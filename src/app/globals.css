@@ -92,37 +92,37 @@
 }
 
 .dark {
-  --background: #0c1117;
-  --foreground: #f0f0f0;
-  --card: #151c25;
-  --card-foreground: #f0f0f0;
-  --popover: #151c25;
-  --popover-foreground: #f0f0f0;
-  --primary: #14b8a6;
-  --primary-foreground: #0c1117;
-  --secondary: #1a2430;
-  --secondary-foreground: #f0f0f0;
-  --muted: #1a2430;
-  --muted-foreground: #9ca3af;
-  --accent: #1a2430;
-  --accent-foreground: #f0f0f0;
+  --background: #0a0f16;
+  --foreground: #e8eaed;
+  --card: #111827;
+  --card-foreground: #e8eaed;
+  --popover: #111827;
+  --popover-foreground: #e8eaed;
+  --primary: #2dd4bf;
+  --primary-foreground: #0a0f16;
+  --secondary: #1e293b;
+  --secondary-foreground: #e8eaed;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #e8eaed;
   --destructive: #fb7185;
-  --border: #2a3544;
-  --input: #2a3544;
-  --ring: #14b8a6;
-  --chart-1: #14b8a6;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #2dd4bf;
+  --chart-1: #2dd4bf;
   --chart-2: #fb7185;
-  --chart-3: #2dd4bf;
+  --chart-3: #14b8a6;
   --chart-4: #f43f5e;
-  --chart-5: #0d9488;
-  --sidebar: #0f1920;
-  --sidebar-foreground: #f0f0f0;
-  --sidebar-primary: #14b8a6;
-  --sidebar-primary-foreground: #0c1117;
-  --sidebar-accent: #1a2430;
-  --sidebar-accent-foreground: #f0f0f0;
-  --sidebar-border: #2a3544;
-  --sidebar-ring: #14b8a6;
+  --chart-5: #5eead4;
+  --sidebar: #0d1420;
+  --sidebar-foreground: #e8eaed;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #0a0f16;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #e8eaed;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #2dd4bf;
 }
 
 @layer base {
@@ -149,12 +149,62 @@
   background: #9ca3af;
 }
 
+/* Animated gradient background for empty states */
+.animate-gradient-bg {
+  background: linear-gradient(135deg, #f0fdfa, #ccfbf1, #d1fae5, #f0fdfa);
+  background-size: 300% 300%;
+  animation: gradient-shift 4s ease infinite;
+}
+.dark .animate-gradient-bg {
+  background: linear-gradient(135deg, #134e4a, #115e59, #0f766e, #134e4a);
+  background-size: 300% 300%;
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 /* Slider gradient track for pain/stress */
 .slider-gradient-green-red [data-slot="slider-track"] {
   background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
 }
 .slider-gradient-green-red [data-slot="slider-range"] {
   background: transparent;
+}
+
+/* Card glassmorphism for dark mode */
+.dark .glass-card {
+  background: rgba(21, 28, 37, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 53, 68, 0.5);
+}
+
+/* Animated gradient for empty states */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-bg {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 25%, #f0fdfa 50%, #d1fae5 75%, #f0fdfa 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.dark .animate-gradient-bg {
+  background: linear-gradient(135deg, #0d1420 0%, #134e4a 25%, #0d1420 50%, #1a2430 75%, #0d1420 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Smooth recording pulse */
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.recording-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
 }
 
 @media print {

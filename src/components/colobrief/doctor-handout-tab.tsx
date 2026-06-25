@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Printer, Sparkles, Loader2, FileText } from "lucide-react";
+import { Printer, Sparkles, Loader2, FileText, ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -184,15 +184,25 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-20 text-center"
+        className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto"
       >
-        <div className="rounded-full bg-teal-50 p-6 mb-6">
-          <FileText className="h-10 w-10 text-teal-600" />
+        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+          <ClipboardList className="h-14 w-14 text-teal-600 mx-auto" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No data for a handout</h3>
-        <p className="text-muted-foreground max-w-md">
-          Log at least a few days of symptoms to generate a clinical brief for your doctor.
+        <p className="text-muted-foreground max-w-md mb-4">
+          Log at least a few days of symptoms to generate an SBAR Clinical Brief 
+          that you can share with your gastroenterologist.
         </p>
+        <div className="rounded-lg border bg-card/50 p-4 text-left max-w-sm w-full">
+          <p className="text-sm font-medium mb-2">📋 What you'll get:</p>
+          <ul className="text-xs text-muted-foreground space-y-1">
+            <li>• SBAR-formatted clinical summary</li>
+            <li>• Automated trend analysis</li>
+            <li>• Trigger identification report</li>
+            <li>• Print-ready PDF for your doctor</li>
+          </ul>
+        </div>
       </motion.div>
     );
   }

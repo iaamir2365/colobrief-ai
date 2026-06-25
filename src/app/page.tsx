@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
@@ -46,10 +46,10 @@ import MyRecordsTab from "@/components/colobrief/my-records-tab";
 import DoctorHandoutTab from "@/components/colobrief/doctor-handout-tab";
 
 const NAV_ITEMS = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard },
-  { key: "log", label: "Log Symptoms", icon: PlusCircle },
-  { key: "records", label: "My Records", icon: FileText },
-  { key: "handout", label: "Doctor Handout", icon: ClipboardList },
+  { key: "overview", label: "Overview", icon: LayoutDashboard, shortcut: "O" },
+  { key: "log", label: "Log Symptoms", icon: PlusCircle, shortcut: "L" },
+  { key: "records", label: "My Records", icon: FileText, shortcut: "R" },
+  { key: "handout", label: "Doctor Handout", icon: ClipboardList, shortcut: "H" },
 ] as const;
 
 type TabKey = (typeof NAV_ITEMS)[number]["key"];
@@ -86,6 +86,33 @@ function AppContent() {
     setActiveTab(key as TabKey);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case "o":
+            e.preventDefault();
+            setActiveTab("overview");
+            break;
+          case "l":
+            e.preventDefault();
+            setActiveTab("log");
+            break;
+          case "r":
+            e.preventDefault();
+            setActiveTab("records");
+            break;
+          case "h":
+            e.preventDefault();
+            setActiveTab("handout");
+            break;
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" className="border-r-0">
@@ -115,7 +142,7 @@ function AppContent() {
                     <SidebarMenuButton
                       isActive={activeTab === item.key}
                       onClick={() => handleTabChange(item.key)}
-                      tooltip={item.label}
+                      tooltip={`${item.label} (Ctrl+${item.shortcut})`}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
@@ -232,12 +259,26 @@ function AppContent() {
           </main>
 
           {/* Footer */}
-          <footer className="mt-auto border-t px-6 py-4 print:hidden">
+          <footer className="mt-auto border-t px-6 py-3 print:hidden">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
               <span>ColoBrief AI — Bridging daily flares and clinical consultations</span>
-              <span className="text-xs">Built with empathy for the UC community</span>
+              <div className="hidden sm:flex items-center gap-3 text-xs">
+                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘O</kbd> Overview</span>
+                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘L</kbd> Log</span>
+                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘R</kbd> Records</span>
+                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘H</kbd> Handout</span>
+              </div>
             </div>
           </footer>
+
+          {/* Mobile FAB - Log Symptoms */}
+          <Button
+            onClick={() => setActiveTab("log")}
+            size="lg"
+            className="fixed bottom-6 right-6 md:hidden h-14 w-14 rounded-full shadow-xl shadow-teal-500/30 bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 z-50 p-0"
+          >
+            <PlusCircle className="h-7 w-7" />
+          </Button>
         </div>
       </SidebarInset>
     </SidebarProvider>

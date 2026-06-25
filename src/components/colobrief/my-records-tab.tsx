@@ -122,14 +122,15 @@ export default function MyRecordsTab({
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center py-20 text-center"
       >
-        <div className="rounded-full bg-teal-50 p-6 mb-6">
-          <FileText className="h-10 w-10 text-teal-600" />
+        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+          <FileText className="h-14 w-14 text-teal-600 mx-auto" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No records yet</h3>
         <p className="text-muted-foreground max-w-md mb-6">
-          Start logging your symptoms to build your health history.
+          Your symptom history will appear here once you start logging. Each entry shows 
+          pain levels, stool data, triggers, and personal notes.
         </p>
-        <Button onClick={onGoToLog} className="gap-2">
+        <Button onClick={onGoToLog} className="gap-2 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25">
           <PlusCircle className="h-4 w-4" />
           Log Your First Symptom
         </Button>

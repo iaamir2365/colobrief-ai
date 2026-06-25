@@ -41,6 +41,8 @@ import {
   Cell,
   BarChart,
   Bar,
+  ScatterChart,
+  Scatter,
 } from "recharts";
 import { format, subDays, parseISO, isAfter } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
@@ -81,6 +83,30 @@ const pieChartConfig: ChartConfig = {
 const barChartConfig: ChartConfig = {
   count: { label: "Occurrences", color: "#0d9488" },
 };
+
+const scatterConfig: ChartConfig = {
+  scatter: { label: "Pain vs Stress", color: "#0d9488" },
+};
+
+function getStoolEmoji(type: number): string {
+  if (type <= 2) return "🪨";
+  if (type <= 4) return "✅";
+  if (type <= 6) return "⚠️";
+  return "🚨";
+}
+
+function CircularGauge({ value, max = 10, size = 48, strokeWidth = 4, color = "#0d9488" }: { value: number; max?: number; size?: number; strokeWidth?: number; color?: string }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const progress = Math.min(value / max, 1) * circumference;
+
+  return (
+    <svg width={size} height={size} className="-rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-muted/30" />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={circumference - progress} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+    </svg>
+  );
+}
 
 interface OverviewTabProps {
   symptoms: SymptomLog[];
@@ -273,14 +299,35 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-20 text-center"
+        className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto"
       >
-        <div className="rounded-full bg-teal-50 p-6 mb-6">
-          <FileText className="h-10 w-10 text-teal-600" />
+        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+          <div className="relative">
+            <Activity className="h-14 w-14 text-teal-600 mx-auto" />
+            <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-400 rounded-full animate-bounce" />
+            <div className="absolute -bottom-1 -left-1 h-3 w-3 bg-rose-400 rounded-full animate-bounce [animation-delay:0.15s]" />
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">No data yet</h3>
-        <p className="text-muted-foreground max-w-md">
-          Start logging your symptoms to see your personalized dashboard with trends, triggers, and insights.
+        <h3 className="text-xl font-semibold text-foreground mb-2">Welcome to ColoBrief AI</h3>
+        <p className="text-muted-foreground mb-6">
+          Start tracking your Ulcerative Colitis symptoms to unlock personalized insights, 
+          trend analysis, and clinical handouts for your doctor.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+          {[
+            { icon: "🎤", title: "Voice Log", desc: "Speak your symptoms naturally" },
+            { icon: "✨", title: "AI Extract", desc: "AI parses your notes into data" },
+            { icon: "📊", title: "Live Charts", desc: "See trends as you log" },
+          ].map((tip) => (
+            <div key={tip.title} className="rounded-lg border bg-card p-3 text-center">
+              <span className="text-2xl">{tip.icon}</span>
+              <p className="text-sm font-medium mt-1">{tip.title}</p>
+              <p className="text-xs text-muted-foreground">{tip.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-6">
+          Click <strong>"Load Demo Data"</strong> in the sidebar to explore with sample data
         </p>
       </motion.div>
     );
@@ -298,6 +345,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       borderColor: "border-l-rose-400",
       sparklineColor: "#f43f5e",
       sparkData: sparklineData.pain,
+      gaugeMax: 10,
+      gaugeColor: "#f43f5e",
     },
     {
       label: "Avg Stool Frequency",
@@ -322,6 +371,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       borderColor: "border-l-amber-400",
       sparklineColor: "#f59e0b",
       sparkData: sparklineData.stress,
+      gaugeMax: 10,
+      gaugeColor: "#f59e0b",
     },
     {
       label: "Total Logs",
@@ -392,7 +443,12 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             transition={{ delay: i * 0.1 }}
           >
             <Card className={`rounded-xl border-0 shadow-sm border-l-4 ${card.borderColor} hover:scale-[1.02] transition-transform`}>
-              <CardContent className="p-5">
+              <CardContent className="p-5 relative">
+                {"gaugeMax" in card && card.gaugeMax && (
+                  <div className="absolute top-2 right-2">
+                    <CircularGauge value={card.rawValue} max={card.gaugeMax as number} color={card.gaugeColor as string} />
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
                     <card.icon className={`h-5 w-5 ${card.color}`} />
@@ -540,7 +596,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       </motion.div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Most Common Triggers */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -578,6 +634,38 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No triggers logged yet.
                 </p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Pain-Stress Correlation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="rounded-xl border-0 shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold">Pain vs Stress Correlation</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {symptoms.length >= 2 ? (
+                <ChartContainer config={scatterConfig} className="h-[200px] w-full">
+                  <ScatterChart>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="stressLevel" name="Stress" type="number" domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" label={{ value: "Stress →", position: "bottom", fontSize: 11, fill: "var(--color-muted-foreground)" }} />
+                    <YAxis dataKey="painLevel" name="Pain" type="number" domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" label={{ value: "Pain ↑", angle: -90, position: "insideLeft", fontSize: 11, fill: "var(--color-muted-foreground)" }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Scatter data={symptoms.map(s => ({ x: s.stressLevel, y: s.painLevel, date: format(parseISO(s.date), "MMM d") }))} fill="var(--color-scatter)">
+                      {symptoms.map((s, i) => (
+                        <Cell key={i} fill={s.painLevel > 6 ? "#f43f5e" : s.painLevel > 3 ? "#f59e0b" : "#10b981"} />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ChartContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">Need at least 2 data points.</p>
               )}
             </CardContent>
           </Card>
@@ -637,7 +725,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                           className="h-3 w-3 rounded-sm shrink-0"
                           style={{ backgroundColor: entry.fill }}
                         />
-                        <span className="text-muted-foreground truncate">Type {entry.type}</span>
+                        <span className="text-muted-foreground truncate">{getStoolEmoji(entry.type)} Type {entry.type}</span>
                         <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
                           {entry.value}
                         </Badge>

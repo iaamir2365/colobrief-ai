@@ -233,15 +233,23 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Welcome Banner */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 p-4 flex items-start gap-3">
-          <div className="rounded-lg bg-teal-100 p-2 mt-0.5">
-            <ClipboardCheck className="h-5 w-5 text-teal-600" />
+        <div className="rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 border border-teal-200 dark:border-teal-800/50 p-4 flex items-start gap-3">
+          <div className="rounded-lg bg-teal-100 dark:bg-teal-900/50 p-2 mt-0.5 shrink-0">
+            <ClipboardCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-teal-800">Log Today's Symptoms</h3>
-            <p className="text-xs text-teal-700/70 mt-0.5">
+            <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-200">Log Today's Symptoms</h3>
+            <p className="text-xs text-teal-700/70 dark:text-teal-300/70 mt-0.5">
               Track your daily UC symptoms to identify patterns and share data with your doctor. Use voice input or AI extraction for faster logging.
             </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 font-medium">
+                💡 Tip: Use voice input for hands-free logging
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">
+                ⌨️ Shortcut: Press Ctrl+L to jump here
+              </span>
+            </div>
           </div>
         </div>
       </motion.div>
