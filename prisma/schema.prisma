@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String        @id @default(cuid())
+  name       String
+  email      String        @unique
+  doctorName String?
+  symptomLogs SymptomLog[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model SymptomLog {
+  id             String   @id @default(cuid())
+  userId         String
+  date           String
+  painLevel      Float    @default(0)
+  stoolFrequency Float    @default(0)
+  stoolType      Float    @default(1)
+  stressLevel    Float    @default(0)
+  triggers       String   @default("[]")
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+}

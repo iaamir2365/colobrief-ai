@@ -1,0 +1,20 @@
+export interface SymptomLog {
+  id: string;
+  userId: string;
+  date: string;
+  painLevel: number;
+  stoolFrequency: number;
+  stoolType: number;
+  stressLevel: number;
+  triggers: string[];
+  notes?: string;
+  createdAt: string;
+}
+
+export interface AIPrediction {
+  stoolFrequency: number;
+  painLevel: number;
+  bristolStoolType: number;
+  stressLevel: number;
+  triggers: string[];
+}

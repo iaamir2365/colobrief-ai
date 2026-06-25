@@ -1,0 +1,196 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-coral-400: #fb7185;
+  --color-coral-500: #f43f5e;
+  --color-coral-600: #e11d48;
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #FAFAF8;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+  --secondary: #f0fdfa;
+  --secondary-foreground: #115e59;
+  --muted: #f5f5f3;
+  --muted-foreground: #6b7280;
+  --accent: #f0fdfa;
+  --accent-foreground: #0f766e;
+  --destructive: #e11d48;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #0d9488;
+  --chart-1: #0d9488;
+  --chart-2: #f43f5e;
+  --chart-3: #14b8a6;
+  --chart-4: #fb7185;
+  --chart-5: #99f6e4;
+  --sidebar: #f0fdfa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ccfbf1;
+  --sidebar-accent-foreground: #0f766e;
+  --sidebar-border: #99f6e4;
+  --sidebar-ring: #0d9488;
+}
+
+.dark {
+  --background: #0c1117;
+  --foreground: #f0f0f0;
+  --card: #151c25;
+  --card-foreground: #f0f0f0;
+  --popover: #151c25;
+  --popover-foreground: #f0f0f0;
+  --primary: #14b8a6;
+  --primary-foreground: #0c1117;
+  --secondary: #1a2430;
+  --secondary-foreground: #f0f0f0;
+  --muted: #1a2430;
+  --muted-foreground: #9ca3af;
+  --accent: #1a2430;
+  --accent-foreground: #f0f0f0;
+  --destructive: #fb7185;
+  --border: #2a3544;
+  --input: #2a3544;
+  --ring: #14b8a6;
+  --chart-1: #14b8a6;
+  --chart-2: #fb7185;
+  --chart-3: #2dd4bf;
+  --chart-4: #f43f5e;
+  --chart-5: #0d9488;
+  --sidebar: #0f1920;
+  --sidebar-foreground: #f0f0f0;
+  --sidebar-primary: #14b8a6;
+  --sidebar-primary-foreground: #0c1117;
+  --sidebar-accent: #1a2430;
+  --sidebar-accent-foreground: #f0f0f0;
+  --sidebar-border: #2a3544;
+  --sidebar-ring: #14b8a6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Slider gradient track for pain/stress */
+.slider-gradient-green-red [data-slot="slider-track"] {
+  background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
+}
+.slider-gradient-green-red [data-slot="slider-range"] {
+  background: transparent;
+}
+
+@media print {
+  /* Hide everything except the handout content */
+  body * {
+    visibility: hidden;
+  }
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  /* Clean medical document styling */
+  .print-area table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .print-area th, .print-area td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 11px;
+  }
+  .print-area h1 {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .print-area h2 {
+    font-size: 14px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+}
