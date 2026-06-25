@@ -3,19 +3,22 @@
 import { useState, useCallback } from "react";
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   PlusCircle,
   FileText,
   ClipboardList,
   Heart,
-  Database,
+  DatabaseZap,
   Loader2,
+  Sun,
+  Moon,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -61,8 +64,9 @@ const TAB_TITLES: Record<TabKey, string> = {
 function AppContent() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const { theme, setTheme } = useTheme();
 
-  const { data: symptoms = [], isLoading } = useQuery<SymptomLog[]>({
+  const { data: symptoms = [], isLoading, isError, error } = useQuery<SymptomLog[]>({
     queryKey: ["symptoms"],
     queryFn: () => fetch("/api/symptoms").then((r) => r.json()),
   });
@@ -94,7 +98,7 @@ function AppContent() {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">ColoBrief AI</span>
-                  <span className="truncate text-xs text-muted-foreground">UC Symptom Tracker</span>
+                  <span className="truncate text-xs text-muted-foreground">Empathetic UC Tracking</span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -132,12 +136,12 @@ function AppContent() {
                     onClick={() => demoMutation.mutate()}
                     disabled={demoMutation.isPending}
                     tooltip="Load Demo Data"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground border-l-2 border-l-teal-500 bg-teal-500/5 hover:bg-teal-500/10 rounded-r-md"
                   >
                     {demoMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Database className="h-4 w-4" />
+                      <DatabaseZap className="h-4 w-4" />
                     )}
                     <span>Load Demo Data</span>
                   </SidebarMenuButton>
@@ -157,6 +161,7 @@ function AppContent() {
               <span className="truncate text-xs text-muted-foreground">demo@colobrief.ai</span>
             </div>
           </div>
+          <span className="truncate text-xs text-muted-foreground">v1.0.0</span>
         </SidebarFooter>
 
         <SidebarRail />
@@ -169,7 +174,25 @@ function AppContent() {
             <SidebarTrigger className="-ml-2" />
             <Separator orientation="vertical" className="h-6" />
             <h1 className="text-lg font-semibold">{TAB_TITLES[activeTab]}</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto h-9 w-9"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
           </header>
+
+          {/* Error Banner */}
+          {isError && (
+            <div className="mx-6 mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              Failed to load symptom data. Please try refreshing the page.
+            </div>
+          )}
 
           {/* Main Content */}
           <main className="flex-1 p-6">
@@ -177,10 +200,10 @@ function AppContent() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, x: 8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
                 >
                   {activeTab === "overview" && (
                     <OverviewTab symptoms={symptoms} isLoading={isLoading} />
@@ -209,8 +232,11 @@ function AppContent() {
           </main>
 
           {/* Footer */}
-          <footer className="mt-auto border-t px-6 py-4 text-center text-sm text-muted-foreground print:hidden">
-            ColoBrief AI — Bridging daily flares and clinical consultations
+          <footer className="mt-auto border-t px-6 py-4 print:hidden">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span>ColoBrief AI — Bridging daily flares and clinical consultations</span>
+              <span className="text-xs">Built with empathy for the UC community</span>
+            </div>
           </footer>
         </div>
       </SidebarInset>

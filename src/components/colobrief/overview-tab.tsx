@@ -2,7 +2,22 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Activity, UtensilsCrossed, Brain, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  Activity,
+  UtensilsCrossed,
+  Brain,
+  FileText,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle,
+  CalendarDays,
+  Trophy,
+  ShieldAlert,
+  Flame,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +32,7 @@ import {
 import {
   LineChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -76,11 +92,34 @@ function TrendIndicator({ current, previous }: { current: number; previous: numb
   const diff = current - previous;
   if (Math.abs(diff) < 0.5) return <Minus className="h-4 w-4 text-muted-foreground" />;
   if (diff < 0) return <TrendingDown className="h-4 w-4 text-emerald-500" />;
-  return <TrendingUp className="h-4 w-4 text-coral-500" />;
+  return <TrendingUp className="h-4 w-4 text-rose-500" />;
+}
+
+function MiniSparkline({ dataPoints, color }: { dataPoints: number[]; color: string }) {
+  if (dataPoints.length === 0) return null;
+  const max = Math.max(...dataPoints, 1);
+  return (
+    <div className="flex items-end gap-[3px] h-6 mt-2">
+      {dataPoints.slice(-5).map((val, i) => {
+        const height = Math.max(Math.round((val / max) * 24), 2);
+        return (
+          <div
+            key={i}
+            className="w-[6px] rounded-sm opacity-60"
+            style={{
+              height: `${height}px`,
+              backgroundColor: color,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   const sevenDaysAgo = useMemo(() => subDays(new Date(), 7), []);
+  const threeDaysAgo = useMemo(() => subDays(new Date(), 3), []);
 
   const metrics = useMemo(() => {
     if (!symptoms.length) return null;
@@ -131,6 +170,11 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       }));
   }, [symptoms]);
 
+  const mostCommonStoolType = useMemo(() => {
+    if (!stoolTypeDistribution.length) return null;
+    return stoolTypeDistribution.reduce((best, cur) => (cur.value > best.value ? cur : best));
+  }, [stoolTypeDistribution]);
+
   const triggerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     symptoms.forEach((s) => {
@@ -142,6 +186,69 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([trigger, count]) => ({ trigger, count }));
+  }, [symptoms]);
+
+  // Flare Risk Alert: 3-day rolling average of pain
+  const flareAlert = useMemo(() => {
+    const last3 = symptoms
+      .filter((s) => isAfter(parseISO(s.date), threeDaysAgo))
+      .map((s) => s.painLevel);
+    if (last3.length === 0) return null;
+    const avg = last3.reduce((a, b) => a + b, 0) / last3.length;
+    if (avg > 6) return { level: "high" as const, avg };
+    if (avg >= 4) return { level: "moderate" as const, avg };
+    return { level: "stable" as const, avg };
+  }, [symptoms, threeDaysAgo]);
+
+  // Weekly Insights
+  const weeklyInsights = useMemo(() => {
+    if (symptoms.length < 2) return null;
+    const sorted = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
+    const mid = Math.ceil(sorted.length / 2);
+    const firstHalf = sorted.slice(0, mid);
+    const secondHalf = sorted.slice(mid);
+
+    const avg = (arr: SymptomLog[], key: "painLevel" | "stressLevel" | "stoolFrequency") =>
+      arr.length ? arr.reduce((sum, s) => sum + s[key], 0) / arr.length : 0;
+
+    // Most improved metric (biggest decrease from first half to second half)
+    const improvements = [
+      { name: "Pain", diff: avg(firstHalf, "painLevel") - avg(secondHalf, "painLevel") },
+      { name: "Stress", diff: avg(firstHalf, "stressLevel") - avg(secondHalf, "stressLevel") },
+      { name: "Stool Freq", diff: avg(firstHalf, "stoolFrequency") - avg(secondHalf, "stoolFrequency") },
+    ];
+    const mostImproved = improvements.reduce((best, cur) => (cur.diff > best.diff ? cur : best), improvements[0]);
+
+    // Worst & best days (pain*2 + stress)
+    let worstDay: { date: string; score: number } | null = null;
+    let bestDay: { date: string; score: number } | null = null;
+    sorted.forEach((s) => {
+      const score = s.painLevel * 2 + s.stressLevel;
+      if (!worstDay || score > worstDay.score) worstDay = { date: s.date, score };
+      if (!bestDay || score < bestDay.score) bestDay = { date: s.date, score };
+    });
+
+    // Top trigger
+    const triggerMap: Record<string, number> = {};
+    symptoms.forEach((s) => s.triggers.forEach((t) => { triggerMap[t] = (triggerMap[t] || 0) + 1; }));
+    const topTrigger = Object.entries(triggerMap).sort(([, a], [, b]) => b - a)[0];
+
+    return {
+      mostImproved: mostImproved.diff > 0 ? mostImproved.name : null,
+      worstDay: worstDay ? format(parseISO(worstDay.date), "MMM d") : "—",
+      bestDay: bestDay ? format(parseISO(bestDay.date), "MMM d") : "—",
+      topTrigger: topTrigger ? topTrigger[0] : "None",
+    };
+  }, [symptoms]);
+
+  // Sparkline data for each metric
+  const sparklineData = useMemo(() => {
+    const sorted = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
+    return {
+      pain: sorted.slice(-5).map((s) => s.painLevel),
+      stool: sorted.slice(-5).map((s) => s.stoolFrequency),
+      stress: sorted.slice(-5).map((s) => s.stressLevel),
+    };
   }, [symptoms]);
 
   if (isLoading) {
@@ -182,40 +289,99 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   const metricCards = [
     {
       label: "Avg Pain Level",
-      value: metrics ? metrics.avgPain.toFixed(1) : "—",
+      value: metrics ? `${metrics.avgPain.toFixed(1)}/10` : "—",
+      rawValue: metrics?.avgPain ?? 0,
       icon: Activity,
       prev: metrics?.prevPain,
-      color: "text-coral-500",
+      color: "text-rose-500",
       bgColor: "bg-rose-50",
+      borderColor: "border-l-rose-400",
+      sparklineColor: "#f43f5e",
+      sparkData: sparklineData.pain,
     },
     {
       label: "Avg Stool Frequency",
-      value: metrics ? metrics.avgStool.toFixed(1) : "—",
+      value: metrics ? `${metrics.avgStool.toFixed(1)}/day` : "—",
+      rawValue: metrics?.avgStool ?? 0,
       icon: UtensilsCrossed,
       prev: metrics?.prevStool,
       color: "text-teal-600",
       bgColor: "bg-teal-50",
+      borderColor: "border-l-teal-400",
+      sparklineColor: "#0d9488",
+      sparkData: sparklineData.stool,
     },
     {
       label: "Avg Stress Level",
-      value: metrics ? metrics.avgStress.toFixed(1) : "—",
+      value: metrics ? `${metrics.avgStress.toFixed(1)}/10` : "—",
+      rawValue: metrics?.avgStress ?? 0,
       icon: Brain,
       prev: metrics?.prevStress,
       color: "text-amber-500",
       bgColor: "bg-amber-50",
+      borderColor: "border-l-amber-400",
+      sparklineColor: "#f59e0b",
+      sparkData: sparklineData.stress,
     },
     {
       label: "Total Logs",
       value: String(symptoms.length),
+      rawValue: symptoms.length,
       icon: FileText,
       prev: null,
       color: "text-teal-600",
       bgColor: "bg-teal-50",
+      borderColor: "border-l-teal-400",
+      sparklineColor: "#0d9488",
+      sparkData: [],
     },
   ];
 
   return (
     <div className="space-y-6">
+      {/* Flare Risk Alert Banner */}
+      {flareAlert && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {flareAlert.level === "high" && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
+              <div>
+                <h4 className="font-semibold text-rose-800 text-sm">High Flare Risk</h4>
+                <p className="text-rose-700 text-sm mt-0.5">
+                  Your average pain level over the last 3 days is {flareAlert.avg.toFixed(1)}/10. Consider contacting your healthcare provider.
+                </p>
+              </div>
+            </div>
+          )}
+          {flareAlert.level === "moderate" && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+              <div>
+                <h4 className="font-semibold text-amber-800 text-sm">Moderate Symptoms</h4>
+                <p className="text-amber-700 text-sm mt-0.5">
+                  Your recent pain levels are elevated. Continue monitoring and consider dietary adjustments.
+                </p>
+              </div>
+            </div>
+          )}
+          {flareAlert.level === "stable" && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+              <div>
+                <h4 className="font-semibold text-emerald-800 text-sm">Symptoms Stable</h4>
+                <p className="text-emerald-700 text-sm mt-0.5">
+                  Your recent readings look good. Keep up the great self-management!
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricCards.map((card, i) => (
@@ -225,25 +391,80 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className="rounded-xl border-0 shadow-sm hover:shadow-md transition-shadow">
+            <Card className={`rounded-xl border-0 shadow-sm border-l-4 ${card.borderColor} hover:scale-[1.02] transition-transform`}>
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
                     <card.icon className={`h-5 w-5 ${card.color}`} />
                   </div>
                   {card.prev !== null && (
-                    <TrendIndicator current={Number(card.value)} previous={card.prev} />
+                    <TrendIndicator current={card.rawValue} previous={card.prev!} />
                   )}
                 </div>
                 <div className="mt-3">
                   <p className="text-sm text-muted-foreground">{card.label}</p>
                   <p className="text-2xl font-bold mt-0.5">{card.value}</p>
                 </div>
+                {card.sparkData.length > 0 && (
+                  <MiniSparkline dataPoints={card.sparkData} color={card.sparklineColor} />
+                )}
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
+
+      {/* Weekly Insights */}
+      {weeklyInsights && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+        >
+          <Card className="rounded-xl border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-amber-500" />
+                Weekly Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="rounded-lg bg-emerald-50 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs text-muted-foreground">Most Improved</span>
+                  </div>
+                  <p className="text-sm font-semibold text-emerald-800">
+                    {weeklyInsights.mostImproved || "No change yet"}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-rose-50 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldAlert className="h-4 w-4 text-rose-500" />
+                    <span className="text-xs text-muted-foreground">Worst Day</span>
+                  </div>
+                  <p className="text-sm font-semibold text-rose-800">{weeklyInsights.worstDay}</p>
+                </div>
+                <div className="rounded-lg bg-teal-50 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="h-4 w-4 text-teal-600" />
+                    <span className="text-xs text-muted-foreground">Best Day</span>
+                  </div>
+                  <p className="text-sm font-semibold text-teal-800">{weeklyInsights.bestDay}</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Flame className="h-4 w-4 text-amber-500" />
+                    <span className="text-xs text-muted-foreground">Top Trigger</span>
+                  </div>
+                  <p className="text-sm font-semibold text-amber-800">{weeklyInsights.topTrigger}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Main Line Chart */}
       <motion.div
@@ -256,20 +477,48 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             <CardTitle className="text-base font-semibold">Symptom Trends</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ChartContainer config={lineChartConfig} className="h-[300px] w-full">
+            <ChartContainer config={lineChartConfig} className="h-[320px] w-full">
               <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                 <YAxis yAxisId="left" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
+                {/* Area fills */}
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="stoolFrequency"
+                  stroke="none"
+                  fill="url(#tealGradient)"
+                />
+                <Area
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="painLevel"
+                  stroke="none"
+                  fill="url(#roseGradient)"
+                />
+                {/* Lines on top */}
                 <Line
                   yAxisId="left"
                   type="monotone"
                   dataKey="stoolFrequency"
                   stroke="var(--color-stoolFrequency)"
                   strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   dot={{ r: 4, fill: "var(--color-stoolFrequency)" }}
                   activeDot={{ r: 6 }}
                 />
@@ -279,6 +528,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   dataKey="painLevel"
                   stroke="var(--color-painLevel)"
                   strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   dot={{ r: 4, fill: "var(--color-painLevel)" }}
                   activeDot={{ r: 6 }}
                 />
@@ -302,13 +553,14 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             </CardHeader>
             <CardContent className="pt-0">
               {triggerCounts.length ? (
-                <div className="space-y-3">
+                <div className="rounded-lg bg-muted/40 p-3 space-y-3">
                   {triggerCounts.map((t) => (
                     <div key={t.trigger} className="flex items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="font-medium truncate">{t.trigger}</span>
-                          <span className="text-muted-foreground ml-2">{t.count}×</span>
+                        <div className="flex items-center gap-2 text-sm mb-1">
+                          <span className="h-2 w-2 rounded-full bg-teal-500 shrink-0" />
+                          <span className="font-bold">{t.count}</span>
+                          <span className="font-medium truncate text-muted-foreground">{t.trigger}</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
                           <motion.div
@@ -344,25 +596,40 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             <CardContent className="pt-0">
               {stoolTypeDistribution.length ? (
                 <div className="flex items-center gap-4">
-                  <ChartContainer config={pieChartConfig} className="h-[200px] w-[200px] shrink-0">
-                    <PieChart>
-                      <Pie
-                        data={stoolTypeDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={85}
-                        dataKey="value"
-                        nameKey="type"
-                        stroke="none"
-                      >
-                        {stoolTypeDistribution.map((entry, index) => (
-                          <Cell key={index} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </PieChart>
-                  </ChartContainer>
+                  <div className="relative">
+                    <ChartContainer config={pieChartConfig} className="h-[200px] w-[200px] shrink-0">
+                      <PieChart>
+                        <defs>
+                          <filter id="donutShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
+                          </filter>
+                        </defs>
+                        <Pie
+                          data={stoolTypeDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={85}
+                          dataKey="value"
+                          nameKey="type"
+                          stroke="none"
+                          filter="url(#donutShadow)"
+                        >
+                          {stoolTypeDistribution.map((entry, index) => (
+                            <Cell key={index} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                      </PieChart>
+                    </ChartContainer>
+                    {/* Center label */}
+                    {mostCommonStoolType && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-2xl font-bold text-foreground">Type {mostCommonStoolType.type}</span>
+                        <span className="text-xs text-muted-foreground">Most Common</span>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex flex-col gap-2 min-w-0">
                     {stoolTypeDistribution.map((entry) => (
                       <div key={entry.type} className="flex items-center gap-2 text-sm">

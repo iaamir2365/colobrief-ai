@@ -9,6 +9,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -230,8 +231,23 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Date */}
+      {/* Welcome Banner */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 p-4 flex items-start gap-3">
+          <div className="rounded-lg bg-teal-100 p-2 mt-0.5">
+            <ClipboardCheck className="h-5 w-5 text-teal-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-teal-800">Log Today's Symptoms</h3>
+            <p className="text-xs text-teal-700/70 mt-0.5">
+              Track your daily UC symptoms to identify patterns and share data with your doctor. Use voice input or AI extraction for faster logging.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Date */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
         <Card className="rounded-xl border-0 shadow-sm">
           <CardContent className="p-6">
             <div className="space-y-2">
@@ -249,6 +265,12 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Physical Symptoms Section Header */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Physical Symptoms</span>
+        <Separator className="flex-1" />
+      </div>
 
       {/* Pain Level & Stool Frequency side by side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -378,6 +400,12 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </motion.div>
       </div>
 
+      {/* Identified Triggers Section Header */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Identified Triggers</span>
+        <Separator className="flex-1" />
+      </div>
+
       {/* Triggers */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <Card className="rounded-xl border-0 shadow-sm">
@@ -385,7 +413,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
             <CardTitle className="text-base font-semibold">Triggers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
               {COMMON_TRIGGERS.map((trigger) => (
                 <label
                   key={trigger}
@@ -433,6 +461,12 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Additional Notes Section Header */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Additional Notes</span>
+        <Separator className="flex-1" />
+      </div>
 
       {/* Notes with Voice Input */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
@@ -487,6 +521,9 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
                 rows={4}
                 className="resize-none"
               />
+              <p className="text-xs text-muted-foreground text-right mt-1">
+                {notes.length} characters
+              </p>
               {isRecording && (
                 <p className="text-xs text-rose-500 flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
@@ -568,7 +605,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
           onClick={handleSave}
           disabled={isSaving}
           size="lg"
-          className="w-full h-12 text-base font-semibold rounded-xl"
+          className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25 transition-all"
         >
           {isSaving ? (
             <>

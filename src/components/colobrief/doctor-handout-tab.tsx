@@ -215,6 +215,33 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
         </Button>
       </div>
 
+      {/* Bristol Stool Scale Reference Card */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <Card className="rounded-xl border-0 shadow-sm print:hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">Bristol Stool Scale Reference</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: "Constipation", color: "bg-stone-100 border-stone-200", desc: "Hard, lumpy — Types 1-2", icon: "🪨" },
+                { label: "Normal", color: "bg-emerald-50 border-emerald-200", desc: "Smooth, soft — Types 3-4", icon: "✅" },
+                { label: "Mild Diarrhea", color: "bg-amber-50 border-amber-200", desc: "Soft, mushy — Types 5-6", icon: "⚠️" },
+                { label: "Severe Diarrhea", color: "bg-rose-50 border-rose-200", desc: "Watery — Type 7", icon: "🚨" },
+              ].map((item) => (
+                <div key={item.label} className={`rounded-lg border p-3 ${item.color}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Print area */}
       <div className="print-area space-y-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -244,7 +271,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               <Separator className="mb-6 print:mb-4" />
 
               {/* S - Situation */}
-              <div className="mb-5">
+              <div className="mb-5 border-l-4 border-teal-400 pl-4">
                 <h2 className="text-base font-semibold text-teal-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
                   S — Situation
                 </h2>
@@ -254,8 +281,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               </div>
 
               {/* B - Background */}
-              <div className="mb-5">
-                <h2 className="text-base font-semibold text-teal-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+              <div className="mb-5 border-l-4 border-sky-400 pl-4">
+                <h2 className="text-base font-semibold text-sky-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
                   B — Background
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -264,8 +291,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               </div>
 
               {/* A - Assessment */}
-              <div className="mb-5">
-                <h2 className="text-base font-semibold text-teal-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+              <div className="mb-5 border-l-4 border-amber-400 pl-4">
+                <h2 className="text-base font-semibold text-amber-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
                   A — Assessment
                 </h2>
                 {aiSummary && (
@@ -310,8 +337,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               </div>
 
               {/* R - Recommendation */}
-              <div className="mb-6">
-                <h2 className="text-base font-semibold text-teal-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+              <div className="mb-6 border-l-4 border-violet-400 pl-4">
+                <h2 className="text-base font-semibold text-violet-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
                   R — Recommendation
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -326,6 +353,9 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 <h2 className="text-base font-semibold mb-3 print:text-sm print:mt-4 print:mb-1">
                   Recent Symptom Log
                 </h2>
+                <p className="text-xs text-muted-foreground mb-2 sm:hidden">
+                  &larr; Scroll horizontally to see all columns &rarr;
+                </p>
                 <div className="overflow-x-auto rounded-lg border print:rounded-none">
                   <Table>
                     <TableHeader>
@@ -345,7 +375,13 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                           <TableCell className="font-medium">
                             {format(parseISO(log.date), "MMM d")}
                           </TableCell>
-                          <TableCell>{log.painLevel}/10</TableCell>
+                          <TableCell>
+                            <span className={`font-medium ${
+                              log.painLevel <= 3 ? "text-emerald-600" : log.painLevel <= 6 ? "text-amber-600" : "text-rose-600"
+                            }`}>
+                              {log.painLevel}/10
+                            </span>
+                          </TableCell>
                           <TableCell>{log.stoolFrequency}×</TableCell>
                           <TableCell>Type {log.stoolType}</TableCell>
                           <TableCell>{log.stressLevel}/10</TableCell>

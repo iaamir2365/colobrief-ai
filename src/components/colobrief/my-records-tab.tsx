@@ -59,6 +59,7 @@ export default function MyRecordsTab({
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return symptoms;
@@ -87,6 +88,10 @@ export default function MyRecordsTab({
       setDeletingId(null);
     }
   };
+
+  const avgPain = filtered.length ? filtered.reduce((s, l) => s + l.painLevel, 0) / filtered.length : 0;
+  const avgFreq = filtered.length ? filtered.reduce((s, l) => s + l.stoolFrequency, 0) / filtered.length : 0;
+  const avgStress = filtered.length ? filtered.reduce((s, l) => s + l.stressLevel, 0) / filtered.length : 0;
 
   const getPainVariant = (pain: number): "default" | "secondary" | "destructive" | "outline" => {
     if (pain <= 3) return "default";
@@ -172,7 +177,12 @@ export default function MyRecordsTab({
               </TableHeader>
               <TableBody>
                 {paged.map((log, i) => (
-                  <TableRow key={log.id}>
+                  <>
+                  <TableRow
+                    key={log.id}
+                    className="cursor-pointer hover:bg-muted/30"
+                    onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                  >
                     <TableCell className="pl-4 font-medium">
                       {format(parseISO(log.date), "MMM d, yyyy")}
                     </TableCell>
@@ -212,6 +222,7 @@ export default function MyRecordsTab({
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
+                            onClick={(e) => e.stopPropagation()}
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9 text-muted-foreground hover:text-destructive"
@@ -241,6 +252,21 @@ export default function MyRecordsTab({
                       </AlertDialog>
                     </TableCell>
                   </TableRow>
+                  {expandedId === log.id && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="bg-muted/20 px-6 py-3">
+                        <div className="text-sm">
+                          <span className="font-medium text-muted-foreground">Notes: </span>
+                          {log.notes || "No notes recorded for this entry."}
+                          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                            <span>Stress: {log.stressLevel}/10</span>
+                            <span>Bristol Type: {log.stoolType} — {BRISTOL_LABELS[log.stoolType] || "Unknown"}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </>
                 ))}
               </TableBody>
             </Table>
@@ -248,28 +274,59 @@ export default function MyRecordsTab({
         </Card>
       </motion.div>
 
+      {/* Summary Averages */}
+      {filtered.length > 0 && (
+        <div className="flex gap-6 mt-3 px-4 text-sm text-muted-foreground">
+          <span>Avg Pain: <strong className="text-foreground">{avgPain.toFixed(1)}</strong>/10</span>
+          <span>Avg Freq: <strong className="text-foreground">{avgFreq.toFixed(1)}</strong>/day</span>
+          <span>Avg Stress: <strong className="text-foreground">{avgStress.toFixed(1)}</strong>/10</span>
+        </div>
+      )}
+
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(Math.max(0, page - 1))}
-            disabled={page === 0}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground px-3">
-            Page {page + 1} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-            disabled={page >= totalPages - 1}
-          >
-            Next
-          </Button>
+        <div className="flex items-center justify-center gap-1">
+          <Button variant="outline" size="sm" onClick={() => setPage(0)} disabled={page === 0}>&laquo;</Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>&lsaquo;</Button>
+          {totalPages <= 7
+            ? Array.from({ length: totalPages }, (_, i) => (
+                <Button
+                  key={i}
+                  variant={i === page ? "default" : "outline"}
+                  size="sm"
+                  className="w-8 h-8 p-0"
+                  onClick={() => setPage(i)}
+                >
+                  {i + 1}
+                </Button>
+              ))
+            : (() => {
+                const pages: number[] = [];
+                const start = Math.max(1, page - 2);
+                const end = Math.min(totalPages - 2, page + 2);
+                pages.push(0);
+                if (start > 1) pages.push(-1);
+                for (let i = start; i <= end; i++) pages.push(i);
+                if (end < totalPages - 2) pages.push(-2);
+                pages.push(totalPages - 1);
+                return pages.map((p, idx) =>
+                  p < 0 ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-muted-foreground">&hellip;</span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={p === page ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setPage(p)}
+                    >
+                      {p + 1}
+                    </Button>
+                  )
+                );
+              })()}
+          <Button variant="outline" size="sm" onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}>&rsaquo;</Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>&raquo;</Button>
         </div>
       )}
     </div>
