@@ -188,7 +188,7 @@ function AppContent() {
               <span className="truncate text-xs text-muted-foreground">demo@colobrief.ai</span>
             </div>
           </div>
-          <span className="truncate text-xs text-muted-foreground">v1.0.0</span>
+          <span className="truncate text-xs text-muted-foreground">v1.2.0</span>
         </SidebarFooter>
 
         <SidebarRail />
@@ -259,7 +259,12 @@ function AppContent() {
           </main>
 
           {/* Footer */}
-          <footer className="mt-auto border-t px-6 py-3 print:hidden">
+          <motion.footer
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-auto border-t px-6 py-3 print:hidden"
+          >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
               <span>ColoBrief AI — Bridging daily flares and clinical consultations</span>
               <div className="hidden sm:flex items-center gap-3 text-xs">
@@ -269,7 +274,7 @@ function AppContent() {
                 <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘H</kbd> Handout</span>
               </div>
             </div>
-          </footer>
+          </motion.footer>
 
           {/* Mobile FAB - Log Symptoms */}
           <Button

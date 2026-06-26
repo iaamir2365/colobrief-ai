@@ -30,6 +30,9 @@ export async function GET() {
       stressLevel: log.stressLevel,
       triggers: JSON.parse(log.triggers),
       notes: log.notes ?? undefined,
+      medicationTaken: log.medicationTaken ?? null,
+      bloodInStool: log.bloodInStool,
+      urgencyLevel: log.urgencyLevel,
       createdAt: log.createdAt.toISOString(),
     }));
 
@@ -70,6 +73,9 @@ export async function POST(request: NextRequest) {
         stressLevel: Number(stressLevel) || 0,
         triggers: JSON.stringify(triggers || []),
         notes: notes || null,
+        medicationTaken: body.medicationTaken || null,
+        bloodInStool: body.bloodInStool ?? false,
+        urgencyLevel: body.urgencyLevel ?? 0,
       },
     });
 
@@ -83,6 +89,9 @@ export async function POST(request: NextRequest) {
       stressLevel: log.stressLevel,
       triggers: JSON.parse(log.triggers),
       notes: log.notes ?? undefined,
+      medicationTaken: log.medicationTaken ?? null,
+      bloodInStool: log.bloodInStool,
+      urgencyLevel: log.urgencyLevel,
       createdAt: log.createdAt.toISOString(),
     });
   } catch (error) {

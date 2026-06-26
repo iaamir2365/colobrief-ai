@@ -25,8 +25,11 @@ model SymptomLog {
   stoolFrequency Float    @default(0)
   stoolType      Float    @default(1)
   stressLevel    Float    @default(0)
-  triggers       String   @default("[]")
-  notes          String?
+  triggers        String   @default("[]")
+  notes           String?
+  medicationTaken String?
+  bloodInStool    Boolean  @default(false)
+  urgencyLevel    Int      @default(0)
   createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

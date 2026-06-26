@@ -90,6 +90,16 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
     });
     const mostCommonStoolType = Object.entries(stoolTypeCounts).sort(([, a], [, b]) => b - a)[0];
 
+    // Medication adherence
+    const medAdherence = symptoms.length
+      ? Math.round((symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length / symptoms.length) * 100)
+      : 0;
+    // Blood frequency
+    const bloodDays = symptoms.filter((s) => s.bloodInStool).length;
+    const bloodPct = symptoms.length ? Math.round((bloodDays / symptoms.length) * 100) : 0;
+    // Average urgency
+    const avgUrgency = avg(symptoms.map((s) => s.urgencyLevel));
+
     return {
       dateRange,
       avgPain: avg(symptoms.map((s) => s.painLevel)),
@@ -102,6 +112,10 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
         ? `Type ${mostCommonStoolType[0]} — ${BRISTOL_LABELS[Number(mostCommonStoolType[0])] || ""} (${mostCommonStoolType[1]}×)`
         : "N/A",
       recentLogs: sorted.slice(-14),
+      medAdherence,
+      bloodDays,
+      bloodPct,
+      avgUrgency,
     };
   }, [symptoms]);
 
@@ -121,7 +135,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
   const computedAssessment = useMemo(() => {
     if (!stats) return "";
-    return `Overall trend: ${stats.trend}. Average pain ${stats.avgPain.toFixed(1)}/10, stool frequency ${stats.avgStool.toFixed(1)}/day, stress ${stats.avgStress.toFixed(1)}/10. Common triggers: ${stats.topTriggers.join(", ") || "None identified"}. Most common stool type: ${stats.mostCommonStoolType}.`;
+    return `Overall trend: ${stats.trend}. Average pain ${stats.avgPain.toFixed(1)}/10, stool frequency ${stats.avgStool.toFixed(1)}/day, stress ${stats.avgStress.toFixed(1)}/10. Common triggers: ${stats.topTriggers.join(", ") || "None identified"}. Most common stool type: ${stats.mostCommonStoolType}. Medication adherence: ${stats.medAdherence}%. Blood in stool reported on ${stats.bloodDays} days (${stats.bloodPct}%). Average urgency level: ${stats.avgUrgency.toFixed(1)}/3.`;
   }, [stats]);
   const assessment = aiSummary?.assessment || computedAssessment;
 
@@ -315,7 +329,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
                 {/* Quick stats */}
                 {stats && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 print:grid-cols-4 print:gap-2 print:mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mt-4 print:grid-cols-7 print:gap-2 print:mt-2">
                     <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
                       <p className="text-xs text-muted-foreground">Avg Pain</p>
                       <p className="text-lg font-bold">{stats.avgPain.toFixed(1)}</p>
@@ -341,6 +355,18 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                       >
                         {stats.trend}
                       </p>
+                    </div>
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                      <p className="text-xs text-muted-foreground">Med Adherence</p>
+                      <p className="text-lg font-bold text-teal-600">{stats.medAdherence}%</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                      <p className="text-xs text-muted-foreground">Blood Days</p>
+                      <p className="text-lg font-bold text-rose-600">{stats.bloodDays} ({stats.bloodPct}%)</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                      <p className="text-xs text-muted-foreground">Avg Urgency</p>
+                      <p className="text-lg font-bold">{stats.avgUrgency.toFixed(1)}/3</p>
                     </div>
                   </div>
                 )}
@@ -376,6 +402,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                         <TableHead>Stool Type</TableHead>
                         <TableHead>Stress</TableHead>
                         <TableHead>Triggers</TableHead>
+                        <TableHead>Blood</TableHead>
+                        <TableHead>Urgency</TableHead>
                         <TableHead className="hidden lg:table-cell">Notes</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -408,6 +436,18 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                                 </span>
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {log.bloodInStool ? (
+                              <span className="text-rose-600 font-medium text-xs">Yes</span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs">
+                              {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}
+                            </span>
                           </TableCell>
                           <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-xs text-muted-foreground">
                             {log.notes || "—"}

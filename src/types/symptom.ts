@@ -8,6 +8,9 @@ export interface SymptomLog {
   stressLevel: number;
   triggers: string[];
   notes?: string;
+  medicationTaken?: string | null;
+  bloodInStool: boolean;
+  urgencyLevel: number;
   createdAt: string;
 }
 

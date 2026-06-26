@@ -12,6 +12,25 @@ const UC_TRIGGERS = [
   'Processed Food',
 ];
 
+const MEDICATIONS = [
+  'Mesalamine (Asacol) 800mg',
+  'Mesalamine (Asacol) 800mg',
+  'Mesalamine (Asacol) 800mg',
+  'Prednisone 20mg',
+  '',
+  'Mesalamine (Asacol) 800mg',
+  'Mesalamine (Asacol) 800mg',
+  'Prednisone 20mg',
+  'Mesalamine (Asacol) 800mg',
+  '',
+  'Mesalamine (Asacol) 800mg',
+  '',
+  'Prednisone 20mg',
+  'Mesalamine (Asacol) 800mg',
+  'Mesalamine (Asacol) 800mg',
+  '',
+];
+
 const PATIENT_NOTES = [
   'Woke up feeling okay. Had oatmeal for breakfast. Mild cramping in the afternoon after lunch meeting.',
   'Tough day at work. Lots of deadlines and pressure. Noticed more urgency in the evening.',
@@ -101,7 +120,19 @@ export async function POST() {
         ? ['Stress', UC_TRIGGERS[rand(0, 7)]]
         : pickTriggers();
 
+      // Blood in stool: ~30% chance, higher on flare days
+      const bloodInStool = isFlareDay
+        ? Math.random() < 0.6
+        : Math.random() < 0.2;
+
+      // Urgency correlated with stoolType: higher type = higher urgency
+      const urgencyLevel = stoolType >= 6 ? (Math.random() < 0.7 ? 3 : 2)
+        : stoolType >= 5 ? (Math.random() < 0.5 ? 2 : 1)
+        : stoolType >= 3 ? (Math.random() < 0.4 ? 1 : 0)
+        : 0;
+
       const notes = PATIENT_NOTES[i % PATIENT_NOTES.length];
+      const medication = MEDICATIONS[i % MEDICATIONS.length];
 
       entries.push({
         userId: user.id,
@@ -112,6 +143,9 @@ export async function POST() {
         stressLevel,
         triggers: JSON.stringify(triggers),
         notes,
+        medicationTaken: medication || null,
+        bloodInStool,
+        urgencyLevel,
       });
     }
 

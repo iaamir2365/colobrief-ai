@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, Trash2, PlusCircle, FileText } from "lucide-react";
+import { Search, Trash2, PlusCircle, FileText, Download, Droplets } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,10 @@ const BRISTOL_LABELS: Record<number, string> = {
   5: "Soft blobs",
   6: "Mushy",
   7: "Watery",
+};
+
+const BRISTOL_EMOJIS: Record<number, string> = {
+  1: "🪨", 2: "🪨", 3: "✅", 4: "✅", 5: "⚠️", 6: "⚠️", 7: "🚨"
 };
 
 const PAGE_SIZE = 10;
@@ -140,7 +144,7 @@ export default function MyRecordsTab({
 
   return (
     <div className="space-y-4">
-      {/* Search & Summary */}
+      {/* Search & Export & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -154,10 +158,31 @@ export default function MyRecordsTab({
             className="pl-9"
           />
         </div>
-        <p className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{paged.length}</span> of{" "}
-          <span className="font-medium text-foreground">{filtered.length}</span> records
-        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs h-8"
+            onClick={() => window.open("/api/symptoms/export?format=csv", "_blank")}
+          >
+            <Download className="h-3.5 w-3.5" />
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs h-8"
+            onClick={() => window.open("/api/symptoms/export?format=json", "_blank")}
+          >
+            <Download className="h-3.5 w-3.5" />
+            JSON
+          </Button>
+          <p className="text-sm text-muted-foreground ml-1">
+            <span className="font-medium text-foreground">{paged.length}</span>
+            {" / "}
+            <span className="font-medium text-foreground">{filtered.length}</span>
+          </p>
+        </div>
       </div>
 
       {/* Table */}
@@ -173,6 +198,8 @@ export default function MyRecordsTab({
                   <TableHead>Stool Type</TableHead>
                   <TableHead>Stress</TableHead>
                   <TableHead>Triggers</TableHead>
+                  <TableHead>Blood</TableHead>
+                  <TableHead>Urgency</TableHead>
                   <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -198,6 +225,7 @@ export default function MyRecordsTab({
                     <TableCell>{log.stoolFrequency}×</TableCell>
                     <TableCell>
                       <span className="text-sm">
+                        <span className="mr-1">{BRISTOL_EMOJIS[log.stoolType] || "📋"}</span>
                         Type {log.stoolType}
                         <span className="text-muted-foreground text-xs ml-1">
                           ({BRISTOL_LABELS[log.stoolType] || "Unknown"})
@@ -218,6 +246,25 @@ export default function MyRecordsTab({
                           </Badge>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {log.bloodInStool ? (
+                        <Droplets className="h-4 w-4 text-rose-500" />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          log.urgencyLevel === 0 ? "outline" :
+                          log.urgencyLevel === 1 ? "default" :
+                          log.urgencyLevel === 2 ? "secondary" : "destructive"
+                        }
+                        className="text-xs"
+                      >
+                        {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="pr-4 text-right">
                       <AlertDialog>
@@ -255,13 +302,16 @@ export default function MyRecordsTab({
                   </TableRow>
                   {expandedId === log.id && (
                     <TableRow>
-                      <TableCell colSpan={7} className="bg-muted/20 px-6 py-3">
+                      <TableCell colSpan={9} className="bg-muted/20 px-6 py-3">
                         <div className="text-sm">
                           <span className="font-medium text-muted-foreground">Notes: </span>
                           {log.notes || "No notes recorded for this entry."}
                           <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
                             <span>Stress: {log.stressLevel}/10</span>
                             <span>Bristol Type: {log.stoolType} — {BRISTOL_LABELS[log.stoolType] || "Unknown"}</span>
+                            <span>Medication: {log.medicationTaken || "None"}</span>
+                            <span>Blood: {log.bloodInStool ? "Yes" : "No"}</span>
+                            <span>Urgency: {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}</span>
                           </div>
                         </div>
                       </TableCell>

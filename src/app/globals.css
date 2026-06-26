@@ -148,6 +148,21 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+/* Firefox scrollbar support */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+/* Dark mode scrollbar colors */
+.dark .custom-scrollbar {
+  scrollbar-color: #4b5563 transparent;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
 
 /* Animated gradient background for empty states */
 .animate-gradient-bg {

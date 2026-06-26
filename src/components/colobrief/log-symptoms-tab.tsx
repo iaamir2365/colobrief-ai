@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -67,6 +68,9 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
   const [stressLevel, setStressLevel] = useState([3]);
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
   const [customTrigger, setCustomTrigger] = useState("");
+  const [medication, setMedication] = useState("");
+  const [bloodInStool, setBloodInStool] = useState(false);
+  const [urgencyLevel, setUrgencyLevel] = useState(0);
   const [notes, setNotes] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -202,6 +206,9 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
           stoolType: Number(stoolType),
           stressLevel: stressLevel[0],
           triggers: selectedTriggers,
+          medicationTaken: medication || undefined,
+          bloodInStool,
+          urgencyLevel,
           notes: notes || undefined,
         }),
       });
@@ -214,6 +221,9 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
       setStoolType("4");
       setStressLevel([3]);
       setSelectedTriggers([]);
+      setMedication("");
+      setBloodInStool(false);
+      setUrgencyLevel(0);
       setNotes("");
       onSaved();
     } catch {
@@ -466,6 +476,59 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Medication & Additional Metrics Section Header */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Medication & Additional Metrics</span>
+        <Separator className="flex-1" />
+      </div>
+
+      {/* Medication & Metrics */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+        <Card className="rounded-xl border-0 shadow-sm">
+          <CardContent className="p-6 space-y-5">
+            {/* Medication Taken */}
+            <div className="space-y-2">
+              <Label htmlFor="medication" className="text-sm font-medium">Medication Taken</Label>
+              <Input
+                id="medication"
+                placeholder="e.g., Mesalamine 800mg, Prednisone 20mg"
+                value={medication}
+                onChange={(e) => setMedication(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Optional — list any UC medications taken today</p>
+            </div>
+
+            {/* Blood in Stool */}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Blood in Stool</Label>
+                <p className="text-xs text-muted-foreground">Check if you noticed any blood</p>
+              </div>
+              <Switch checked={bloodInStool} onCheckedChange={setBloodInStool} />
+            </div>
+
+            {/* Urgency Level */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Urgency Level</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
+                  <Button
+                    key={label}
+                    type="button"
+                    variant={urgencyLevel === i ? "default" : "outline"}
+                    size="sm"
+                    className={urgencyLevel === i ? "bg-teal-600 hover:bg-teal-700" : ""}
+                    onClick={() => setUrgencyLevel(i)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>

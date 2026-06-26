@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
+import { useAnimatedNumber } from "@/hooks/use-animated-number";
 import { motion } from "framer-motion";
 import {
   Activity,
   UtensilsCrossed,
   Brain,
   FileText,
+  Pill,
+  Droplets,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -68,6 +71,10 @@ const lineChartConfig: ChartConfig = {
     label: "Pain Level",
     color: "#f43f5e",
   },
+  stressLevel: {
+    label: "Stress Level",
+    color: "#f59e0b",
+  },
 };
 
 const pieChartConfig: ChartConfig = {
@@ -108,6 +115,23 @@ function CircularGauge({ value, max = 10, size = 48, strokeWidth = 4, color = "#
   );
 }
 
+interface MetricCardData {
+  label: string;
+  value: string;
+  rawValue: number;
+  suffix: string;
+  decimals: number;
+  icon: React.ComponentType<{ className?: string }>;
+  prev: number | null | undefined;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  sparklineColor: string;
+  sparkData: number[];
+  gaugeMax?: number;
+  gaugeColor?: string;
+}
+
 interface OverviewTabProps {
   symptoms: SymptomLog[];
   isLoading: boolean;
@@ -143,6 +167,48 @@ function MiniSparkline({ dataPoints, color }: { dataPoints: number[]; color: str
   );
 }
 
+function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: number }) {
+  const animatedValue = useAnimatedNumber(card.rawValue);
+  const displayValue = card.decimals > 0
+    ? animatedValue.toFixed(card.decimals)
+    : String(Math.round(animatedValue));
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+    >
+      <Card className={`rounded-xl border-0 shadow-sm border-l-4 ${card.borderColor} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-teal-200 dark:hover:border-teal-800`}>
+        <CardContent className="p-5 relative">
+          {card.gaugeMax && (
+            <div className="absolute top-2 right-2">
+              <CircularGauge value={card.rawValue} max={card.gaugeMax} color={card.gaugeColor} />
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
+              <card.icon className={`h-5 w-5 ${card.color}`} />
+            </div>
+            {card.prev !== null && (
+              <TrendIndicator current={card.rawValue} previous={card.prev!} />
+            )}
+          </div>
+          <div className="mt-3">
+            <p className="text-sm text-muted-foreground">{card.label}</p>
+            <p className="text-2xl font-bold mt-0.5">
+              {displayValue}<span className="text-base font-medium text-muted-foreground ml-0.5">{card.suffix}</span>
+            </p>
+          </div>
+          {card.sparkData.length > 0 && (
+            <MiniSparkline dataPoints={card.sparkData} color={card.sparklineColor} />
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   const sevenDaysAgo = useMemo(() => subDays(new Date(), 7), []);
   const threeDaysAgo = useMemo(() => subDays(new Date(), 3), []);
@@ -158,6 +224,13 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
     const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
     const avgOld = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
 
+    // Medication adherence: % of days with medication logged
+    const medAdherence = symptoms.length
+      ? (symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length / symptoms.length) * 100
+      : 0;
+    // Blood incidents: count of days with bloodInStool=true
+    const bloodIncidents = symptoms.filter((s) => s.bloodInStool).length;
+
     return {
       avgPain: avg(recent.map((s) => s.painLevel)),
       prevPain: avgOld(older.map((s) => s.painLevel)),
@@ -166,6 +239,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       avgStress: avg(recent.map((s) => s.stressLevel)),
       prevStress: avgOld(older.map((s) => s.stressLevel)),
       totalLogs: symptoms.length,
+      medAdherence,
+      bloodIncidents,
     };
   }, [symptoms, sevenDaysAgo]);
 
@@ -177,6 +252,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
         fullDate: s.date,
         stoolFrequency: s.stoolFrequency,
         painLevel: s.painLevel,
+        stressLevel: s.stressLevel,
+        bloodInStool: s.bloodInStool,
       }));
   }, [symptoms]);
 
@@ -280,8 +357,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
@@ -336,8 +413,10 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   const metricCards = [
     {
       label: "Avg Pain Level",
-      value: metrics ? `${metrics.avgPain.toFixed(1)}/10` : "—",
+      value: metrics ? `${metrics.avgPain.toFixed(1)}` : "—",
       rawValue: metrics?.avgPain ?? 0,
+      suffix: "/10",
+      decimals: 1,
       icon: Activity,
       prev: metrics?.prevPain,
       color: "text-rose-500",
@@ -350,8 +429,10 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
     },
     {
       label: "Avg Stool Frequency",
-      value: metrics ? `${metrics.avgStool.toFixed(1)}/day` : "—",
+      value: metrics ? `${metrics.avgStool.toFixed(1)}` : "—",
       rawValue: metrics?.avgStool ?? 0,
+      suffix: "/day",
+      decimals: 1,
       icon: UtensilsCrossed,
       prev: metrics?.prevStool,
       color: "text-teal-600",
@@ -362,8 +443,10 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
     },
     {
       label: "Avg Stress Level",
-      value: metrics ? `${metrics.avgStress.toFixed(1)}/10` : "—",
+      value: metrics ? `${metrics.avgStress.toFixed(1)}` : "—",
       rawValue: metrics?.avgStress ?? 0,
+      suffix: "/10",
+      decimals: 1,
       icon: Brain,
       prev: metrics?.prevStress,
       color: "text-amber-500",
@@ -378,12 +461,44 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       label: "Total Logs",
       value: String(symptoms.length),
       rawValue: symptoms.length,
+      suffix: "",
+      decimals: 0,
       icon: FileText,
       prev: null,
       color: "text-teal-600",
       bgColor: "bg-teal-50",
       borderColor: "border-l-teal-400",
       sparklineColor: "#0d9488",
+      sparkData: [],
+    },
+    {
+      label: "Medication Adherence",
+      value: metrics ? `${metrics.medAdherence.toFixed(0)}` : "—",
+      rawValue: metrics?.medAdherence ?? 0,
+      suffix: "%",
+      decimals: 0,
+      icon: Pill,
+      prev: null,
+      color: "text-teal-600",
+      bgColor: "bg-teal-50",
+      borderColor: "border-l-teal-400",
+      sparklineColor: "#0d9488",
+      sparkData: [],
+      gaugeMax: 100,
+      gaugeColor: "#0d9488",
+    },
+    {
+      label: "Blood Incidents",
+      value: String(metrics?.bloodIncidents ?? 0),
+      rawValue: metrics?.bloodIncidents ?? 0,
+      suffix: " days",
+      decimals: 0,
+      icon: Droplets,
+      prev: null,
+      color: "text-rose-500",
+      bgColor: "bg-rose-50",
+      borderColor: "border-l-rose-400",
+      sparklineColor: "#ef4444",
       sparkData: [],
     },
   ];
@@ -434,39 +549,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       )}
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {metricCards.map((card, i) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Card className={`rounded-xl border-0 shadow-sm border-l-4 ${card.borderColor} hover:scale-[1.02] transition-transform`}>
-              <CardContent className="p-5 relative">
-                {"gaugeMax" in card && card.gaugeMax && (
-                  <div className="absolute top-2 right-2">
-                    <CircularGauge value={card.rawValue} max={card.gaugeMax as number} color={card.gaugeColor as string} />
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
-                    <card.icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                  {card.prev !== null && (
-                    <TrendIndicator current={card.rawValue} previous={card.prev!} />
-                  )}
-                </div>
-                <div className="mt-3">
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                  <p className="text-2xl font-bold mt-0.5">{card.value}</p>
-                </div>
-                {card.sparkData.length > 0 && (
-                  <MiniSparkline dataPoints={card.sparkData} color={card.sparklineColor} />
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+          <AnimatedMetricCard key={card.label} card={card} index={i} />
         ))}
       </div>
 
@@ -544,6 +629,10 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                     <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
                     <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
                   </linearGradient>
+                  <linearGradient id="stressGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-stressLevel)" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="var(--color-stressLevel)" stopOpacity={0} />
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
@@ -565,6 +654,16 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   dataKey="painLevel"
                   stroke="none"
                   fill="url(#roseGradient)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="stressLevel"
+                  stroke="var(--color-stressLevel)"
+                  fill="url(#stressGradient)"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  yAxisId="right"
+                  dot={false}
                 />
                 {/* Lines on top */}
                 <Line
@@ -589,6 +688,19 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   dot={{ r: 4, fill: "var(--color-painLevel)" }}
                   activeDot={{ r: 6 }}
                 />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="stressLevel"
+                  stroke="var(--color-stressLevel)"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+                {/* Blood indicator dots rendered via custom activeDot on pain line */}
               </LineChart>
             </ChartContainer>
           </CardContent>
