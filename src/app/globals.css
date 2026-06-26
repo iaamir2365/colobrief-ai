@@ -500,6 +500,11 @@ main {
   animation: pulse-soft 3s ease-in-out infinite;
 }
 
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 2px 8px -2px rgba(13, 148, 136, 0.4); }
+  50% { box-shadow: 0 2px 16px -2px rgba(13, 148, 136, 0.7); }
+}
+
 /* Shimmer — loading placeholder shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -922,4 +927,176 @@ a:focus:not(:focus-visible) {
     border-radius: 0 !important;
     box-shadow: none !important;
   }
-}/* CACHE BUST */
+}
+
+/* === v1.4 Premium Visual System === */
+
+/* 41. Card depth system - soft layered shadows */
+.card-premium {
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.04), 0 4px 12px 0 rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.dark .card-premium {
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.2), 0 4px 12px 0 rgba(0,0,0,0.15);
+  border-color: rgba(255,255,255,0.06);
+}
+.card-premium:hover {
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.06), 0 8px 24px 0 rgba(0,0,0,0.08);
+}
+
+/* 42. Section title styling */
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* 43. Stat value styling */
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 44. Gradient text for emphasis */
+.text-gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-foreground));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 45. Subtle inner glow on cards (enhanced) */
+.card-glow {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+.card-glow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  pointer-events: none;
+}
+.card-glow:hover {
+  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.1), 0 4px 12px rgba(13, 148, 136, 0.08);
+}
+.dark .card-glow:hover {
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 4px 12px rgba(45, 212, 191, 0.08);
+}
+
+/* 46. Refined badge styling */
+.badge-refined {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* 47. Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 48. Improved scrollbar for main content area */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.2);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* 49. Metric card colored top accent */
+.metric-accent-rose { border-top: 3px solid #f43f5e; }
+.metric-accent-teal { border-top: 3px solid #14b8a6; }
+.metric-accent-amber { border-top: 3px solid #f59e0b; }
+.metric-accent-violet { border-top: 3px solid #8b5cf6; }
+
+/* 50. Hover lift for cards (enhanced) */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+.dark .hover-lift:hover {
+  box-shadow: 0 8px 25px -5px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.2);
+}
+
+/* 51. Animated background mesh for empty states */
+@keyframes mesh-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.bg-mesh {
+  background: linear-gradient(135deg, #f0fdfa 0%, #f5f3ff 25%, #fef2f2 50%, #fffbeb 75%, #f0fdfa 100%);
+  background-size: 400% 400%;
+  animation: mesh-gradient 15s ease infinite;
+}
+.dark .bg-mesh {
+  background: linear-gradient(135deg, rgba(13,20,32,0.8) 0%, rgba(15,23,42,0.8) 25%, rgba(20,10,15,0.8) 50%, rgba(20,18,10,0.8) 75%, rgba(13,20,32,0.8) 100%);
+  background-size: 400% 400%;
+  animation: mesh-gradient 15s ease infinite;
+}
+
+/* 52. Teal accent glow ring */
+.glow-teal {
+  box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.1), 0 0 15px -3px rgba(20, 184, 166, 0.2);
+}
+.dark .glow-teal {
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 0 20px -3px rgba(45, 212, 191, 0.15);
+}
+
+/* 53. Premium button styles */
+.btn-premium {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px -2px rgba(13, 148, 136, 0.4);
+  transition: all 0.2s ease;
+}
+.btn-premium:hover {
+  box-shadow: 0 4px 14px -2px rgba(13, 148, 136, 0.5);
+  transform: translateY(-1px);
+}
+.btn-premium:active {
+  transform: translateY(0);
+}
+
+/* 54. Table row hover enhancement */
+.table-row-premium:hover {
+  background: rgba(20, 184, 166, 0.03);
+}
+.dark .table-row-premium:hover {
+  background: rgba(45, 212, 191, 0.05);
+}
+
+/* 55. Animated border for special elements */
+@keyframes border-rotate {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+/* CACHE BUST */

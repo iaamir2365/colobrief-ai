@@ -146,6 +146,7 @@ function AppContent() {
                       isActive={activeTab === item.key}
                       onClick={() => handleTabChange(item.key)}
                       tooltip={`${item.label} (Ctrl+${item.shortcut})`}
+                      className={activeTab === item.key ? "bg-primary/10 border-l-2 border-l-primary" : "border-l-2 border-l-transparent"}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
@@ -166,7 +167,7 @@ function AppContent() {
                     onClick={() => demoMutation.mutate()}
                     disabled={demoMutation.isPending}
                     tooltip="Load Demo Data"
-                    className="text-muted-foreground hover:text-foreground border-l-2 border-l-teal-500 bg-teal-500/5 hover:bg-teal-500/10 rounded-r-md"
+                    className="text-muted-foreground hover:text-foreground border-l-2 border-l-teal-500 bg-teal-500/5 hover:bg-teal-500/10 rounded-r-md btn-premium"
                   >
                     {demoMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -191,7 +192,7 @@ function AppContent() {
               <span className="truncate text-xs text-muted-foreground">demo@colobrief.ai</span>
             </div>
           </div>
-          <span className="truncate text-xs text-muted-foreground">v1.3.0</span>
+          <span className="truncate text-xs text-muted-foreground">v1.4.0</span>
         </SidebarFooter>
 
         <SidebarRail />
@@ -246,7 +247,7 @@ function AppContent() {
               </Button>
             </div>
           </header>
-          <div className="h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
+          <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
           {/* Error Banner */}
           {isError && (
@@ -298,7 +299,7 @@ function AppContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-auto border-t px-6 py-3 print:hidden bg-muted/30"
+            className="mt-auto border-t px-6 py-3 print:hidden bg-muted/30 card-glow"
           >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
@@ -322,7 +323,7 @@ function AppContent() {
           <Button
             onClick={() => setActiveTab("log")}
             size="lg"
-            className="fixed bottom-6 right-6 md:hidden h-14 w-14 rounded-full shadow-xl shadow-teal-500/30 bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 z-50 p-0"
+            className="fixed bottom-6 right-6 md:hidden h-14 w-14 rounded-full shadow-xl shadow-teal-500/30 bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 z-50 p-0 glow-teal"
           >
             <PlusCircle className="h-7 w-7" />
           </Button>

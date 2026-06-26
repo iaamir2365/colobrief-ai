@@ -392,7 +392,7 @@ export default function MyRecordsTab({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-20 text-center"
+        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-20 text-center"
       >
         <div className="animate-gradient-bg rounded-2xl p-8 mb-6 relative">
           <FileText className="h-14 w-14 text-teal-600 mx-auto" />
@@ -427,17 +427,17 @@ export default function MyRecordsTab({
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-2 sm:grid-cols-4 gap-3"
       >
-        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 p-3">
+        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 p-3 card-premium hover-lift">
           <p className="text-[10px] uppercase tracking-wider text-teal-600 dark:text-teal-400 font-medium">Total Entries</p>
           <p className="text-2xl font-bold text-teal-800 dark:text-teal-200 stat-number mt-0.5">{symptoms.length}</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/60 dark:border-rose-800/40 p-3">
+        <div className="rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/60 dark:border-rose-800/40 p-3 card-premium hover-lift">
           <p className="text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-400 font-medium">Avg Pain</p>
           <p className="text-2xl font-bold text-rose-800 dark:text-rose-200 stat-number mt-0.5">
             {symptoms.length ? (symptoms.reduce((s, l) => s + l.painLevel, 0) / symptoms.length).toFixed(1) : "—"}
           </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 p-3">
+        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 p-3 card-premium hover-lift">
           <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium">Blood Days</p>
           <p className="text-2xl font-bold text-amber-800 dark:text-amber-200 stat-number mt-0.5">
             {symptoms.filter(s => s.bloodInStool).length}
@@ -446,7 +446,7 @@ export default function MyRecordsTab({
             </span>
           </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/20 border border-sky-200/60 dark:border-sky-800/40 p-3">
+        <div className="rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/20 border border-sky-200/60 dark:border-sky-800/40 p-3 card-premium hover-lift">
           <p className="text-[10px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-medium">Top Trigger</p>
           <p className="text-lg font-bold text-sky-800 dark:text-sky-200 mt-0.5 truncate">
             {(() => {
@@ -462,7 +462,8 @@ export default function MyRecordsTab({
       {/* Search & Export & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="rounded-xl card-premium flex items-center px-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
             placeholder="Search by date, notes, or triggers..."
             value={search}
@@ -470,14 +471,15 @@ export default function MyRecordsTab({
               setSearch(e.target.value);
               setPage(0);
             }}
-            className="pl-9"
+            className="pl-9 border-0 shadow-none focus-visible:ring-0"
           />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
             onClick={() => window.open("/api/symptoms/export?format=csv", "_blank")}
           >
             <Download className="h-3.5 w-3.5" />
@@ -486,7 +488,7 @@ export default function MyRecordsTab({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
             onClick={() => window.open("/api/symptoms/export?format=json", "_blank")}
           >
             <Download className="h-3.5 w-3.5" />
@@ -546,7 +548,7 @@ export default function MyRecordsTab({
                   paged.map((log, i) => (
                   <React.Fragment key={log.id}>
                   <TableRow
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="cursor-pointer hover:bg-muted/50 transition-colors table-row-premium"
                     onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
                   >
                     <TableCell className="pl-4 font-medium">
@@ -714,7 +716,7 @@ export default function MyRecordsTab({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 rounded-xl bg-muted/30 border border-border/40 px-3 py-2 shadow-sm">
+        <div className="flex items-center justify-center gap-1 rounded-xl bg-muted/30 border border-border/40 px-3 py-2.5 shadow-sm card-premium">
           <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(0)} disabled={page === 0}>&laquo;</Button>
           <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>&lsaquo;</Button>
           {totalPages <= 7

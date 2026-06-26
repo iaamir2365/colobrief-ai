@@ -49,7 +49,7 @@ function calculateScore(logs: SymptomLog[]): number {
 }
 
 function CircularGaugeLarge({ value, color }: { value: number; color: string }) {
-  const size = 140;
+  const size = 150;
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -147,24 +147,28 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
         value: avg(activeLogs.map((s) => s.painLevel)).toFixed(1),
         icon: Activity,
         color: "text-rose-500",
+        borderColor: "#f43f5e",
       },
       {
         label: "Stool",
         value: avg(activeLogs.map((s) => s.stoolFrequency)).toFixed(1),
         icon: UtensilsCrossed,
         color: "text-teal-600 dark:text-teal-400",
+        borderColor: "#14b8a6",
       },
       {
         label: "Stress",
         value: avg(activeLogs.map((s) => s.stressLevel)).toFixed(1),
         icon: Brain,
         color: "text-amber-500",
+        borderColor: "#f59e0b",
       },
       {
         label: "Blood",
         value: `${Math.round((activeLogs.filter((s) => s.bloodInStool).length / activeLogs.length) * 100)}%`,
         icon: Droplets,
         color: "text-rose-500",
+        borderColor: "#f43f5e",
       },
     ];
 
@@ -197,7 +201,7 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="rounded-xl border-0 shadow-sm h-full overflow-hidden relative">
+      <Card className="rounded-xl border-0 shadow-sm h-full overflow-hidden relative card-premium card-glow glow-teal">
         {/* Subtle gradient background accent */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -208,7 +212,7 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
         <CardContent className="p-5 relative flex flex-col items-center">
           {/* Header */}
           <div className="flex items-center justify-between w-full mb-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="section-title">
               UC Health Score
             </h3>
             {prevScore !== null && (
@@ -252,6 +256,7 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
               <div
                 key={m.label}
                 className="flex flex-col items-center gap-1 rounded-lg bg-muted/40 p-2"
+                style={{ borderLeftColor: m.borderColor, borderLeftWidth: '2px', borderLeftStyle: 'solid' }}
               >
                 <m.icon className={`h-4 w-4 ${m.color}`} />
                 <span className="text-sm font-bold tabular-nums">{m.value}</span>

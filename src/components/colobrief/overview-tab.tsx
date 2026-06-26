@@ -48,11 +48,10 @@ import {
   Bar,
   ScatterChart,
   Scatter,
-  ResponsiveContainer,
   ReferenceLine,
   ZAxis,
 } from "recharts";
-import { format, subDays, parseISO, isAfter } from "date-fns";
+import { format, subDays, parseISO, isAfter, startOfDay } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
 import HealthScoreCard from "@/components/colobrief/health-score-card";
 import MedicationTracker from "@/components/colobrief/medication-tracker";
@@ -65,6 +64,9 @@ import SymptomTimeline from "@/components/colobrief/symptom-timeline";
 import EmergencyAlertBanner from "@/components/colobrief/emergency-alert-banner";
 import FlareRiskPredictor from "@/components/colobrief/flare-risk-predictor";
 import BloodTracker from "@/components/colobrief/blood-tracker";
+import SymptomForecast from "@/components/colobrief/symptom-forecast";
+import SymptomRadar from "@/components/colobrief/symptom-radar";
+import SymptomInsights from "@/components/colobrief/symptom-insights";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Type 1: Hard lumps",
@@ -199,9 +201,9 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.1, type: "spring", stiffness: 200, damping: 20 }}
     >
-      <Card className={`rounded-xl border-0 shadow-sm card-elevated border-l-4 ${card.borderColor} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-teal-200 dark:hover:border-teal-800`}>
+      <Card className={`rounded-xl border-0 card-premium hover-lift border-l-4 ${card.borderColor}`}>
         <CardContent className="p-5 relative">
           {card.gaugeMax && (
             <div className="absolute top-2 right-2">
@@ -218,7 +220,7 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
           </div>
           <div className="mt-3">
             <p className="text-sm text-muted-foreground">{card.label}</p>
-            <p className="text-2xl font-bold mt-0.5">
+            <p className="text-2xl font-bold mt-0.5 stat-value" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.06)" }}>
               {displayValue}<span className="text-base font-medium text-muted-foreground ml-0.5">{card.suffix}</span>
             </p>
           </div>
@@ -227,6 +229,63 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
           )}
         </CardContent>
       </Card>
+    </motion.div>
+  );
+}
+
+function QuickStatsStrip({ symptoms }: { symptoms: SymptomLog[] }) {
+  const today = startOfDay(new Date());
+  const weekStart = subDays(today, 6);
+
+  const thisWeek = useMemo(() => {
+    return symptoms.filter((s) => {
+      const d = parseISO(s.date);
+      return (d >= weekStart && d <= today) || d.toISOString().slice(0, 10) === format(today, "yyyy-MM-dd");
+    });
+  }, [symptoms, weekStart, today]);
+
+  const totalDays = symptoms.length;
+  const avgPainWeek = thisWeek.length
+    ? (thisWeek.reduce((a, s) => a + s.painLevel, 0) / thisWeek.length).toFixed(1)
+    : "—";
+  const bestDay = thisWeek.length
+    ? thisWeek.reduce((best, s) => (s.painLevel < best.painLevel ? s : best), thisWeek[0])
+    : null;
+  const daysInWeek = 7;
+  const completeness = Math.round((thisWeek.length / daysInWeek) * 100);
+
+  const items = [
+    { icon: CalendarDays, label: "Days Tracked", value: String(totalDays), color: "text-teal-600" },
+    { icon: Activity, label: "Avg Pain (wk)", value: String(avgPainWeek), color: "text-rose-500" },
+    { icon: CheckCircle, label: "Best Day", value: bestDay ? format(parseISO(bestDay.date), "MMM d") : "—", color: "text-emerald-600" },
+    { icon: Trophy, label: "Completeness", value: `${completeness}%`, color: "text-amber-500" },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="card-premium rounded-xl p-3">
+        <div className="flex items-center justify-around gap-4">
+          {items.map((item, i) => (
+            <motion.div
+              key={item.label}
+              className="flex items-center gap-2 text-center"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 + 0.1, duration: 0.3 }}
+            >
+              <item.icon className={`h-4 w-4 shrink-0 ${item.color}`} />
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground leading-tight">{item.label}</p>
+                <p className={`text-sm font-semibold ${item.color} leading-tight`}>{item.value}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -499,34 +558,34 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto"
+        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-24 text-center max-w-lg mx-auto"
       >
-        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+        <div className="animate-gradient-bg rounded-2xl p-10 mb-6">
           <div className="relative">
-            <Activity className="h-14 w-14 text-teal-600 mx-auto" />
-            <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-400 rounded-full animate-bounce" />
-            <div className="absolute -bottom-1 -left-1 h-3 w-3 bg-rose-400 rounded-full animate-bounce [animation-delay:0.15s]" />
+            <Activity className="h-20 w-20 text-teal-600 mx-auto" />
+            <div className="absolute -top-1 -right-1 h-5 w-5 bg-amber-400 rounded-full animate-bounce" />
+            <div className="absolute -bottom-1 -left-1 h-4 w-4 bg-rose-400 rounded-full animate-bounce [animation-delay:0.15s]" />
           </div>
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">Welcome to ColoBrief AI</h3>
-        <p className="text-muted-foreground mb-6">
+        <h3 className="text-2xl font-bold text-foreground mb-2">Welcome to ColoBrief AI</h3>
+        <p className="text-muted-foreground mb-8 max-w-sm">
           Start tracking your Ulcerative Colitis symptoms to unlock personalized insights, 
           trend analysis, and clinical handouts for your doctor.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
           {[
-            { icon: "🎤", title: "Voice Log", desc: "Speak your symptoms naturally" },
-            { icon: "✨", title: "AI Extract", desc: "AI parses your notes into data" },
-            { icon: "📊", title: "Live Charts", desc: "See trends as you log" },
+            { icon: "📊", title: "Load Demo Data", desc: "Explore with 14 days of sample UC data", highlight: true },
+            { icon: "📝", title: "Log First Symptom", desc: "Start tracking your daily symptoms", highlight: false },
+            { icon: "📖", title: "Learn More", desc: "Discover all features and tips", highlight: false },
           ].map((tip) => (
-            <div key={tip.title} className="rounded-lg border bg-card p-3 text-center">
-              <span className="text-2xl">{tip.icon}</span>
-              <p className="text-sm font-medium mt-1">{tip.title}</p>
-              <p className="text-xs text-muted-foreground">{tip.desc}</p>
+            <div key={tip.title} className={`rounded-xl border p-4 text-center transition-all hover-lift ${tip.highlight ? 'bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border-primary/30 shadow-sm' : 'bg-card'}`}>
+              <span className="text-3xl">{tip.icon}</span>
+              <p className="text-sm font-semibold mt-2">{tip.title}</p>
+              <p className="text-xs text-muted-foreground mt-1">{tip.desc}</p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-6">
+        <p className="text-xs text-muted-foreground mt-8">
           Click <strong>"Load Demo Data"</strong> in the sidebar to explore with sample data
         </p>
       </motion.div>
@@ -627,12 +686,18 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Emergency Alert Banner */}
       <EmergencyAlertBanner symptoms={symptoms} isLoading={isLoading} />
 
+      {/* Quick Stats Mini Bar */}
+      <QuickStatsStrip symptoms={symptoms} />
+
+      {/* 7-Day Symptom Forecast */}
+      <SymptomForecast symptoms={symptoms} isLoading={isLoading} />
+
       {/* Health Score + Weekly Progress Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <HealthScoreCard symptoms={symptoms} isLoading={false} />
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -652,8 +717,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
         >
           <div>
             {flareAlert.level === "high" && (
-              <div className="rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 dark:border-rose-700/60 p-4 flex items-start gap-3">
-                <div className="rounded-full bg-rose-100 dark:bg-rose-900/60 p-1.5 shrink-0">
+              <div className="rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 dark:border-rose-700/60 p-4 flex items-start gap-3 card-premium">
+                <div className="rounded-full bg-rose-100 dark:bg-rose-900/60 p-2 shrink-0">
                   <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                 </div>
                 <div>
@@ -665,8 +730,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
               </div>
             )}
             {flareAlert.level === "moderate" && (
-              <div className="rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 dark:border-amber-700/60 p-4 flex items-start gap-3">
-                <div className="rounded-full bg-amber-100 dark:bg-amber-900/60 p-1.5 shrink-0">
+              <div className="rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 dark:border-amber-700/60 p-4 flex items-start gap-3 card-premium">
+                <div className="rounded-full bg-amber-100 dark:bg-amber-900/60 p-2 shrink-0">
                   <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
@@ -678,8 +743,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
               </div>
             )}
             {flareAlert.level === "stable" && (
-              <div className="rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 dark:border-emerald-700/60 p-4 flex items-start gap-3">
-                <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/60 p-1.5 shrink-0">
+              <div className="rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 dark:border-emerald-700/60 p-4 flex items-start gap-3 card-premium">
+                <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/60 p-2 shrink-0">
                   <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
@@ -720,7 +785,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
         >
-          <Card className="rounded-xl border-0 shadow-sm bg-gradient-subtle">
+          <Card className="rounded-xl border-0 card-premium card-glow bg-gradient-subtle">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-amber-500" />
@@ -728,7 +793,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="h-4 w-4 text-emerald-600" />
@@ -774,7 +839,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <Card className="rounded-xl border-0 shadow-sm">
+        <Card className="rounded-xl border-0 card-premium">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Symptom Trends</CardTitle>
           </CardHeader>
@@ -876,7 +941,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.17 }}
         >
-          <Card className="rounded-xl border-0 shadow-sm">
+          <Card className="rounded-xl border-0 card-premium">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -906,15 +971,15 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <ResponsiveContainer width="100%" height={300}>
-                <ScatterChart
-                  margin={{
-                    top: 10,
-                    right: 30,
-                    bottom: 20,
-                    left: 10,
-                  }}
-                >
+            <ChartContainer config={enhancedScatterConfig} className="h-[300px] w-full">
+              <ScatterChart
+                margin={{
+                  top: 10,
+                  right: 30,
+                  bottom: 20,
+                  left: 10,
+                }}
+              >
                   <defs>
                     <radialGradient
                       id="scatterPointGradient"
@@ -1017,7 +1082,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                     })}
                   </Scatter>
                 </ScatterChart>
-              </ResponsiveContainer>
+              </ChartContainer>
               <div className="flex items-center justify-center gap-6 mt-2">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
@@ -1042,7 +1107,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       {/* Period Comparison */}
       {periodComparison && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
-          <Card className="rounded-xl border-0 shadow-sm card-elevated">
+          <Card className="rounded-xl border-0 card-premium">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -1169,7 +1234,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="rounded-xl border-0 shadow-sm h-full">
+          <Card className="rounded-xl border-0 card-premium h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">Most Common Triggers</CardTitle>
             </CardHeader>
@@ -1214,7 +1279,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <Card className="rounded-xl border-0 shadow-sm h-full">
+          <Card className="rounded-xl border-0 card-premium h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">Bristol Stool Type Distribution</CardTitle>
             </CardHeader>
@@ -1280,6 +1345,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
         </motion.div>
       </div>
 
+      {/* Week-over-Week Radar */}
+      <SymptomRadar symptoms={symptoms} isLoading={isLoading} />
+
       {/* Blood Tracker */}
       <BloodTracker symptoms={symptoms} isLoading={isLoading} />
 
@@ -1291,6 +1359,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
 
       {/* Symptom Timeline */}
       <SymptomTimeline symptoms={symptoms} isLoading={isLoading} />
+
+      {/* AI Symptom Insights Summary */}
+      <SymptomInsights symptoms={symptoms} isLoading={isLoading} />
 
       {/* AI Insights Chat Panel */}
       <AIInsightsPanel symptoms={symptoms} />

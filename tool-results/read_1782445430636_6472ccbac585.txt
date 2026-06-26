@@ -1,0 +1,498 @@
+   700→
+   701→### Completed Features (v1.3.0)
+   702→
+   703→#### Core Functionality
+   704→1. **Symptom Logging** - Full form with pain slider, stool frequency, Bristol stool type select, stress slider, trigger checkboxes, medication input, blood in stool switch, urgency level, free-text notes
+   705→2. **Voice-to-Text** - Web Speech API integration for hands-free logging
+   706→3. **AI Extract** - Send free-text notes to z-ai-web-dev-sdk, get structured clinical data back, verify before saving
+   707→4. **My Records** - Searchable, paginated table with color-coded badges, expandable rows, CSV/JSON export, edit & delete
+   708→5. **Doctor Handout** - SBAR-formatted clinical brief with AI summary generation, print-to-PDF
+   709→
+   710→#### Dashboard & Analytics
+   711→6. **UC Health Score** - Animated circular SVG gauge (0-100) with color-coded severity, mini-metrics, 7-day trend comparison
+   712→7. **Symptom Trends Chart** - Dual-axis line chart with area fills (stool frequency, pain level, stress level)
+   713→8. **Weekly Insights** - Auto-generated best/worst days, most improved metric, top trigger
+   714→9. **Flare Risk Alert** - 3-day rolling average pain assessment (stable/moderate/high)
+   715→10. **Bristol Stool Distribution** - Donut chart with legend
+   716→11. **Pain vs Stress Correlation** - Scatter chart with color-coded severity
+   717→12. **Trigger Analysis** - Top 5 triggers with animated progress bars
+   718→13. **Symptom Calendar Heatmap** - 30-day color-coded severity grid with tooltips
+   719→14. **Medication Tracker** - Adherence %, per-medication symptom correlation analysis
+   720→
+   721→#### UX & Styling
+   722→15. **Dark Mode** - Full support with next-themes, all components styled
+   723→16. **Responsive Design** - Mobile-first with collapsible sidebar, mobile FAB, compact calendar
+   724→17. **Micro-interactions** - Animated number counting, card hover effects, staggered entry animations, gradient sliders
+   725→18. **Keyboard Shortcuts** - Ctrl+O/L/R/H for tab navigation
+   726→19. **Form Progress Indicator** - Animated completion bar in log form
+   727→20. **Card Glow Effects** - Subtle teal shadow on hover
+   728→21. **Background Dot Pattern** - Subtle radial gradient texture
+   729→22. **Print-Ready Handout** - CSS print styles with watermark branding
+   730→
+   731→### API Routes
+   732→- `GET /api/user` - Get/create demo user
+   733→- `GET /api/symptoms` - Fetch all symptom logs
+   734→- `POST /api/symptoms` - Create new log
+   735→- `PUT /api/symptoms/[id]` - Edit existing log (NEW)
+   736→- `DELETE /api/symptoms/[id]` - Delete log
+   737→- `POST /api/symptoms/ai-extract` - AI clinical data extraction
+   738→- `POST /api/symptoms/demo` - Generate 14 days of realistic demo data
+   739→- `GET /api/symptoms/export` - Export as CSV or JSON
+   740→
+   741→### Files Modified/Created This Session
+   742→- **NEW**: `src/components/colobrief/health-score-card.tsx`
+   743→- **NEW**: `src/components/colobrief/symptom-calendar.tsx`
+   744→- **NEW**: `src/components/colobrief/medication-tracker.tsx`
+   745→- **MODIFIED**: `src/components/colobrief/overview-tab.tsx` (integrated 3 new components, dark mode fixes)
+   746→- **MODIFIED**: `src/components/colobrief/my-records-tab.tsx` (React.Fragment fix, edit dialog)
+   747→- **MODIFIED**: `src/components/colobrief/log-symptoms-tab.tsx` (section icons, progress bar, gradient buttons)
+   748→- **MODIFIED**: `src/components/colobrief/doctor-handout-tab.tsx` (SBAR icon badges, watermark, card glow)
+   749→- **MODIFIED**: `src/app/api/symptoms/[id]/route.ts` (added PUT handler)
+   750→- **MODIFIED**: `src/app/page.tsx` (sidebar gradient, header divider, footer polish)
+   751→- **MODIFIED**: `src/app/globals.css` (dot pattern, card glow, focus rings, scrollbar, duplicate fix)
+   752→
+   753→### Unresolved Issues & Risks
+   754→1. **Demo data notes mismatch**: The demo data generator assigns random notes that may not perfectly match the numeric symptom values (cosmetic, not functional)
+   755→2. **No authentication**: App uses a hardcoded demo user — suitable for hackathon but not production
+   756→3. **Single-user architecture**: All API routes query the first user in the DB
+   757→4. **SQLite limitations**: No concurrent write support — acceptable for single-user demo
+   758→
+   759→### Priority Recommendations for Next Phase
+   760→1. **HIGH**: Add multi-user auth (NextAuth.js is already available in dependencies)
+   761→2. **HIGH**: Add data visualization export (chart screenshots for sharing)
+   762→3. **MEDIUM**: Push notifications / browser notifications for medication reminders
+   763→4. **MEDIUM**: Food diary integration with USDA nutrition database
+   764→5. **MEDIUM**: Offline-first with PWA service worker for mobile use
+   765→6. **LOW**: Internationalization (i18n) for broader patient reach
+   766→7. **LOW**: FHIR-compliant data export for EHR integration
+   767→
+   768→---
+   769→Task ID: 5
+   770→Agent: Main Coordinator
+   771→Task: QA testing, styling improvements, new features, and SDK bug fix
+   772→
+   773→## Current Project Status Assessment
+   774→
+   775→The ColoBrief AI application is in a **stable, feature-rich state** suitable for hackathon presentation. All 4 tabs (Overview, Log Symptoms, My Records, Doctor Handout) are fully functional with zero runtime errors. The app compiles cleanly, passes ESLint, and renders correctly in both light and dark modes across desktop and mobile viewports.
+   776→
+   777→VLM visual quality assessment: **8/10** — clean layout, clear hierarchy, cohesive color coding, well-organized data visualizations.
+   778→
+   779→## Work Log
+   780→
+   781→### QA Testing (agent-browser)
+   782→- Tested all 4 tabs: Overview, Log Symptoms, My Records, Doctor Handout
+   783→- Verified dark mode toggle works correctly
+   784→- Verified mobile responsive layout (390×844 iPhone viewport)
+   785→- Tested search/filter functionality in Records tab
+   786→- Verified data export (CSV/JSON) buttons
+   787→- Tested Load Demo Data button (14-day UC symptom data generation)
+   788→- Confirmed zero console errors across all interactions
+   789→- Used VLM to analyze screenshots and identify visual improvement areas
+   790→
+   791→### Bug Fixes
+   792→- **CRITICAL**: Fixed `z-ai-web-dev-sdk` API usage in both `/api/symptoms/ai-chat/route.ts` and `/api/symptoms/ai-extract/route.ts`
+   793→  - Previous code used non-existent `createLLM()` and `llm.chat()` APIs
+   794→  - Fixed to correct API: `ZAI.create()` → `zai.chat.completions.create()`
+   795→  - Verified AI chat returns correct responses with real symptom data
+   796→
+   797→### Styling Improvements (Mandatory)
+   798→1. **Global CSS** (`globals.css` — 310→554 lines):
+   799→   - Added `.card-elevated` — multi-layer box-shadow with hover lift effect
+   800→   - Added `.bg-gradient-subtle` — radial gradient depth overlay
+   801→   - Added `.progress-gradient` — teal gradient progress bars with shimmer
+   802→   - Added `.badge-glow` — primary-colored glow ring on badges
+   803→   - Added `.table-row-hover` — smooth row highlight with primary left accent
+   804→   - Added `.glass-panel` — glassmorphism with backdrop-filter blur
+   805→   - Added `.animate-fade-in-up`, `.animate-pulse-soft`, `.shimmer` — micro-animations
+   806→   - Added `.section-divider` — gradient fade line
+   807→   - Enhanced print styles with page break hints
+   808→   - Improved dark mode scrollbar with theme variables
+   809→   - Added popover enter animation via Radix attribute selector
+   810→
+   811→2. **Overview Tab** (`overview-tab.tsx`):
+   812→   - Enhanced flare alert banners with gradient backgrounds, icon circle containers, bolder text
+   813→   - Applied `card-elevated` to metric cards
+   814→   - Applied `bg-gradient-subtle` to Weekly Insights card
+   815→
+   816→3. **Records Tab** (`my-records-tab.tsx`):
+   817→   - Improved table row hover (`hover:bg-muted/50 transition-colors`)
+   818→   - Better pagination: rounded container, active page styling, consistent button sizing
+   819→   - Enhanced average stats bar: rounded container, color-coded dots, larger values
+   820→   - Better empty state for search with icon and clear button
+   821→   - Polished export buttons with on-brand teal hover effects
+   822→
+   823→4. **Log Tab** (`log-symptoms-tab.tsx`):
+   824→   - Section dividers with icons and gradient lines (Pain & Discomfort, Mental Health, Triggers, Medication & Additional, Notes & AI Assist)
+   825→   - Form card gradient top border accent
+   826→   - Enhanced save button (larger, gradient, shadow, tactile scale feedback)
+   827→   - AI extract section: dashed border with sparkle gradient background
+   828→   - Voice button: prominent rose active state with pulse ring, on-brand idle hover
+   829→
+   830→5. **Doctor Handout Tab** (`doctor-handout-tab.tsx`):
+   831→   - SBAR sections: color-matched background tints, rounded corners, enlarged icon circles
+   832→   - Quick stats grid: `card-elevated` cells, larger/bolder stat values
+   833→   - Export PDF button: teal hover effects
+   834→   - Generate AI Summary button: shadow emphasis
+   835→   - Data table: `table-row-hover` class
+   836→
+   837→### New Features (Mandatory)
+   838→
+   839→1. **AI Symptom Insights Chat** (`ai-insights-panel.tsx` + `/api/symptoms/ai-chat/route.ts`):
+   840→   - Floating collapsible chat panel (fixed bottom-right, z-40)
+   841→   - Teal pill "Ask AI" button when collapsed
+   842→   - 400×500px chat panel with header, quick-question chips, message bubbles
+   843→   - 4 quick questions: "What's my worst trigger?", "Am I improving?", "When should I see a doctor?", "Explain my trends"
+   844→   - Custom markdown parser (bold, italic, lists, line breaks) — no external dependency
+   845→   - Animated typing indicator (3 bouncing dots)
+   846→   - Chat history limited to 10 messages for token efficiency
+   847→   - Server-side AI via `z-ai-web-dev-sdk` with UC-specialized system prompt
+   848→   - Framer Motion open/close animations
+   849→
+   850→2. **Trigger Impact Analysis** (`trigger-correlation.tsx`):
+   851→   - Statistical correlation analysis: compares avg pain/stool/stress when trigger present vs absent
+   852→   - Requires ≥3 total entries and ≥2 days with/without each trigger for validity
+   853→   - Visual: horizontal gradient bars (rose for harmful, emerald for protective)
+   854→   - Strength badges: Strong (>2pts), Moderate (>1pt), Weak
+   855→   - Sub-meta: sample sizes, pain comparison, stool frequency impact
+   856→   - Staggered framer-motion entry animations
+   857→   - Medical disclaimer footer
+   858→   - Integrated into Overview tab between Medication Tracker and AI Insights
+   859→
+   860→3. **Period Comparison Chart** (inline in `overview-tab.tsx`):
+   861→   - Splits logged data into two halves by date
+   862→   - Compares: avg pain, avg stool frequency, avg stress, blood %, top trigger
+   863→   - 3-column layout: First Half | Delta indicator | Second Half
+   864→   - Color-coded delta arrows: green for improvements, red for declines, gray for stable
+   865→   - Only renders when ≥4 data points
+   866→   - Uses GitCompareArrows and ArrowRight icons
+   867→
+   868→### Files Created
+   869→- **NEW**: `src/app/api/symptoms/ai-chat/route.ts` — AI chat backend
+   870→- **NEW**: `src/components/colobrief/ai-insights-panel.tsx` — Chat widget component
+   871→- **NEW**: `src/components/colobrief/trigger-correlation.tsx` — Trigger analysis component
+   872→
+   873→### Files Modified
+   874→- `src/app/globals.css` — 12 new CSS utility classes + enhanced existing styles
+   875→- `src/components/colobrief/overview-tab.tsx` — Flare alert redesign, card-elevated, period comparison, trigger correlation integration, AI panel integration
+   876→- `src/components/colobrief/my-records-tab.tsx` — Row hover, pagination, stats bar, export buttons, search empty state
+   877→- `src/components/colobrief/log-symptoms-tab.tsx` — Section dividers, form card accent, save button, AI extract section, voice button
+   878→- `src/components/colobrief/doctor-handout-tab.tsx` — SBAR section styling, stats grid, buttons, table hover
+   879→- `src/app/api/symptoms/ai-extract/route.ts` — Fixed z-ai-web-dev-sdk API usage
+   880→- `src/app/api/symptoms/ai-chat/route.ts` — Fixed z-ai-web-dev-sdk API usage (corrected from initial creation)
+   881→
+   882→## Verification Results
+   883→- ✅ ESLint: zero errors
+   884→- ✅ agent-browser E2E: all 4 tabs, dark mode, mobile viewport — zero console errors
+   885→- ✅ AI Chat API: tested with curl, returns clinically relevant responses
+   886→- ✅ VLM visual quality: 8/10 rating
+   887→- ✅ Compilation: clean, no TypeScript errors in project files
+   888→
+   889→## Unresolved Issues & Risks
+   890→1. **AI Chat panel auto-closes**: After receiving AI response, the panel may collapse on re-render. Need to ensure panel state persists across parent re-renders (cosmetic, not data-loss)
+   891→2. **No authentication**: App uses a hardcoded demo user — suitable for hackathon but not production
+   892→3. **Single-user architecture**: All API routes query the first user in the DB
+   893→4. **SQLite limitations**: No concurrent write support — acceptable for single-user demo
+   894→
+   895→## Priority Recommendations for Next Phase
+   896→1. **HIGH**: Fix AI panel state persistence across re-renders
+   897→2. **HIGH**: Add multi-user auth (NextAuth.js is already available)
+   898→3. **HIGH**: Data visualization export (chart screenshots for sharing with doctors)
+   899→4. **MEDIUM**: Push notifications for medication reminders
+   900→5. **MEDIUM**: Food diary integration with nutrition database
+   901→6. **MEDIUM**: Offline-first with PWA service worker
+   902→7. **LOW**: Internationalization (i18n)
+   903→8. **LOW**: FHIR-compliant data export for EHR integration
+   904→
+   905→---
+   906→Task ID: 6
+   907→Agent: Main Coordinator
+   908→Task: Round 6 — QA, styling polish, onboarding tour, streak counter, handout enhancement
+   909→
+   910→## Current Project Status Assessment
+   911→
+   912→ColoBrief AI is in a **production-ready hackathon state**. All features are functional, the app passes ESLint with zero errors, and agent-browser E2E testing shows zero console errors across all tabs, dark/light modes, and mobile viewport. VLM visual quality assessment: **8/10**.
+   913→
+   914→## Work Log
+   915→
+   916→### QA Testing (agent-browser)
+   917→- Full E2E across all 4 tabs + onboarding tour + dark mode + mobile
+   918→- Verified onboarding tour 5-step flow works correctly (steps navigate, "Load Demo Data" from step 5 loads data and dismisses tour)
+   919→- Confirmed AI chat panel persists after receiving responses (previous bug resolved)
+   920→- Verified new streak counter displays "14 day streak" + "Champion!" badge with demo data
+   921→- Verified new "Med" column in Records table shows medication info
+   922→- Verified Medication Adherence Summary in Doctor Handout with circular progress
+   923→- Confirmed blood-in-stool now shows as destructive badge
+   924→- All 8 screenshots saved to `/download/qa6-*.png`
+   925→
+   926→### Styling Improvements
+   927→1. **Health Score Hover** (`health-score-card.tsx`): Added `cursor-pointer group transition-transform duration-200 hover:scale-[1.04]` for interactive feedback
+   928→2. **Calendar Heatmap Spacing** (`symptom-calendar.tsx`): Increased grid gaps from 1.5 to 2 across all 5 grid containers
+   929→3. **Slider Polish** (`globals.css`): New CSS rules for slider thumb — 20px size, 3px white border, box-shadow, hover scale 1.15×, active scale 1.05×
+   930→4. **Trigger Checkbox Spacing** (`log-symptoms-tab.tsx`): Increased vertical gap from 2.5 to 3
+   931→5. **Blood Highlight** (`my-records-tab.tsx`): Blood "Yes" now renders as `<Badge variant="destructive">` with Droplets icon
+   932→6. **Medication Column** (`my-records-tab.tsx`): New "Med" table column showing teal Pill icon + truncated medication name; updated colSpan 9→10
+   933→
+   934→### New Features
+   935→
+   936→1. **Onboarding Tour** (`onboarding-tour.tsx` + page.tsx integration):
+   937→   - 5-step animated tour with Framer Motion slide transitions
+   938→   - Step 1: Welcome to ColoBrief AI (animated gradient Heart branding)
+   939→   - Step 2: Track Your Symptoms (Voice, AI Extract, Manual Form feature cards)
+   940→   - Step 3: Visualize Trends (2×2 mini-preview grid of dashboard features)
+   941→   - Step 4: Share with Your Doctor (SBAR format explanation)
+   942→   - Step 5: Get Started (Load Demo Data / Start Logging CTAs)
+   943→   - Full-screen overlay with backdrop blur, progress bar, dot indicators
+   944→   - localStorage persistence (`colobrief-tour-completed`)
+   945→   - Only shows when no data is loaded (first-time user experience)
+   946→
+   947→2. **Daily Streak Counter** (`streak-counter.tsx` + overview-tab.tsx):
+   948→   - Calculates consecutive daily logging streak from today backward
+   949→   - Tracks total unique days, current week count (X/7), best streak ever
+   950→   - Visual states: 0 ("Start your streak!"), 1-2 (basic), 3-6 ("On fire!" + Zap), 7-13 ("Consistent!" + Trophy), 14+ ("Champion!" + gradient gold Trophy)
+   951→   - Warm gradient banner (amber→orange→rose) with flame icon animation
+   952→   - Framer Motion spring animation on streak number
+   953→   - Compact horizontal layout between flare alert and metric cards
+   954→
+   955→3. **Medication Adherence in Handout** (`doctor-handout-tab.tsx`):
+   956→   - New section between header and SBAR with teal Pill icon header
+   957→   - Circular SVG progress gauge showing adherence percentage
+   958→   - Qualitative label (Good ≥80%, Partial ≥50%, Low <50%)
+   959→   - "X of Y days" summary
+   960→   - Blood Days and Avg Urgency stats alongside
+   961→   - Print-safe styling (white background, border)
+   962→   - Gradient background in screen mode
+   963→
+   964→### Bug Fix
+   965→- Added missing `Pill` import in `doctor-handout-tab.tsx`
+   966→
+   967→### Files Created
+   968→- `src/components/colobrief/onboarding-tour.tsx` — 5-step onboarding tour
+   969→- `src/components/colobrief/streak-counter.tsx` — Gamification streak widget
+   970→
+   971→### Files Modified
+   972→- `src/components/colobrief/health-score-card.tsx` — Hover scale effect
+   973→- `src/components/colobrief/symptom-calendar.tsx` — Grid spacing
+   974→- `src/app/globals.css` — Slider thumb CSS
+   975→- `src/components/colobrief/log-symptoms-tab.tsx` — Trigger checkbox spacing
+   976→- `src/components/colobrief/my-records-tab.tsx` — Blood badge, Med column, colSpan fix
+   977→- `src/components/colobrief/doctor-handout-tab.tsx` — Medication adherence section, Pill import
+   978→- `src/components/colobrief/overview-tab.tsx` — Streak counter integration
+   979→
+   980→## Verification Results
+   981→- ✅ ESLint: zero errors (after initial Pill import fix)
+   982→- ✅ agent-browser E2E: onboarding tour, all 4 tabs, AI chat, dark mode, mobile — zero console errors
+   983→- ✅ VLM visual quality: 8/10 (dark mode)
+   984→- ✅ Compilation: clean
+   985→
+   986→## Unresolved Issues & Risks
+   987→1. **Streak counter shows 0 for non-consecutive data**: By design — only shows "Start your streak today!" when no consecutive days ending at today. Demo data starts from today so it works, but real users need to log daily.
+   988→2. **No authentication**: Single hardcoded demo user
+   989→3. **SQLite limitations**: No concurrent writes
+   990→4. **Onboarding tour only shows once**: Uses localStorage — clearing browser data re-triggers it (acceptable)
+   991→
+   992→## Priority Recommendations for Next Phase
+   993→1. **HIGH**: Add export chart as image feature (html2canvas) for sharing with doctors
+   994→2. **HIGH**: Multi-user support with NextAuth.js
+   995→3. **MEDIUM**: Push notification reminders for daily logging
+   996→4. **MEDIUM**: Food/meal diary with photo upload
+   997→5. **MEDIUM**: PWA offline support for mobile use
+   998→6. **LOW**: FHIR data export for EHR integration
+   999→
+  1000→---
+  1001→Task ID: 6
+  1002→Agent: fullstack-developer
+  1003→Task: Build Symptom Timeline component
+  1004→
+  1005→Work Log:
+  1006→- Created `/src/components/colobrief/symptom-timeline.tsx` as a "use client" component
+  1007→- Implemented vertical timeline with severity-colored circular nodes (emerald/amber/orange/rose)
+  1008→- Severity score formula: pain*2 + stoolFreq + stress*0.5 + (bloodInStool ? 5 : 0)
+  1009→- Each timeline entry shows: date, pain mini-bar, stress mini-bar, stool frequency/type, blood indicator, up to 3 trigger badges, notes preview (60 chars)
+  1010→- Added staggered framer-motion slide-in-from-left animations per item
+  1011→- MiniBar sub-component with animated width proportional to 0-10 scale
+  1012→- Loading state with Skeleton placeholders for 5 items
+  1013→- Empty state with friendly message and icon
+  1014→- Scrollable container (max-h-520px) with custom-scrollbar class
+  1015→- Integrated SymptomTimeline into overview-tab.tsx before AIInsightsPanel
+  1016→- Passed `symptoms` and `isLoading` props from parent
+  1017→- Lint passes cleanly
+  1018→
+  1019→Stage Summary:
+  1020→- Shows 7 most recent days as a visual vertical timeline
+  1021→- Color-coded severity nodes (emerald/amber/orange/rose) with matching background tints
+  1022→- Compact metric display with animated mini bars for pain and stress
+  1023→- Staggered framer-motion entry animations (slide from left + fade)
+  1024→- Integrated into overview dashboard between TriggerCorrelation and AIInsightsPanel
+  1025→
+  1026→---
+  1027→Task ID: 4
+  1028→Agent: fullstack-developer
+  1029→Task: Build Emergency Alert Banner component
+  1030→
+  1031→Work Log:
+  1032→- Created `/src/components/colobrief/emergency-alert-banner.tsx` as a "use client" component
+  1033→- Analyzes the most recent 3 days of symptom data for 5 dangerous thresholds:
+  1034→  - Pain level >= 8 on any day (Flame icon, Critical)
+  1035→  - Stool frequency >= 8 on any day (Zap icon, Critical)
+  1036→  - Blood in stool present (Droplets icon, Critical)
+  1037→  - Stool type 7 / watery (Waves icon, High)
+  1038→  - Urgency level = 3 / severe (AlertTriangle icon, High)
+  1039→- Visual design: gradient rose-50 to red-50 (light) / rose-950/20 to red-950/10 (dark), rose-500 left border accent
+  1040→- Each warning listed as bullet point with severity-specific icon and Badge (destructive for Critical, outline amber for High)
+  1041→- Dismiss button (X) hides banner for session via useState
+  1042→- Animated entrance: framer-motion slide down from top + fade in + staggered list items
+  1043→- Disclaimer footer: "This is not medical advice..."
+  1044→- Returns null when no alerts, loading, or dismissed
+  1045→- Imported and rendered EmergencyAlertBanner in overview-tab.tsx as the very first element (above Health Score Card)
+  1046→- Lint passes cleanly with zero errors
+  1047→
+  1048→Stage Summary:
+  1049→- Emergency alerts for pain>=8, freq>=8, blood, watery stool, severe urgency
+  1050→- Dismissible with session persistence (useState)
+  1051→- Animated entrance with framer-motion (slide + fade + stagger)
+  1052→- Integrated into overview tab above all other content
+  1053→
+  1054→---
+  1055→Task ID: 5
+  1056→Agent: fullstack-developer
+  1057→Task: Build Weekly Progress Summary component
+  1058→
+  1059→Work Log:
+  1060→- Created `src/components/colobrief/weekly-progress-summary.tsx`
+  1061→- "use client" component accepting `symptoms: SymptomLog[]` and `isLoading: boolean` props
+  1062→- Imports SymptomLog from `@/types/symptom` and `useAnimatedNumber` from `@/hooks/use-animated-number`
+  1063→- Compares this week (Mon–Sun, or rolling 7 days if early in week) vs previous week
+  1064→- Calculates averages for Pain Level, Stool Frequency, Stress Level, Blood Days count
+  1065→- Each metric row shows: icon (Activity/UtensilsCrossed/Brain/Droplets), animated average value via useAnimatedNumber, trend arrow (TrendingDown=green if improved, TrendingUp=red if worsened, Minus=amber if ±0.5), change amount badge, mini dual progress bars (this week colored + last week muted)
+  1066→- Overall week status badge: "Improving"/"Stable"/"Worsening" based on weighted average of normalized changes (pain 2x, blood 2x, stool 1.5x, stress 1.5x)
+  1067→- Empty state when fewer than 5 total data points across both weeks, with helpful message
+  1068→- Loading state uses Skeleton from shadcn/ui
+  1069→- Card styling: rounded-xl border-0 shadow-sm, CardHeader with TrendingUp icon, legend at bottom
+  1070→- Staggered row animations via framer-motion
+  1071→- Integrated into `overview-tab.tsx`: HealthScoreCard and WeeklyProgressSummary sit side by side in a `grid grid-cols-1 md:grid-cols-2` grid
+  1072→- Flare Alert banner moved to its own full-width row below the two-column grid
+  1073→- Lint passes cleanly with zero errors
+  1074→
+  1075→Stage Summary:
+  1076→- Side-by-side comparison of pain, stool, stress, blood metrics
+  1077→- Animated values via useAnimatedNumber and trend arrows (green/red/amber)
+  1078→- "Improving/Stable/Worsening" overall assessment with weighted scoring
+  1079→- Integrated into overview-tab.tsx in a 2-column grid with HealthScoreCard
+  1080→---
+  1081→Task ID: 6
+  1082→Agent: fullstack-developer
+  1083→Task: Build Symptom Timeline component
+  1084→
+  1085→Work Log:
+  1086→- Created `src/components/colobrief/symptom-timeline.tsx`
+  1087→- Vertical timeline with 7 most recent days
+  1088→- Severity-colored nodes: emerald (≤10), amber (≤20), orange (≤30), rose (>30)
+  1089→- Each day shows: formatted date, severity badge, animated pain/stress mini-bars, stool frequency/type, blood indicator, trigger badges, notes preview (60 char)
+  1090→- Staggered framer-motion slide-in-from-left animations
+  1091→- Loading skeleton and empty state handled
+  1092→- Integrated into overview-tab.tsx after TriggerCorrelation
+  1093→
+  1094→Stage Summary:
+  1095→- Visual vertical timeline for 7 recent days
+  1096→- Color-coded severity nodes with connecting line
+  1097→- Compact metric display with animated mini-bars
+  1098→
+  1099→---
+  1100→Task ID: 7
+  1101→Agent: Main Coordinator
+  1102→Task: Styling improvements, bug fixes, and polish
+  1103→
+  1104→Work Log:
+  1105→- Added 16 new CSS utility classes to globals.css (v1.3 section): noise-overlay, card-press, text-gradient-teal, animated-border, stat-number, hover-lift, status-dot, tooltip-enhanced, sidebar-active-indicator, scroll-fade, container-dashboard, empty-state-illustration, animate-count-up, smooth-scroll, selection-color, checkbox-accent
+  1106→- Enhanced page header: added live tracking status dot with ping animation, "X days tracked" badge, last-entry-date pill on Overview tab, rounded theme toggle button
+  1107→- Enhanced footer: added branded logo icon, separator, tagline
+  1108→- Updated version to v1.3.0 in sidebar
+  1109→- Enhanced My Records tab: added Quick Stats Summary Strip (4 color-coded cards: Total Entries, Avg Pain, Blood Days %, Top Trigger) above search bar
+  1110→- Enhanced My Records empty state: added feature list with icons (Search, Edit, Export, Delete)
+  1111→- Fixed duplicate key bug: deduplicated triggers in demo data generator and handout table (used Set + unique key with log.id prefix)
+  1112→- Ran lint: zero errors
+  1113→- Full QA pass via agent-browser: all 4 tabs, zero console errors
+  1114→
+  1115→Stage Summary:
+  1116→- 16 advanced CSS utility classes for premium visual polish
+  1117→- Header shows live status indicator and data context
+  1118→- My Records tab has summary statistics strip
+  1119→- Duplicate trigger key bug fixed at both data and rendering level
+  1120→- All QA checks pass
+  1121→
+  1122→---
+  1123→Task ID: FINAL
+  1124→Agent: Main Coordinator
+  1125→Task: Project status assessment and handover documentation
+  1126→
+  1127→## Current Project Status / Assessment
+  1128→
+  1129→ColoBrief AI v1.3.0 is **production-ready for hackathon demo**. The application is a comprehensive, AI-assisted Ulcerative Colitis symptom tracking portal with 4 fully functional tabs, 15 React components, 7 API routes, and zero known bugs.
+  1130→
+  1131→**Architecture:**
+  1132→- Next.js 16 App Router + TypeScript 5 + Tailwind CSS 4
+  1133→- Prisma ORM + SQLite (User 1→N SymptomLog)
+  1134→- shadcn/ui (New York style) + Recharts + Framer Motion
+  1135→- z-ai-web-dev-sdk for AI (extraction + chat)
+  1136→- TanStack Query for client state management
+  1137→
+  1138→**Component Count:** 15 client components in src/components/colobrief/
+  1139→- onboarding-tour, overview-tab, log-symptoms-tab, my-records-tab, doctor-handout-tab
+  1140→- health-score-card, weekly-progress-summary, medication-tracker, trigger-correlation
+  1141→- symptom-calendar, symptom-timeline, emergency-alert-banner, ai-insights-panel, streak-counter
+  1142→
+  1143→## Current Goals / Completed Modifications / Verification Results
+  1144→
+  1145→This session completed:
+  1146→1. **Emergency Alert Banner** — Analyzes last 3 days for 5 dangerous thresholds (pain≥8, freq≥8, blood, watery stool, severe urgency). Animated, dismissible, with medical disclaimer.
+  1147→2. **Weekly Progress Summary** — This week vs last week comparison for pain, stool, stress, blood. Animated values, trend arrows, overall "Improving/Stable/Worsening" badge. Sits alongside Health Score in 2-column grid.
+  1148→3. **Symptom Timeline** — Vertical timeline of 7 most recent days with severity-colored nodes, mini metric bars, trigger badges, and staggered animations.
+  1149→4. **Period Comparison** — Built into overview tab: first-half vs second-half data comparison with colored trend indicators.
+  1150→5. **16 Advanced CSS Utilities** — noise-overlay, card-press, animated-border, stat-number, hover-lift, status-dot, text-gradient-teal, and more.
+  1151→6. **Header Enhancement** — Live tracking status dot, "X days tracked" badge, last-entry-date context pill.
+  1152→7. **My Records Stats Strip** — 4 color-coded summary cards (Total Entries, Avg Pain, Blood Days %, Top Trigger).
+  1153→8. **Empty State Polish** — Feature list with icons in My Records empty state.
+  1154→9. **Bug Fix** — Duplicate trigger key in React (demo data + handout table).
+  1155→
+  1156→**Verification:**
+  1157→- ESLint: zero errors
+  1158→- Agent-browser QA: all 4 tabs tested, zero console errors
+  1159→- Dev server: compiles and runs cleanly
+  1160→
+  1161→## Unresolved Issues / Risks / Priority Recommendations
+  1162→
+  1163→1. **[Low Risk] AI Chat Rate Limiting** — The /api/symptoms/ai-chat endpoint has no rate limiting. For hackathon demo this is fine, but production needs throttling.
+  1164→
+  1165→2. **[Low Risk] Single User** — App is hard-coded to a single demo user (demo@colobrief.ai). Multi-user auth would need NextAuth integration.
+  1166→
+  1167→3. **[Info] Browser Compatibility** — Web Speech API (voice input) only works in Chrome/Edge. Safari/Firefox users see a graceful error message.
+  1168→
+  1169→4. **[Info] Data Persistence** — Using SQLite file storage. For hackathon this is perfect. Production would need a cloud database.
+  1170→
+  1171→5. **Priority Recommendations for Next Phase:**
+  1172→   - P1: Add a dark mode-specific polish pass (some gradients could be more visible in dark mode)
+  1173→   - P1: Add medication scheduling / reminder feature
+  1174→   - P2: Data visualization export (chart images for sharing)
+  1175→   - P2: Multi-language support (i18n)
+  1176→   - P3: Real-time sync via WebSocket for caregiver/doctor portal
+  1177→
+  1178→---
+  1179→Task ID: 4-a
+  1180→Agent: fullstack-developer
+  1181→Task: Add scatter plot and enhanced area chart to overview
+  1182→
+  1183→Work Log:
+  1184→- Read full overview-tab.tsx (1089 lines) to understand existing chart structure
+  1185→- Added ResponsiveContainer, ReferenceLine, ZAxis imports from recharts
+  1186→- Added enhancedScatterConfig ChartConfig for new scatter chart
+  1187→- Created scatterAnalysis useMemo with linear regression, Pearson correlation, mean crosshair values
+  1188→- Enhanced existing line chart area gradients: teal-500 (#14b8a6) at 35% opacity, rose at 25%, amber at 20%
+  1189→- Fixed stress Area component (removed duplicate stroke/dasharray, now fill-only gradient)
+  1190→- Added new Stress vs Pain Scatter Plot Card with: teal/emerald colored dots (opacity+size varies by pain), dashed trend line, mean crosshair reference lines, correlation badge, strength label, responsive layout via ResponsiveContainer
+  1191→- Added loading skeleton (h-72) for new scatter plot
+  1192→- Confirmed zero lint errors
+  1193→
+  1194→Stage Summary:
+  1195→- Two new data visualizations added to Overview tab
+  1196→- Zero lint errors confirmed
+  1197→

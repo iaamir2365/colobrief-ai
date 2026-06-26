@@ -299,7 +299,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
 
       {/* Date */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
-        <Card className="rounded-xl border-0 shadow-sm card-glow relative overflow-hidden">
+        <Card className="rounded-xl border-0 shadow-sm card-premium card-glow relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-emerald-400 to-teal-500" />
           <CardContent className="p-6 pt-7">
             <div className="space-y-2">
@@ -319,16 +319,18 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
       </motion.div>
 
       {/* Pain & Discomfort Section Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <Activity className="h-4 w-4 text-teal-600" />
-        <h4 className="text-sm font-semibold text-foreground">Pain &amp; Discomfort</h4>
-        <div className="flex-1 h-px bg-border" />
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="rounded-full bg-teal-100 dark:bg-teal-900/50 p-1.5">
+          <Activity className="h-4 w-4 text-teal-600" />
+        </div>
+        <h4 className="section-title text-foreground">Pain &amp; Discomfort</h4>
+        <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
       </div>
 
       {/* Pain Level & Stool Frequency side by side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Card className="rounded-xl border-0 shadow-sm card-glow">
+          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -357,7 +359,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="rounded-xl border-0 shadow-sm card-glow">
+          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -402,7 +404,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
       {/* Bristol Stool Type & Stress Level */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <Card className="rounded-xl border-0 shadow-sm card-glow">
+          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6">
               <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-1.5"><Droplets className="h-3.5 w-3.5 text-sky-500" /> Bristol Stool Type</Label>
@@ -424,7 +426,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="rounded-xl border-0 shadow-sm card-glow">
+          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -454,15 +456,17 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
       </div>
 
       {/* Triggers Section Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <Zap className="h-4 w-4 text-amber-500" />
-        <h4 className="text-sm font-semibold text-foreground">Triggers</h4>
-        <div className="flex-1 h-px bg-border" />
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="rounded-full bg-amber-100 dark:bg-amber-900/50 p-1.5">
+          <Zap className="h-4 w-4 text-amber-500" />
+        </div>
+        <h4 className="section-title text-foreground">Triggers</h4>
+        <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
       </div>
 
       {/* Triggers */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-        <Card className="rounded-xl border-0 shadow-sm card-glow">
+        <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Triggers</CardTitle>
           </CardHeader>
@@ -471,7 +475,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
               {COMMON_TRIGGERS.map((trigger) => (
                 <label
                   key={trigger}
-                  className="flex items-center gap-2 cursor-pointer select-none"
+                  className="flex items-center gap-2 cursor-pointer select-none rounded-lg px-2 py-1.5 bg-muted/30 hover:bg-muted/60 transition-colors"
                 >
                   <Checkbox
                     checked={selectedTriggers.includes(trigger)}
@@ -517,15 +521,17 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
       </motion.div>
 
       {/* Medication & Additional Section Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <Pill className="h-4 w-4 text-violet-500" />
-        <h4 className="text-sm font-semibold text-foreground">Medication & Additional</h4>
-        <div className="flex-1 h-px bg-border" />
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="rounded-full bg-violet-100 dark:bg-violet-900/50 p-1.5">
+          <Pill className="h-4 w-4 text-violet-500" />
+        </div>
+        <h4 className="section-title text-foreground">Medication & Additional</h4>
+        <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
       </div>
 
       {/* Medication & Metrics */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-        <Card className="rounded-xl border-0 shadow-sm card-glow">
+        <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
           <CardContent className="p-6 space-y-5">
             {/* Medication Taken */}
             <div className="space-y-2">
@@ -571,15 +577,17 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
       </motion.div>
 
       {/* Notes & AI Assist Section Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <FileText className="h-4 w-4 text-teal-600" />
-        <h4 className="text-sm font-semibold text-foreground">Notes & AI Assist</h4>
-        <div className="flex-1 h-px bg-border" />
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="rounded-full bg-teal-100 dark:bg-teal-900/50 p-1.5">
+          <FileText className="h-4 w-4 text-teal-600" />
+        </div>
+        <h4 className="section-title text-foreground">Notes & AI Assist</h4>
+        <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
       </div>
 
       {/* Notes with Voice Input */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card className="rounded-xl border-0 shadow-sm card-glow">
+        <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
           <CardContent className="p-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -717,7 +725,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
           onClick={handleSave}
           disabled={isSaving}
           size="lg"
-          className="w-full h-13 text-base font-semibold rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all hover:scale-[1.01] active:scale-[0.99]"
+          className="w-full h-13 text-base font-semibold rounded-xl btn-premium hover:scale-[1.01] active:scale-[0.99]"
         >
           {isSaving ? (
             <>

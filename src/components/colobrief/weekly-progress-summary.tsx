@@ -109,8 +109,11 @@ function MiniProgressBar({
     <div className="flex flex-col gap-1 w-24 shrink-0">
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
-          className={`h-full rounded-full ${thisColor} transition-all duration-700 ease-out`}
-          style={{ width: `${thisPct}%` }}
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{
+            width: `${thisPct}%`,
+            background: `linear-gradient(90deg, ${thisColor === 'bg-emerald-500' ? '#10b981' : thisColor === 'bg-rose-500' ? '#f43f5e' : '#f59e0b'}, ${thisColor === 'bg-emerald-500' ? '#34d399' : thisColor === 'bg-rose-500' ? '#fb7185' : '#fbbf24'})`,
+          }}
         />
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -135,7 +138,7 @@ function MetricRowDisplay({ metric, index }: { metric: MetricRow; index: number 
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.08 * index, duration: 0.35 }}
-      className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0"
+      className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0"
     >
       <div className="rounded-lg bg-muted/60 p-2 shrink-0">
         <metric.icon className="h-4 w-4 text-muted-foreground" />
@@ -358,7 +361,7 @@ export default function WeeklyProgressSummary({
   const status = statusConfig[overallStatus!];
 
   return (
-    <Card className="rounded-xl border-0 shadow-sm">
+    <Card className="rounded-xl border-0 shadow-sm card-premium">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -366,7 +369,7 @@ export default function WeeklyProgressSummary({
             Weekly Progress
           </CardTitle>
           <div
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${status.bg} ${status.color} ${status.border}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${status.bg} ${status.color} ${status.border} badge-refined`}
           >
             {overallStatus === "Improving" && (
               <TrendingDown className="h-3 w-3" />
