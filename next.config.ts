@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  allowedDevOrigins: [
+    "preview-chat-8bdfb114-3a7c-44a1-91a0-29142d98c976.space-z.ai",
+  ],
 };
 
 export default nextConfig;

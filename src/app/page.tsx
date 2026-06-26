@@ -176,11 +176,6 @@ function AppContent() {
     return <AuthForm />;
   }
 
-  // Email not verified — show verification form
-  if (!user.emailVerified) {
-    return <AuthForm />;
-  }
-
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" className="border-r-0">

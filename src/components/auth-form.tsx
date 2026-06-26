@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   AlertCircle,
   KeyRound,
+  DatabaseZap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,24 @@ export default function AuthForm() {
   const login = useAuthStore((s) => s.login);
   const signup = useAuthStore((s) => s.signup);
   const refreshUser = useAuthStore((s) => s.refreshUser);
+  const userEmail = useAuthStore((s) => s.user?.email);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/demo-login", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Demo login failed");
+      localStorage.setItem("colobrief-token", data.token);
+      useAuthStore.setState({ token: data.token, user: data.user, isLoading: false, isInitialized: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Demo login failed");
+    } finally {
+      setIsDemoLoading(false);
+    }
+  };
 
   // Resend cooldown timer
   useEffect(() => {
@@ -250,7 +269,7 @@ export default function AuthForm() {
                   <CardDescription className="text-sm">
                     We sent a 6-digit code to your email address.
                     <br />
-                    <span className="font-medium text-foreground">{useAuthStore.getState().user?.email}</span>
+                    <span className="font-medium text-foreground">{userEmail}</span>
                   </CardDescription>
                 </CardHeader>
 
@@ -539,6 +558,26 @@ export default function AuthForm() {
                         ? mode === "login" ? "Signing in..." : "Creating account..."
                         : mode === "login" ? "Sign In" : "Create Account"}
                     </Button>
+
+                    {/* Demo Login Button */}
+                    <div className="relative">
+                      <Separator className="my-4" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 font-medium border-dashed border-2 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/50 hover:border-teal-400 dark:hover:border-teal-600 transition-all"
+                        onClick={handleDemoLogin}
+                        disabled={isLoading}
+                      >
+                        {isDemoLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <DatabaseZap className="h-4 w-4 mr-2" />
+                        )}
+                        {isDemoLoading ? "Loading Demo..." : "Try Demo — Explore with Sample Data"}
+                      </Button>
+                      <Separator className="my-4" />
+                    </div>
 
                     {/* Switch mode */}
                     <div className="relative">
