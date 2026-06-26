@@ -165,36 +165,6 @@
 }
 
 /* Animated gradient background for empty states */
-.animate-gradient-bg {
-  background: linear-gradient(135deg, #f0fdfa, #ccfbf1, #d1fae5, #f0fdfa);
-  background-size: 300% 300%;
-  animation: gradient-shift 4s ease infinite;
-}
-.dark .animate-gradient-bg {
-  background: linear-gradient(135deg, #134e4a, #115e59, #0f766e, #134e4a);
-  background-size: 300% 300%;
-}
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* Slider gradient track for pain/stress */
-.slider-gradient-green-red [data-slot="slider-track"] {
-  background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
-}
-.slider-gradient-green-red [data-slot="slider-range"] {
-  background: transparent;
-}
-
-/* Card glassmorphism for dark mode */
-.dark .glass-card {
-  background: rgba(21, 28, 37, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(42, 53, 68, 0.5);
-}
-
-/* Animated gradient for empty states */
 @keyframes gradient-shift {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -212,6 +182,69 @@
   animation: gradient-shift 8s ease infinite;
 }
 
+/* Slider gradient track for pain/stress */
+.slider-gradient-green-red [data-slot="slider-track"] {
+  background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
+}
+.slider-gradient-green-red [data-slot="slider-range"] {
+  background: transparent;
+}
+
+/* Card glassmorphism for dark mode */
+.dark .glass-card {
+  background: rgba(21, 28, 37, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 53, 68, 0.5);
+}
+
+/* Smooth focus ring animation */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  transition: outline-color 0.2s;
+}
+
+/* Card hover glow effect */
+.card-glow {
+  transition: box-shadow 0.2s ease;
+}
+.card-glow:hover {
+  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.1), 0 4px 12px rgba(13, 148, 136, 0.08);
+}
+.dark .card-glow:hover {
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 4px 12px rgba(45, 212, 191, 0.08);
+}
+
+/* Subtle dot grid background pattern */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle, currentColor 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom scrollbar for main content */
+main::-webkit-scrollbar { width: 6px; }
+main::-webkit-scrollbar-track { background: transparent; }
+main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+main::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+main {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Sonner toast styling */
+[data-sonner-toaster] [data-sonner-toast] {
+  border-radius: 12px;
+}
+
 /* Smooth recording pulse */
 @keyframes gentle-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -220,6 +253,22 @@
 
 .recording-pulse {
   animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Print watermark hidden by default, visible only in print area context */
+.print-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 6rem;
+  font-weight: 900;
+  color: currentColor;
+  opacity: 0.025;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 0;
+  user-select: none;
 }
 
 @media print {

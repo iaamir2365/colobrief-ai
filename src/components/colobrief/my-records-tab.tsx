@@ -1,13 +1,25 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Trash2, PlusCircle, FileText, Download, Droplets } from "lucide-react";
+import { Search, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -27,6 +39,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
@@ -45,6 +65,30 @@ const BRISTOL_EMOJIS: Record<number, string> = {
   1: "🪨", 2: "🪨", 3: "✅", 4: "✅", 5: "⚠️", 6: "⚠️", 7: "🚨"
 };
 
+const COMMON_TRIGGERS = [
+  "Dairy",
+  "Stress",
+  "Spicy Food",
+  "NSAIDs",
+  "Alcohol",
+  "Caffeine",
+  "Lack of Sleep",
+  "Anxiety",
+  "Processed Food",
+  "Travel",
+  "Other",
+];
+
+const BRISTOL_TYPES = [
+  { value: "1", label: "Type 1: Separate hard lumps" },
+  { value: "2", label: "Type 2: Lumpy sausage shape" },
+  { value: "3", label: "Type 3: Sausage with cracks" },
+  { value: "4", label: "Type 4: Smooth soft sausage" },
+  { value: "5", label: "Type 5: Soft blobs with clear edges" },
+  { value: "6", label: "Type 6: Fluffy, mushy" },
+  { value: "7", label: "Type 7: Watery, no solid pieces" },
+];
+
 const PAGE_SIZE = 10;
 
 interface MyRecordsTabProps {
@@ -52,6 +96,229 @@ interface MyRecordsTabProps {
   isLoading: boolean;
   onDeleted: () => void;
   onGoToLog: () => void;
+}
+
+function EditSymptomDialog({
+  log,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  log: SymptomLog;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+}) {
+  const [date, setDate] = useState(log.date);
+  const [painLevel, setPainLevel] = useState([log.painLevel]);
+  const [stoolFrequency, setStoolFrequency] = useState(log.stoolFrequency);
+  const [stoolType, setStoolType] = useState(String(log.stoolType));
+  const [stressLevel, setStressLevel] = useState([log.stressLevel]);
+  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([...log.triggers]);
+  const [medication, setMedication] = useState(log.medicationTaken || "");
+  const [bloodInStool, setBloodInStool] = useState(log.bloodInStool);
+  const [urgencyLevel, setUrgencyLevel] = useState(log.urgencyLevel);
+  const [notes, setNotes] = useState(log.notes || "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setDate(log.date);
+      setPainLevel([log.painLevel]);
+      setStoolFrequency(log.stoolFrequency);
+      setStoolType(String(log.stoolType));
+      setStressLevel([log.stressLevel]);
+      setSelectedTriggers([...log.triggers]);
+      setMedication(log.medicationTaken || "");
+      setBloodInStool(log.bloodInStool);
+      setUrgencyLevel(log.urgencyLevel);
+      setNotes(log.notes || "");
+    }
+  }, [open, log]);
+
+  const toggleTrigger = useCallback((trigger: string) => {
+    setSelectedTriggers((prev) =>
+      prev.includes(trigger) ? prev.filter((t) => t !== trigger) : [...prev, trigger]
+    );
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/symptoms/${log.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          painLevel: painLevel[0],
+          stoolFrequency,
+          stoolType: Number(stoolType),
+          stressLevel: stressLevel[0],
+          triggers: selectedTriggers,
+          medicationTaken: medication || undefined,
+          bloodInStool,
+          urgencyLevel,
+          notes: notes || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      toast.success("Log updated successfully!");
+      onOpenChange(false);
+      onSaved();
+    } catch {
+      toast.error("Failed to update log.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getPainColor = (val: number) => {
+    if (val <= 3) return "text-emerald-600";
+    if (val <= 6) return "text-amber-500";
+    return "text-rose-500";
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>Edit Symptom Log — {format(parseISO(log.date), "MMM d, yyyy")}</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="max-h-[70vh] pr-4">
+          <div className="space-y-5 pb-4">
+            {/* Date */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Date</Label>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="max-w-[200px]" />
+            </div>
+
+            {/* Pain & Stool Frequency */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Pain Level</Label>
+                  <span className={`text-xl font-bold ${getPainColor(painLevel[0])}`}>{painLevel[0]}</span>
+                </div>
+                <Slider value={painLevel} onValueChange={setPainLevel} min={1} max={10} step={1} />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>No pain</span><span>Severe</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Stool Frequency</Label>
+                  <span className="text-xl font-bold text-teal-600">{stoolFrequency}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => setStoolFrequency(Math.max(0, stoolFrequency - 1))}>−</Button>
+                  <Input type="number" value={stoolFrequency} onChange={(e) => setStoolFrequency(Math.min(20, Math.max(0, Number(e.target.value) || 0)))} className="text-center text-lg font-semibold h-9" min={0} max={20} />
+                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => setStoolFrequency(Math.min(20, stoolFrequency + 1))}>+</Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bristol & Stress */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Bristol Stool Type</Label>
+                <Select value={stoolType} onValueChange={setStoolType}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BRISTOL_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Stress Level</Label>
+                  <span className={`text-xl font-bold ${getPainColor(stressLevel[0])}`}>{stressLevel[0]}</span>
+                </div>
+                <Slider value={stressLevel} onValueChange={setStressLevel} min={1} max={10} step={1} />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Calm</span><span>Very stressed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Triggers */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Triggers</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+                {COMMON_TRIGGERS.map((trigger) => (
+                  <label key={trigger} className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox
+                      checked={selectedTriggers.includes(trigger)}
+                      onCheckedChange={() => toggleTrigger(trigger)}
+                    />
+                    <span className="text-sm">{trigger}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedTriggers.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedTriggers.map((t) => (
+                    <Badge key={t} variant="secondary" className="cursor-pointer hover:bg-destructive/10 transition-colors" onClick={() => toggleTrigger(t)}>
+                      {t} ×
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Medication & Blood & Urgency */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Medication Taken</Label>
+                <Input
+                  placeholder="e.g., Mesalamine 800mg"
+                  value={medication}
+                  onChange={(e) => setMedication(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Blood in Stool</Label>
+                  <p className="text-xs text-muted-foreground">Check if noticed</p>
+                </div>
+                <Switch checked={bloodInStool} onCheckedChange={setBloodInStool} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Urgency Level</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
+                    <Button
+                      key={label}
+                      type="button"
+                      variant={urgencyLevel === i ? "default" : "outline"}
+                      size="sm"
+                      className={urgencyLevel === i ? "bg-teal-600 hover:bg-teal-700" : ""}
+                      onClick={() => setUrgencyLevel(i)}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Notes</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add notes..." rows={3} className="resize-none" />
+            </div>
+          </div>
+        </ScrollArea>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={isSaving} className="bg-teal-600 hover:bg-teal-700">
+            {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function MyRecordsTab({
@@ -64,6 +331,7 @@ export default function MyRecordsTab({
   const [page, setPage] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingLog, setEditingLog] = useState<SymptomLog | null>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return symptoms;
@@ -205,9 +473,8 @@ export default function MyRecordsTab({
               </TableHeader>
               <TableBody>
                 {paged.map((log, i) => (
-                  <>
+                  <React.Fragment key={log.id}>
                   <TableRow
-                    key={log.id}
                     className="cursor-pointer hover:bg-muted/30"
                     onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
                   >
@@ -267,17 +534,26 @@ export default function MyRecordsTab({
                       </Badge>
                     </TableCell>
                     <TableCell className="pr-4 text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            onClick={(e) => e.stopPropagation()}
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          onClick={(e) => { e.stopPropagation(); setEditingLog(log); }}
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-muted-foreground hover:text-teal-600"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              onClick={(e) => e.stopPropagation()}
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete this log?</AlertDialogTitle>
@@ -298,6 +574,7 @@ export default function MyRecordsTab({
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                   {expandedId === log.id && (
@@ -317,7 +594,7 @@ export default function MyRecordsTab({
                       </TableCell>
                     </TableRow>
                   )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -379,6 +656,16 @@ export default function MyRecordsTab({
           <Button variant="outline" size="sm" onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}>&rsaquo;</Button>
           <Button variant="outline" size="sm" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>&raquo;</Button>
         </div>
+      )}
+
+      {/* Edit Dialog */}
+      {editingLog && (
+        <EditSymptomDialog
+          log={editingLog}
+          open={!!editingLog}
+          onOpenChange={(open) => { if (!open) setEditingLog(null); }}
+          onSaved={onDeleted}
+        />
       )}
     </div>
   );

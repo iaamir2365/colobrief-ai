@@ -557,3 +557,210 @@ Stage Summary:
 4. **Add a "Mood Journal" freeform entry** alongside structured logging for holistic tracking
 5. **Consider adding blood indicator markers** on the trend chart using a custom approach (e.g., custom dot renderer on the pain line instead of ReferenceDot)
 6. **Add data import** (CSV upload) for patients migrating from other trackers
+
+---
+Task ID: 2
+Agent: Bug Fix Agent
+Task: Fix React Fragment key warning and dark mode insight cards
+
+Work Log:
+- Fixed React Fragment shorthand `<>` to `<React.Fragment key={log.id}>` in my-records-tab.tsx (lines 207-320), moved key from TableRow to Fragment
+- Added `import React` to my-records-tab.tsx
+- Added dark mode variants to 4 Weekly Insights cards in overview-tab.tsx: emerald, rose, teal, amber (bg + text)
+- Added dark mode variants to 3 flare alert banners in overview-tab.tsx: rose, amber, emerald (bg, border, heading text, body text)
+- Ran `bun run lint` — no errors
+
+Stage Summary:
+- No more React key warnings on Fragment elements
+- Dark mode properly styled for insight cards and flare alert banners
+
+---
+Task ID: 4
+Agent: Feature Development Agent
+Task: Build UC Health Score Card and Symptom Calendar Heatmap
+
+Work Log:
+- Created health-score-card.tsx with animated circular SVG gauge (0-100 score)
+- Implemented composite score algorithm: pain×4, stool×3, stress×1.5, stoolType penalty, blood% penalty
+- Added color coding: green (80+), amber (50-79), rose (<50) with status labels
+- Added 7-day vs previous 7-day comparison with trend arrow
+- Added mini-metrics row (pain, stool, stress, blood) contributing to score
+- Created symptom-calendar.tsx with 30-day heatmap grid (7 columns, ~5 rows)
+- Implemented severity algorithm: pain×2 + stoolFreq + stress×0.5 + blood bonus
+- Added color bands: emerald (0-10), amber (11-20), orange (21-30), rose (30+)
+- Added hover tooltips with day details (pain, stool, stress, blood, triggers)
+- Added today ring highlight, mobile compact mode with colored dots
+- Added legend below calendar, responsive layout
+- Integrated Health Score Card at top of overview in grid with flare alert (1:2 cols)
+- Integrated Calendar Heatmap between Weekly Insights and main chart
+- Ran `bun run lint` — no errors
+
+Stage Summary:
+- Health Score: 0-100 composite gauge with animated SVG, color coding, trend comparison
+- Calendar: 30-day severity heatmap with tooltips, legend, responsive mobile mode
+- Both fully responsive with dark mode support (bg-muted/40, dark: variants)
+
+---
+Task ID: 5
+Agent: Feature Development Agent  
+Task: Build Edit Symptom Log and Medication Tracker
+
+Work Log:
+- Added PUT handler to /api/symptoms/[id]/route.ts with all fields (date, painLevel, stoolFrequency, stoolType, stressLevel, triggers, notes, medicationTaken, bloodInStool, urgencyLevel), 404 handling, and mapped JSON response
+- Added EditSymptomDialog component to my-records-tab.tsx with pre-filled form fields (date, pain slider, stool frequency stepper, Bristol select, stress slider, trigger checkboxes, medication input, blood switch, urgency buttons, notes textarea)
+- Added Pencil edit button next to delete button in each table row
+- Edit dialog uses Dialog from shadcn/ui with ScrollArea, resets form state on open via useEffect, calls PUT API and onDeleted() on save
+- Created medication-tracker.tsx with medication extraction from logs, per-medication stats (days taken, avg pain/freq taken vs not taken), comparison bars, adherence progress bar, and insight message
+- Integrated MedicationTracker into overview-tab.tsx below the bottom row (triggers, scatter, bristol) as a new full-width card
+- Ran lint, no errors
+
+Stage Summary:
+- Users can now edit existing symptom logs via pencil icon button
+- Medication tracker shows adherence % and symptom correlation per medication
+- Both features responsive with dark mode support
+
+---
+Task ID: 3
+Agent: Styling Expert Agent
+Task: Major styling polish pass
+
+Work Log:
+- Enhanced globals.css: removed duplicate @keyframes gradient-shift and .animate-gradient-bg blocks, consolidated into single refined version (8s, multi-stop gradient)
+- Added body::before dot grid background pattern (radial-gradient, 24px spacing, 0.03 opacity)
+- Added .card-glow hover effect with teal box-shadow and dark mode variant
+- Added *:focus-visible smooth ring animation (2px solid var(--ring), 0.2s transition)
+- Added main::-webkit-scrollbar custom thin scrollbar (6px, var(--border) thumb, var(--muted-foreground) hover)
+- Added main scrollbar-width: thin for Firefox
+- Added [data-sonner-toaster] [data-sonner-toast] border-radius: 12px for polished toasts
+- Added .print-watermark CSS class for branding watermark in handout
+- Polished page.tsx sidebar logo: bg-gradient-to-br from-teal-600 to-teal-700 with shadow-sm
+- Added gradient line under header: h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent
+- Enhanced footer: bg-muted/30 background, polished kbd elements with bg-background border-border rounded-md shadow-sm
+- Enhanced log-symptoms-tab.tsx: added Activity, Droplets, Zap, Pill, FileText icons from lucide-react
+- Added form completion progress indicator (animated teal-to-emerald gradient bar with percentage label)
+- Added card-glow class to all form section cards
+- Added section header icons: Activity (Physical Symptoms), Droplets (Stool Frequency, Bristol Stool Type), Zap (Triggers), Pill (Medication), FileText (Notes)
+- Added inline icons to labels: Droplets on Stool Frequency/Bristol, Activity on Stress Level, Pill on Medication
+- AI Extract button: bg-gradient-to-r from-violet-600 to-teal-600 with hover variants and text-white
+- Save button: enhanced hover shadow (hover:shadow-xl hover:shadow-teal-500/30)
+- Enhanced doctor-handout-tab.tsx: added Stethoscope, BookOpen, Activity, Lightbulb icons
+- Added card-glow and relative overflow-hidden to main SBAR card
+- Added print-watermark div with "ColoBrief AI" branding
+- SBAR section headers now have colored icon badges: Stethoscope (S/teal), BookOpen (B/sky), Activity (A/amber), Lightbulb (R/violet)
+- Added dark: variants to all SBAR header text colors
+- Ran lint, no errors
+
+Stage Summary:
+- Subtle background dot pattern added for visual texture
+- Card hover glow effects with dark mode support
+- Smooth focus ring animation on all interactive elements
+- Custom thin scrollbar for main content area
+- Polished sidebar gradient logo and footer keyboard shortcuts
+- Form progress indicator encourages completion of optional fields
+- Section headers enhanced with contextual icons throughout log form
+- AI Extract button now has a striking violet-to-teal gradient
+- SBAR handout sections have distinctive colored icon badges
+- Print area includes low-opacity "ColoBrief AI" watermark branding
+- Sonner toasts have rounded 12px border-radius
+
+---
+Task ID: 6
+Agent: Main Coordinator (Final QA & Status)
+Task: Final QA verification, status assessment, and handover document
+
+Work Log:
+- Read full worklog and all source files to assess project state
+- Ran agent-browser QA on all 4 tabs (Overview, Log Symptoms, My Records, Doctor Handout)
+- Tested edit dialog functionality - verified pre-filled form data
+- Tested mobile responsive layout (iPhone 14 emulation)
+- Tested dark mode toggle
+- Checked dev server logs for compilation/runtime errors - none found
+- Ran `bun run lint` - zero errors
+- Verified all 7 component files present in src/components/colobrief/
+
+Stage Summary:
+- All QA checks passed: zero JS errors, zero lint errors, all features functional
+- Total component count: 7 colobrief components + 1 custom hook + 5 API routes
+- New files created in this session: health-score-card.tsx, symptom-calendar.tsx, medication-tracker.tsx
+
+---
+
+## PROJECT STATUS REPORT (as of 2026-06-26)
+
+### Current Project Status
+ColoBrief AI is a **production-ready hackathon prototype** for AI-assisted Ulcerative Colitis symptom tracking. The application is fully functional with 4 main tabs, 7 dashboard components, and 5 backend API routes. No build errors, no runtime errors, and all features verified via agent-browser QA testing.
+
+### Architecture
+- **Frontend**: Next.js 16 + TypeScript + Tailwind CSS 4 + shadcn/ui (New York style)
+- **State**: TanStack Query for server state, React useState for local UI state
+- **Database**: Prisma ORM + SQLite (User → SymptomLog 1:N relation)
+- **AI**: z-ai-web-dev-sdk for clinical data extraction and summaries
+- **Charts**: Recharts (line, donut, bar, scatter)
+- **Animation**: Framer Motion for page transitions and micro-interactions
+
+### Completed Features (v1.3.0)
+
+#### Core Functionality
+1. **Symptom Logging** - Full form with pain slider, stool frequency, Bristol stool type select, stress slider, trigger checkboxes, medication input, blood in stool switch, urgency level, free-text notes
+2. **Voice-to-Text** - Web Speech API integration for hands-free logging
+3. **AI Extract** - Send free-text notes to z-ai-web-dev-sdk, get structured clinical data back, verify before saving
+4. **My Records** - Searchable, paginated table with color-coded badges, expandable rows, CSV/JSON export, edit & delete
+5. **Doctor Handout** - SBAR-formatted clinical brief with AI summary generation, print-to-PDF
+
+#### Dashboard & Analytics
+6. **UC Health Score** - Animated circular SVG gauge (0-100) with color-coded severity, mini-metrics, 7-day trend comparison
+7. **Symptom Trends Chart** - Dual-axis line chart with area fills (stool frequency, pain level, stress level)
+8. **Weekly Insights** - Auto-generated best/worst days, most improved metric, top trigger
+9. **Flare Risk Alert** - 3-day rolling average pain assessment (stable/moderate/high)
+10. **Bristol Stool Distribution** - Donut chart with legend
+11. **Pain vs Stress Correlation** - Scatter chart with color-coded severity
+12. **Trigger Analysis** - Top 5 triggers with animated progress bars
+13. **Symptom Calendar Heatmap** - 30-day color-coded severity grid with tooltips
+14. **Medication Tracker** - Adherence %, per-medication symptom correlation analysis
+
+#### UX & Styling
+15. **Dark Mode** - Full support with next-themes, all components styled
+16. **Responsive Design** - Mobile-first with collapsible sidebar, mobile FAB, compact calendar
+17. **Micro-interactions** - Animated number counting, card hover effects, staggered entry animations, gradient sliders
+18. **Keyboard Shortcuts** - Ctrl+O/L/R/H for tab navigation
+19. **Form Progress Indicator** - Animated completion bar in log form
+20. **Card Glow Effects** - Subtle teal shadow on hover
+21. **Background Dot Pattern** - Subtle radial gradient texture
+22. **Print-Ready Handout** - CSS print styles with watermark branding
+
+### API Routes
+- `GET /api/user` - Get/create demo user
+- `GET /api/symptoms` - Fetch all symptom logs
+- `POST /api/symptoms` - Create new log
+- `PUT /api/symptoms/[id]` - Edit existing log (NEW)
+- `DELETE /api/symptoms/[id]` - Delete log
+- `POST /api/symptoms/ai-extract` - AI clinical data extraction
+- `POST /api/symptoms/demo` - Generate 14 days of realistic demo data
+- `GET /api/symptoms/export` - Export as CSV or JSON
+
+### Files Modified/Created This Session
+- **NEW**: `src/components/colobrief/health-score-card.tsx`
+- **NEW**: `src/components/colobrief/symptom-calendar.tsx`
+- **NEW**: `src/components/colobrief/medication-tracker.tsx`
+- **MODIFIED**: `src/components/colobrief/overview-tab.tsx` (integrated 3 new components, dark mode fixes)
+- **MODIFIED**: `src/components/colobrief/my-records-tab.tsx` (React.Fragment fix, edit dialog)
+- **MODIFIED**: `src/components/colobrief/log-symptoms-tab.tsx` (section icons, progress bar, gradient buttons)
+- **MODIFIED**: `src/components/colobrief/doctor-handout-tab.tsx` (SBAR icon badges, watermark, card glow)
+- **MODIFIED**: `src/app/api/symptoms/[id]/route.ts` (added PUT handler)
+- **MODIFIED**: `src/app/page.tsx` (sidebar gradient, header divider, footer polish)
+- **MODIFIED**: `src/app/globals.css` (dot pattern, card glow, focus rings, scrollbar, duplicate fix)
+
+### Unresolved Issues & Risks
+1. **Demo data notes mismatch**: The demo data generator assigns random notes that may not perfectly match the numeric symptom values (cosmetic, not functional)
+2. **No authentication**: App uses a hardcoded demo user — suitable for hackathon but not production
+3. **Single-user architecture**: All API routes query the first user in the DB
+4. **SQLite limitations**: No concurrent write support — acceptable for single-user demo
+
+### Priority Recommendations for Next Phase
+1. **HIGH**: Add multi-user auth (NextAuth.js is already available in dependencies)
+2. **HIGH**: Add data visualization export (chart screenshots for sharing)
+3. **MEDIUM**: Push notifications / browser notifications for medication reminders
+4. **MEDIUM**: Food diary integration with USDA nutrition database
+5. **MEDIUM**: Offline-first with PWA service worker for mobile use
+6. **LOW**: Internationalization (i18n) for broader patient reach
+7. **LOW**: FHIR-compliant data export for EHR integration

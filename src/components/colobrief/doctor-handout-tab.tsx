@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Printer, Sparkles, Loader2, FileText, ClipboardList } from "lucide-react";
+import { Printer, Sparkles, Loader2, FileText, ClipboardList, Stethoscope, BookOpen, Activity, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -269,8 +269,11 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       {/* Print area */}
       <div className="print-area space-y-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="rounded-xl border-0 shadow-sm print:shadow-none print:border print:rounded-none">
+          <Card className="rounded-xl border-0 shadow-sm print:shadow-none print:border print:rounded-none card-glow relative overflow-hidden">
             <CardContent className="p-6 print:p-4">
+              {/* Watermark branding */}
+              <div className="print-watermark" aria-hidden="true">ColoBrief AI</div>
+
               {/* Header */}
               <div className="mb-6">
                 <h1 className="text-xl font-bold text-foreground print:text-lg">
@@ -296,7 +299,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
               {/* S - Situation */}
               <div className="mb-5 border-l-4 border-teal-400 pl-4">
-                <h2 className="text-base font-semibold text-teal-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+                <h2 className="text-base font-semibold text-teal-700 dark:text-teal-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
                   S — Situation
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -306,7 +310,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
               {/* B - Background */}
               <div className="mb-5 border-l-4 border-sky-400 pl-4">
-                <h2 className="text-base font-semibold text-sky-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+                <h2 className="text-base font-semibold text-sky-700 dark:text-sky-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
                   B — Background
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -316,7 +321,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
               {/* A - Assessment */}
               <div className="mb-5 border-l-4 border-amber-400 pl-4">
-                <h2 className="text-base font-semibold text-amber-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+                <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
                   A — Assessment
                 </h2>
                 {aiSummary && (
@@ -374,7 +380,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
               {/* R - Recommendation */}
               <div className="mb-6 border-l-4 border-violet-400 pl-4">
-                <h2 className="text-base font-semibold text-violet-700 mb-1.5 print:text-sm print:mt-4 print:mb-1">
+                <h2 className="text-base font-semibold text-violet-700 dark:text-violet-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
                   R — Recommendation
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">

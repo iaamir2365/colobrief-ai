@@ -49,6 +49,9 @@ import {
 } from "recharts";
 import { format, subDays, parseISO, isAfter } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
+import HealthScoreCard from "@/components/colobrief/health-score-card";
+import MedicationTracker from "@/components/colobrief/medication-tracker";
+import SymptomCalendar from "@/components/colobrief/symptom-calendar";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Type 1: Hard lumps",
@@ -505,48 +508,61 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Flare Risk Alert Banner */}
-      {flareAlert && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {flareAlert.level === "high" && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
-              <div>
-                <h4 className="font-semibold text-rose-800 text-sm">High Flare Risk</h4>
-                <p className="text-rose-700 text-sm mt-0.5">
-                  Your average pain level over the last 3 days is {flareAlert.avg.toFixed(1)}/10. Consider contacting your healthcare provider.
-                </p>
+      {/* Health Score + Flare Alert Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <HealthScoreCard symptoms={symptoms} isLoading={false} />
+        <div className="lg:col-span-2">
+          {/* Flare Risk Alert Banner */}
+          {flareAlert ? (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="h-full"
+            >
+              <div className="h-full">
+                {flareAlert.level === "high" && (
+                  <div className="h-full rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800/50 p-4 flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-rose-800 dark:text-rose-300 text-sm">High Flare Risk</h4>
+                      <p className="text-rose-700 dark:text-rose-400 text-sm mt-0.5">
+                        Your average pain level over the last 3 days is {flareAlert.avg.toFixed(1)}/10. Consider contacting your healthcare provider.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {flareAlert.level === "moderate" && (
+                  <div className="h-full rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 p-4 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Moderate Symptoms</h4>
+                      <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
+                        Your recent pain levels are elevated. Continue monitoring and consider dietary adjustments.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {flareAlert.level === "stable" && (
+                  <div className="h-full rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/50 p-4 flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Symptoms Stable</h4>
+                      <p className="text-emerald-700 dark:text-emerald-400 text-sm mt-0.5">
+                        Your recent readings look good. Keep up the great self-management!
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
+            </motion.div>
+          ) : (
+            <div className="h-full rounded-xl border-0 shadow-sm bg-card flex items-center justify-center p-4">
+              <p className="text-sm text-muted-foreground">No recent flare data available yet.</p>
             </div>
           )}
-          {flareAlert.level === "moderate" && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-              <div>
-                <h4 className="font-semibold text-amber-800 text-sm">Moderate Symptoms</h4>
-                <p className="text-amber-700 text-sm mt-0.5">
-                  Your recent pain levels are elevated. Continue monitoring and consider dietary adjustments.
-                </p>
-              </div>
-            </div>
-          )}
-          {flareAlert.level === "stable" && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-              <div>
-                <h4 className="font-semibold text-emerald-800 text-sm">Symptoms Stable</h4>
-                <p className="text-emerald-700 text-sm mt-0.5">
-                  Your recent readings look good. Keep up the great self-management!
-                </p>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      )}
+        </div>
+      </div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -571,41 +587,44 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="rounded-lg bg-emerald-50 p-3">
+                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="h-4 w-4 text-emerald-600" />
                     <span className="text-xs text-muted-foreground">Most Improved</span>
                   </div>
-                  <p className="text-sm font-semibold text-emerald-800">
+                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                     {weeklyInsights.mostImproved || "No change yet"}
                   </p>
                 </div>
-                <div className="rounded-lg bg-rose-50 p-3">
+                <div className="rounded-lg bg-rose-50 dark:bg-rose-950/30 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <ShieldAlert className="h-4 w-4 text-rose-500" />
                     <span className="text-xs text-muted-foreground">Worst Day</span>
                   </div>
-                  <p className="text-sm font-semibold text-rose-800">{weeklyInsights.worstDay}</p>
+                  <p className="text-sm font-semibold text-rose-800 dark:text-rose-300">{weeklyInsights.worstDay}</p>
                 </div>
-                <div className="rounded-lg bg-teal-50 p-3">
+                <div className="rounded-lg bg-teal-50 dark:bg-teal-950/30 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle className="h-4 w-4 text-teal-600" />
                     <span className="text-xs text-muted-foreground">Best Day</span>
                   </div>
-                  <p className="text-sm font-semibold text-teal-800">{weeklyInsights.bestDay}</p>
+                  <p className="text-sm font-semibold text-teal-800 dark:text-teal-300">{weeklyInsights.bestDay}</p>
                 </div>
-                <div className="rounded-lg bg-amber-50 p-3">
+                <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Flame className="h-4 w-4 text-amber-500" />
                     <span className="text-xs text-muted-foreground">Top Trigger</span>
                   </div>
-                  <p className="text-sm font-semibold text-amber-800">{weeklyInsights.topTrigger}</p>
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{weeklyInsights.topTrigger}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
       )}
+
+      {/* Symptom Calendar Heatmap */}
+      <SymptomCalendar symptoms={symptoms} isLoading={false} />
 
       {/* Main Line Chart */}
       <motion.div
@@ -854,6 +873,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </Card>
         </motion.div>
       </div>
+
+      {/* Medication Tracker */}
+      <MedicationTracker symptoms={symptoms} isLoading={isLoading} />
     </div>
   );
 }

@@ -1,0 +1,644 @@
+    50→  { value: "2", label: "Type 2: Lumpy sausage shape" },
+    51→  { value: "3", label: "Type 3: Sausage with cracks" },
+    52→  { value: "4", label: "Type 4: Smooth soft sausage" },
+    53→  { value: "5", label: "Type 5: Soft blobs with clear edges" },
+    54→  { value: "6", label: "Type 6: Fluffy, mushy" },
+    55→  { value: "7", label: "Type 7: Watery, no solid pieces" },
+    56→];
+    57→
+    58→interface LogSymptomsTabProps {
+    59→  onSaved: () => void;
+    60→}
+    61→
+    62→export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
+    63→  const today = new Date().toISOString().split("T")[0];
+    64→  const [date, setDate] = useState(today);
+    65→  const [painLevel, setPainLevel] = useState([3]);
+    66→  const [stoolFrequency, setStoolFrequency] = useState(3);
+    67→  const [stoolType, setStoolType] = useState("4");
+    68→  const [stressLevel, setStressLevel] = useState([3]);
+    69→  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
+    70→  const [customTrigger, setCustomTrigger] = useState("");
+    71→  const [medication, setMedication] = useState("");
+    72→  const [bloodInStool, setBloodInStool] = useState(false);
+    73→  const [urgencyLevel, setUrgencyLevel] = useState(0);
+    74→  const [notes, setNotes] = useState("");
+    75→  const [isRecording, setIsRecording] = useState(false);
+    76→  const [isSaving, setIsSaving] = useState(false);
+    77→  const [isExtracting, setIsExtracting] = useState(false);
+    78→  const [aiResult, setAiResult] = useState<null | {
+    79→    stoolFrequency: number;
+    80→    painLevel: number;
+    81→    bristolStoolType: number;
+    82→    stressLevel: number;
+    83→    triggers: string[];
+    84→  }>(null);
+    85→  const recognitionRef = useRef<any>(null);
+    86→
+    87→  const toggleTrigger = (trigger: string) => {
+    88→    setSelectedTriggers((prev) =>
+    89→      prev.includes(trigger) ? prev.filter((t) => t !== trigger) : [...prev, trigger]
+    90→    );
+    91→  };
+    92→
+    93→  const addCustomTrigger = () => {
+    94→    const trimmed = customTrigger.trim();
+    95→    if (trimmed && !selectedTriggers.includes(trimmed)) {
+    96→      setSelectedTriggers((prev) => [...prev, trimmed]);
+    97→      setCustomTrigger("");
+    98→    }
+    99→  };
+   100→
+   101→  const startRecording = useCallback(() => {
+   102→    const SpeechRecognition =
+   103→      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+   104→    if (!SpeechRecognition) {
+   105→      toast.error("Speech recognition is not supported in this browser.");
+   106→      return;
+   107→    }
+   108→
+   109→    const recognition = new SpeechRecognition();
+   110→    recognition.continuous = true;
+   111→    recognition.interimResults = true;
+   112→    recognition.lang = "en-US";
+   113→
+   114→    let finalTranscript = notes;
+   115→    recognition.onresult = (event: any) => {
+   116→      let interimTranscript = "";
+   117→      for (let i = event.resultIndex; i < event.results.length; i++) {
+   118→        const transcript = event.results[i][0].transcript;
+   119→        if (event.results[i].isFinal) {
+   120→          finalTranscript += (finalTranscript ? " " : "") + transcript;
+   121→        } else {
+   122→          interimTranscript += transcript;
+   123→        }
+   124→      }
+   125→      setNotes(finalTranscript + (interimTranscript ? " " + interimTranscript : ""));
+   126→    };
+   127→
+   128→    recognition.onerror = () => {
+   129→      setIsRecording(false);
+   130→      toast.error("Speech recognition stopped unexpectedly.");
+   131→    };
+   132→
+   133→    recognition.onend = () => {
+   134→      setIsRecording(false);
+   135→    };
+   136→
+   137→    recognitionRef.current = recognition;
+   138→    recognition.start();
+   139→    setIsRecording(true);
+   140→    toast.info("Recording started. Speak into your microphone.");
+   141→  }, [notes]);
+   142→
+   143→  const stopRecording = useCallback(() => {
+   144→    if (recognitionRef.current) {
+   145→      recognitionRef.current.stop();
+   146→      recognitionRef.current = null;
+   147→    }
+   148→    setIsRecording(false);
+   149→    toast.success("Recording stopped.");
+   150→  }, []);
+   151→
+   152→  useEffect(() => {
+   153→    return () => {
+   154→      if (recognitionRef.current) {
+   155→        recognitionRef.current.stop();
+   156→      }
+   157→    };
+   158→  }, []);
+   159→
+   160→  const handleAIExtract = async () => {
+   161→    if (!notes.trim()) {
+   162→      toast.error("Please add some notes before using AI extraction.");
+   163→      return;
+   164→    }
+   165→    setIsExtracting(true);
+   166→    try {
+   167→      const res = await fetch("/api/symptoms/ai-extract", {
+   168→        method: "POST",
+   169→        headers: { "Content-Type": "application/json" },
+   170→        body: JSON.stringify({ notes }),
+   171→      });
+   172→      const data = await res.json();
+   173→      setAiResult(data);
+   174→    } catch {
+   175→      toast.error("AI extraction failed. Please try again.");
+   176→    } finally {
+   177→      setIsExtracting(false);
+   178→    }
+   179→  };
+   180→
+   181→  const applyAIResult = () => {
+   182→    if (!aiResult) return;
+   183→    if (aiResult.painLevel) setPainLevel([aiResult.painLevel]);
+   184→    if (aiResult.stoolFrequency) setStoolFrequency(aiResult.stoolFrequency);
+   185→    if (aiResult.bristolStoolType) setStoolType(String(aiResult.bristolStoolType));
+   186→    if (aiResult.stressLevel) setStressLevel([aiResult.stressLevel]);
+   187→    if (aiResult.triggers?.length) setSelectedTriggers(aiResult.triggers);
+   188→    setAiResult(null);
+   189→    toast.success("AI-extracted values applied to the form.");
+   190→  };
+   191→
+   192→  const handleSave = async () => {
+   193→    if (!date) {
+   194→      toast.error("Please select a date.");
+   195→      return;
+   196→    }
+   197→    setIsSaving(true);
+   198→    try {
+   199→      const res = await fetch("/api/symptoms", {
+   200→        method: "POST",
+   201→        headers: { "Content-Type": "application/json" },
+   202→        body: JSON.stringify({
+   203→          date,
+   204→          painLevel: painLevel[0],
+   205→          stoolFrequency,
+   206→          stoolType: Number(stoolType),
+   207→          stressLevel: stressLevel[0],
+   208→          triggers: selectedTriggers,
+   209→          medicationTaken: medication || undefined,
+   210→          bloodInStool,
+   211→          urgencyLevel,
+   212→          notes: notes || undefined,
+   213→        }),
+   214→      });
+   215→      if (!res.ok) throw new Error("Failed to save");
+   216→      toast.success("Symptom log saved successfully! 🎉");
+   217→      // Reset form
+   218→      setDate(today);
+   219→      setPainLevel([3]);
+   220→      setStoolFrequency(3);
+   221→      setStoolType("4");
+   222→      setStressLevel([3]);
+   223→      setSelectedTriggers([]);
+   224→      setMedication("");
+   225→      setBloodInStool(false);
+   226→      setUrgencyLevel(0);
+   227→      setNotes("");
+   228→      onSaved();
+   229→    } catch {
+   230→      toast.error("Failed to save. Please try again.");
+   231→    } finally {
+   232→      setIsSaving(false);
+   233→    }
+   234→  };
+   235→
+   236→  const getPainColor = (val: number) => {
+   237→    if (val <= 3) return "text-emerald-600";
+   238→    if (val <= 6) return "text-amber-500";
+   239→    return "text-rose-500";
+   240→  };
+   241→
+   242→  return (
+   243→    <div className="max-w-2xl mx-auto space-y-6">
+   244→      {/* Welcome Banner */}
+   245→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+   246→        <div className="rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 border border-teal-200 dark:border-teal-800/50 p-4 flex items-start gap-3">
+   247→          <div className="rounded-lg bg-teal-100 dark:bg-teal-900/50 p-2 mt-0.5 shrink-0">
+   248→            <ClipboardCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+   249→          </div>
+   250→          <div>
+   251→            <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-200">Log Today's Symptoms</h3>
+   252→            <p className="text-xs text-teal-700/70 dark:text-teal-300/70 mt-0.5">
+   253→              Track your daily UC symptoms to identify patterns and share data with your doctor. Use voice input or AI extraction for faster logging.
+   254→            </p>
+   255→            <div className="flex flex-wrap gap-2 mt-2">
+   256→              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 font-medium">
+   257→                💡 Tip: Use voice input for hands-free logging
+   258→              </span>
+   259→              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">
+   260→                ⌨️ Shortcut: Press Ctrl+L to jump here
+   261→              </span>
+   262→            </div>
+   263→          </div>
+   264→        </div>
+   265→      </motion.div>
+   266→
+   267→      {/* Date */}
+   268→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
+   269→        <Card className="rounded-xl border-0 shadow-sm">
+   270→          <CardContent className="p-6">
+   271→            <div className="space-y-2">
+   272→              <Label htmlFor="date" className="text-sm font-medium">
+   273→                Date
+   274→              </Label>
+   275→              <Input
+   276→                id="date"
+   277→                type="date"
+   278→                value={date}
+   279→                onChange={(e) => setDate(e.target.value)}
+   280→                className="max-w-[200px]"
+   281→              />
+   282→            </div>
+   283→          </CardContent>
+   284→        </Card>
+   285→      </motion.div>
+   286→
+   287→      {/* Physical Symptoms Section Header */}
+   288→      <div className="flex items-center gap-3">
+   289→        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Physical Symptoms</span>
+   290→        <Separator className="flex-1" />
+   291→      </div>
+   292→
+   293→      {/* Pain Level & Stool Frequency side by side */}
+   294→      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   295→        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+   296→          <Card className="rounded-xl border-0 shadow-sm">
+   297→            <CardContent className="p-6">
+   298→              <div className="space-y-4">
+   299→                <div className="flex items-center justify-between">
+   300→                  <Label className="text-sm font-medium">Pain Level</Label>
+   301→                  <span className={`text-2xl font-bold ${getPainColor(painLevel[0])}`}>
+   302→                    {painLevel[0]}
+   303→                  </span>
+   304→                </div>
+   305→                <div className="slider-gradient-green-red">
+   306→                  <Slider
+   307→                    value={painLevel}
+   308→                    onValueChange={setPainLevel}
+   309→                    min={1}
+   310→                    max={10}
+   311→                    step={1}
+   312→                  />
+   313→                </div>
+   314→                <div className="flex justify-between text-xs text-muted-foreground">
+   315→                  <span>No pain</span>
+   316→                  <span>Moderate</span>
+   317→                  <span>Severe</span>
+   318→                </div>
+   319→              </div>
+   320→            </CardContent>
+   321→          </Card>
+   322→        </motion.div>
+   323→
+   324→        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+   325→          <Card className="rounded-xl border-0 shadow-sm">
+   326→            <CardContent className="p-6">
+   327→              <div className="space-y-4">
+   328→                <div className="flex items-center justify-between">
+   329→                  <Label className="text-sm font-medium">Stool Frequency</Label>
+   330→                  <span className="text-2xl font-bold text-teal-600">{stoolFrequency}</span>
+   331→                </div>
+   332→                <div className="flex items-center gap-3">
+   333→                  <Button
+   334→                    variant="outline"
+   335→                    size="icon"
+   336→                    className="h-10 w-10 rounded-full"
+   337→                    onClick={() => setStoolFrequency(Math.max(0, stoolFrequency - 1))}
+   338→                  >
+   339→                    −
+   340→                  </Button>
+   341→                  <Input
+   342→                    type="number"
+   343→                    value={stoolFrequency}
+   344→                    onChange={(e) =>
+   345→                      setStoolFrequency(Math.min(20, Math.max(0, Number(e.target.value) || 0)))
+   346→                    }
+   347→                    className="text-center text-lg font-semibold h-10"
+   348→                    min={0}
+   349→                    max={20}
+   350→                  />
+   351→                  <Button
+   352→                    variant="outline"
+   353→                    size="icon"
+   354→                    className="h-10 w-10 rounded-full"
+   355→                    onClick={() => setStoolFrequency(Math.min(20, stoolFrequency + 1))}
+   356→                  >
+   357→                    +
+   358→                  </Button>
+   359→                </div>
+   360→                <p className="text-xs text-muted-foreground text-center">per day (0–20)</p>
+   361→              </div>
+   362→            </CardContent>
+   363→          </Card>
+   364→        </motion.div>
+   365→      </div>
+   366→
+   367→      {/* Bristol Stool Type & Stress Level */}
+   368→      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   369→        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+   370→          <Card className="rounded-xl border-0 shadow-sm">
+   371→            <CardContent className="p-6">
+   372→              <div className="space-y-2">
+   373→                <Label className="text-sm font-medium">Bristol Stool Type</Label>
+   374→                <Select value={stoolType} onValueChange={setStoolType}>
+   375→                  <SelectTrigger className="w-full">
+   376→                    <SelectValue />
+   377→                  </SelectTrigger>
+   378→                  <SelectContent>
+   379→                    {BRISTOL_TYPES.map((t) => (
+   380→                      <SelectItem key={t.value} value={t.value}>
+   381→                        {t.label}
+   382→                      </SelectItem>
+   383→                    ))}
+   384→                  </SelectContent>
+   385→                </Select>
+   386→              </div>
+   387→            </CardContent>
+   388→          </Card>
+   389→        </motion.div>
+   390→
+   391→        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+   392→          <Card className="rounded-xl border-0 shadow-sm">
+   393→            <CardContent className="p-6">
+   394→              <div className="space-y-4">
+   395→                <div className="flex items-center justify-between">
+   396→                  <Label className="text-sm font-medium">Stress Level</Label>
+   397→                  <span className={`text-2xl font-bold ${getPainColor(stressLevel[0])}`}>
+   398→                    {stressLevel[0]}
+   399→                  </span>
+   400→                </div>
+   401→                <div className="slider-gradient-green-red">
+   402→                  <Slider
+   403→                    value={stressLevel}
+   404→                    onValueChange={setStressLevel}
+   405→                    min={1}
+   406→                    max={10}
+   407→                    step={1}
+   408→                  />
+   409→                </div>
+   410→                <div className="flex justify-between text-xs text-muted-foreground">
+   411→                  <span>Calm</span>
+   412→                  <span>Moderate</span>
+   413→                  <span>Very stressed</span>
+   414→                </div>
+   415→              </div>
+   416→            </CardContent>
+   417→          </Card>
+   418→        </motion.div>
+   419→      </div>
+   420→
+   421→      {/* Identified Triggers Section Header */}
+   422→      <div className="flex items-center gap-3">
+   423→        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Identified Triggers</span>
+   424→        <Separator className="flex-1" />
+   425→      </div>
+   426→
+   427→      {/* Triggers */}
+   428→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+   429→        <Card className="rounded-xl border-0 shadow-sm">
+   430→          <CardHeader className="pb-3">
+   431→            <CardTitle className="text-base font-semibold">Triggers</CardTitle>
+   432→          </CardHeader>
+   433→          <CardContent>
+   434→            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
+   435→              {COMMON_TRIGGERS.map((trigger) => (
+   436→                <label
+   437→                  key={trigger}
+   438→                  className="flex items-center gap-2 cursor-pointer select-none"
+   439→                >
+   440→                  <Checkbox
+   441→                    checked={selectedTriggers.includes(trigger)}
+   442→                    onCheckedChange={() => toggleTrigger(trigger)}
+   443→                  />
+   444→                  <span className="text-sm">{trigger}</span>
+   445→                </label>
+   446→              ))}
+   447→            </div>
+   448→            <div className="flex items-center gap-2 mt-4">
+   449→              <Input
+   450→                placeholder="Add custom trigger..."
+   451→                value={customTrigger}
+   452→                onChange={(e) => setCustomTrigger(e.target.value)}
+   453→                onKeyDown={(e) => {
+   454→                  if (e.key === "Enter") {
+   455→                    e.preventDefault();
+   456→                    addCustomTrigger();
+   457→                  }
+   458→                }}
+   459→                className="flex-1"
+   460→              />
+   461→              <Button variant="outline" onClick={addCustomTrigger} className="shrink-0">
+   462→                Add
+   463→              </Button>
+   464→            </div>
+   465→            {selectedTriggers.length > 0 && (
+   466→              <div className="flex flex-wrap gap-1.5 mt-3">
+   467→                {selectedTriggers.map((t) => (
+   468→                  <Badge
+   469→                    key={t}
+   470→                    variant="secondary"
+   471→                    className="cursor-pointer hover:bg-destructive/10 transition-colors"
+   472→                    onClick={() => toggleTrigger(t)}
+   473→                  >
+   474→                    {t} ×
+   475→                  </Badge>
+   476→                ))}
+   477→              </div>
+   478→            )}
+   479→          </CardContent>
+   480→        </Card>
+   481→      </motion.div>
+   482→
+   483→      {/* Medication & Additional Metrics Section Header */}
+   484→      <div className="flex items-center gap-3">
+   485→        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Medication & Additional Metrics</span>
+   486→        <Separator className="flex-1" />
+   487→      </div>
+   488→
+   489→      {/* Medication & Metrics */}
+   490→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+   491→        <Card className="rounded-xl border-0 shadow-sm">
+   492→          <CardContent className="p-6 space-y-5">
+   493→            {/* Medication Taken */}
+   494→            <div className="space-y-2">
+   495→              <Label htmlFor="medication" className="text-sm font-medium">Medication Taken</Label>
+   496→              <Input
+   497→                id="medication"
+   498→                placeholder="e.g., Mesalamine 800mg, Prednisone 20mg"
+   499→                value={medication}
+   500→                onChange={(e) => setMedication(e.target.value)}
+   501→              />
+   502→              <p className="text-xs text-muted-foreground">Optional — list any UC medications taken today</p>
+   503→            </div>
+   504→
+   505→            {/* Blood in Stool */}
+   506→            <div className="flex items-center justify-between">
+   507→              <div>
+   508→                <Label className="text-sm font-medium">Blood in Stool</Label>
+   509→                <p className="text-xs text-muted-foreground">Check if you noticed any blood</p>
+   510→              </div>
+   511→              <Switch checked={bloodInStool} onCheckedChange={setBloodInStool} />
+   512→            </div>
+   513→
+   514→            {/* Urgency Level */}
+   515→            <div className="space-y-2">
+   516→              <Label className="text-sm font-medium">Urgency Level</Label>
+   517→              <div className="grid grid-cols-4 gap-2">
+   518→                {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
+   519→                  <Button
+   520→                    key={label}
+   521→                    type="button"
+   522→                    variant={urgencyLevel === i ? "default" : "outline"}
+   523→                    size="sm"
+   524→                    className={urgencyLevel === i ? "bg-teal-600 hover:bg-teal-700" : ""}
+   525→                    onClick={() => setUrgencyLevel(i)}
+   526→                  >
+   527→                    {label}
+   528→                  </Button>
+   529→                ))}
+   530→              </div>
+   531→            </div>
+   532→          </CardContent>
+   533→        </Card>
+   534→      </motion.div>
+   535→
+   536→      {/* Additional Notes Section Header */}
+   537→      <div className="flex items-center gap-3">
+   538→        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Additional Notes</span>
+   539→        <Separator className="flex-1" />
+   540→      </div>
+   541→
+   542→      {/* Notes with Voice Input */}
+   543→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+   544→        <Card className="rounded-xl border-0 shadow-sm">
+   545→          <CardContent className="p-6">
+   546→            <div className="space-y-3">
+   547→              <div className="flex items-center justify-between">
+   548→                <Label className="text-sm font-medium">Notes</Label>
+   549→                <div className="flex items-center gap-2">
+   550→                  <Button
+   551→                    variant={isRecording ? "destructive" : "outline"}
+   552→                    size="sm"
+   553→                    onClick={isRecording ? stopRecording : startRecording}
+   554→                    className="gap-1.5"
+   555→                  >
+   556→                    {isRecording ? (
+   557→                      <>
+   558→                        <span className="relative flex h-2.5 w-2.5">
+   559→                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+   560→                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+   561→                        </span>
+   562→                        <MicOff className="h-3.5 w-3.5" />
+   563→                        Stop
+   564→                      </>
+   565→                    ) : (
+   566→                      <>
+   567→                        <Mic className="h-3.5 w-3.5" />
+   568→                        Voice
+   569→                      </>
+   570→                    )}
+   571→                  </Button>
+   572→                  <Button
+   573→                    variant="outline"
+   574→                    size="sm"
+   575→                    onClick={handleAIExtract}
+   576→                    disabled={isExtracting || !notes.trim()}
+   577→                    className="gap-1.5"
+   578→                  >
+   579→                    {isExtracting ? (
+   580→                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+   581→                    ) : (
+   582→                      <Sparkles className="h-3.5 w-3.5" />
+   583→                    )}
+   584→                    AI Extract
+   585→                  </Button>
+   586→                </div>
+   587→              </div>
+   588→              <Textarea
+   589→                value={notes}
+   590→                onChange={(e) => setNotes(e.target.value)}
+   591→                placeholder="Describe how you're feeling today... e.g., 'Mild cramping this morning after dairy. Stressful day at work. Had 5 bowel movements, mostly loose.'"
+   592→                rows={4}
+   593→                className="resize-none"
+   594→              />
+   595→              <p className="text-xs text-muted-foreground text-right mt-1">
+   596→                {notes.length} characters
+   597→              </p>
+   598→              {isRecording && (
+   599→                <p className="text-xs text-rose-500 flex items-center gap-1.5">
+   600→                  <span className="relative flex h-2 w-2">
+   601→                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+   602→                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+   603→                  </span>
+   604→                  Listening...
+   605→                </p>
+   606→              )}
+   607→            </div>
+   608→          </CardContent>
+   609→        </Card>
+   610→      </motion.div>
+   611→
+   612→      {/* AI Verification Card */}
+   613→      <AnimatePresence>
+   614→        {aiResult && (
+   615→          <motion.div
+   616→            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+   617→            animate={{ opacity: 1, y: 0, scale: 1 }}
+   618→            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+   619→          >
+   620→            <Card className="rounded-xl border-2 border-teal-200 shadow-sm bg-teal-50/50">
+   621→              <CardHeader className="pb-3">
+   622→                <div className="flex items-center gap-2">
+   623→                  <Sparkles className="h-5 w-5 text-teal-600" />
+   624→                  <CardTitle className="text-base font-semibold">AI-Extracted Values</CardTitle>
+   625→                </div>
+   626→                <p className="text-sm text-muted-foreground">
+   627→                  Review the values extracted from your notes. Apply to update the form, or dismiss.
+   628→                </p>
+   629→              </CardHeader>
+   630→              <CardContent>
+   631→                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+   632→                  <div className="text-center">
+   633→                    <p className="text-xs text-muted-foreground">Pain Level</p>
+   634→                    <p className="text-xl font-bold text-rose-500">{aiResult.painLevel}</p>
+   635→                  </div>
+   636→                  <div className="text-center">
+   637→                    <p className="text-xs text-muted-foreground">Stool Freq.</p>
+   638→                    <p className="text-xl font-bold text-teal-600">{aiResult.stoolFrequency}</p>
+   639→                  </div>
+   640→                  <div className="text-center">
+   641→                    <p className="text-xs text-muted-foreground">Stool Type</p>
+   642→                    <p className="text-xl font-bold">{aiResult.bristolStoolType}</p>
+   643→                  </div>
+   644→                  <div className="text-center">
+   645→                    <p className="text-xs text-muted-foreground">Stress</p>
+   646→                    <p className="text-xl font-bold text-amber-500">{aiResult.stressLevel}</p>
+   647→                  </div>
+   648→                </div>
+   649→                {aiResult.triggers.length > 0 && (
+   650→                  <div className="flex flex-wrap gap-1.5 mb-4">
+   651→                    {aiResult.triggers.map((t) => (
+   652→                      <Badge key={t} variant="secondary">
+   653→                        {t}
+   654→                      </Badge>
+   655→                    ))}
+   656→                  </div>
+   657→                )}
+   658→                <div className="flex gap-2">
+   659→                  <Button onClick={applyAIResult} className="gap-1.5">
+   660→                    <CheckCircle2 className="h-4 w-4" />
+   661→                    Apply Values
+   662→                  </Button>
+   663→                  <Button variant="outline" onClick={() => setAiResult(null)}>
+   664→                    Dismiss
+   665→                  </Button>
+   666→                </div>
+   667→              </CardContent>
+   668→            </Card>
+   669→          </motion.div>
+   670→        )}
+   671→      </AnimatePresence>
+   672→
+   673→      {/* Save Button */}
+   674→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+   675→        <Button
+   676→          onClick={handleSave}
+   677→          disabled={isSaving}
+   678→          size="lg"
+   679→          className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25 transition-all"
+   680→        >
+   681→          {isSaving ? (
+   682→            <>
+   683→              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+   684→              Saving...
+   685→            </>
+   686→          ) : (
+   687→            "Save Symptom Log"
+   688→          )}
+   689→        </Button>
+   690→      </motion.div>
+   691→    </div>
+   692→  );
+   693→}

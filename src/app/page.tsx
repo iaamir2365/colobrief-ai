@@ -120,7 +120,7 @@ function AppContent() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-teal-600 text-white">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 text-white shadow-sm">
                   <Heart className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -212,6 +212,7 @@ function AppContent() {
               <span className="sr-only">Toggle theme</span>
             </Button>
           </header>
+          <div className="h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
 
           {/* Error Banner */}
           {isError && (
@@ -263,15 +264,15 @@ function AppContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-auto border-t px-6 py-3 print:hidden"
+            className="mt-auto border-t px-6 py-3 print:hidden bg-muted/30"
           >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
               <span>ColoBrief AI — Bridging daily flares and clinical consultations</span>
               <div className="hidden sm:flex items-center gap-3 text-xs">
-                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘O</kbd> Overview</span>
-                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘L</kbd> Log</span>
-                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘R</kbd> Records</span>
-                <span><kbd className="px-1.5 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘H</kbd> Handout</span>
+                <span><kbd className="bg-background border border-border rounded-md shadow-sm text-[10px] font-mono px-1.5 py-0.5">⌘O</kbd> Overview</span>
+                <span><kbd className="bg-background border border-border rounded-md shadow-sm text-[10px] font-mono px-1.5 py-0.5">⌘L</kbd> Log</span>
+                <span><kbd className="bg-background border border-border rounded-md shadow-sm text-[10px] font-mono px-1.5 py-0.5">⌘R</kbd> Records</span>
+                <span><kbd className="bg-background border border-border rounded-md shadow-sm text-[10px] font-mono px-1.5 py-0.5">⌘H</kbd> Handout</span>
               </div>
             </div>
           </motion.footer>
