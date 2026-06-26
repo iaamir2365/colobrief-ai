@@ -4,7 +4,7 @@ An AI-powered Ulcerative Colitis symptom tracking and analysis platform built fo
 
 ## Inspiration
 
-I am a solo developer. I had  no venture capital, and no massive engineering team. I built this entire prototype using "AI-assisted development"—pairing raw human empathy with modern AI intelligence.
+I am a solo developer. I had no venture capital, and no massive engineering team. I built this entire prototype using "AI-assisted development"—pairing raw human empathy with modern AI intelligence.
 
 I wanted to build something that respects a patient’s energy. When you are in the middle of a painful flare, you do not have the strength to type into complex databases or slide virtual meters. With ColoBrief AI, you don't have to.
 
