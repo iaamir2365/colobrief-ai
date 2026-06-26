@@ -33,7 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 const COMMON_TRIGGERS = [
@@ -300,8 +299,9 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
 
       {/* Date */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
-        <Card className="rounded-xl border-0 shadow-sm card-glow">
-          <CardContent className="p-6">
+        <Card className="rounded-xl border-0 shadow-sm card-glow relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-emerald-400 to-teal-500" />
+          <CardContent className="p-6 pt-7">
             <div className="space-y-2">
               <Label htmlFor="date" className="text-sm font-medium">
                 Date
@@ -318,11 +318,11 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </Card>
       </motion.div>
 
-      {/* Physical Symptoms Section Header */}
-      <div className="flex items-center gap-2.5">
-        <Activity className="h-3.5 w-3.5 text-teal-500" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Physical Symptoms</span>
-        <Separator className="flex-1" />
+      {/* Pain & Discomfort Section Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <Activity className="h-4 w-4 text-teal-600" />
+        <h4 className="text-sm font-semibold text-foreground">Pain &amp; Discomfort</h4>
+        <div className="flex-1 h-px bg-border" />
       </div>
 
       {/* Pain Level & Stool Frequency side by side */}
@@ -453,11 +453,11 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </motion.div>
       </div>
 
-      {/* Identified Triggers Section Header */}
-      <div className="flex items-center gap-2.5">
-        <Zap className="h-3.5 w-3.5 text-amber-500" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Identified Triggers</span>
-        <Separator className="flex-1" />
+      {/* Triggers Section Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <Zap className="h-4 w-4 text-amber-500" />
+        <h4 className="text-sm font-semibold text-foreground">Triggers</h4>
+        <div className="flex-1 h-px bg-border" />
       </div>
 
       {/* Triggers */}
@@ -516,11 +516,11 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </Card>
       </motion.div>
 
-      {/* Medication & Additional Metrics Section Header */}
-      <div className="flex items-center gap-2.5">
-        <Pill className="h-3.5 w-3.5 text-violet-500" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Medication & Additional Metrics</span>
-        <Separator className="flex-1" />
+      {/* Medication & Additional Section Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <Pill className="h-4 w-4 text-violet-500" />
+        <h4 className="text-sm font-semibold text-foreground">Medication & Additional</h4>
+        <div className="flex-1 h-px bg-border" />
       </div>
 
       {/* Medication & Metrics */}
@@ -570,11 +570,11 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
         </Card>
       </motion.div>
 
-      {/* Additional Notes Section Header */}
-      <div className="flex items-center gap-2.5">
-        <FileText className="h-3.5 w-3.5 text-teal-500" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Additional Notes</span>
-        <Separator className="flex-1" />
+      {/* Notes & AI Assist Section Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <FileText className="h-4 w-4 text-teal-600" />
+        <h4 className="text-sm font-semibold text-foreground">Notes & AI Assist</h4>
+        <div className="flex-1 h-px bg-border" />
       </div>
 
       {/* Notes with Voice Input */}
@@ -589,7 +589,10 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
                     variant={isRecording ? "destructive" : "outline"}
                     size="sm"
                     onClick={isRecording ? stopRecording : startRecording}
-                    className="gap-1.5"
+                    className={isRecording
+                      ? "gap-1.5 bg-rose-600 hover:bg-rose-700 text-white border-rose-600 shadow-lg shadow-rose-500/30"
+                      : "gap-1.5 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+                    }
                   >
                     {isRecording ? (
                       <>
@@ -655,7 +658,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.95 }}
           >
-            <Card className="rounded-xl border-2 border-teal-200 shadow-sm bg-teal-50/50">
+            <Card className="rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 shadow-sm bg-gradient-to-br from-teal-50/80 via-white to-violet-50/40 dark:from-teal-950/30 dark:via-background dark:to-violet-950/20">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-teal-600" />
@@ -714,7 +717,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
           onClick={handleSave}
           disabled={isSaving}
           size="lg"
-          className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all"
+          className="w-full h-13 text-base font-semibold rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
           {isSaving ? (
             <>

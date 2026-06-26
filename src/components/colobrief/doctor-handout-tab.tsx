@@ -225,11 +225,11 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
     <div className="space-y-4">
       {/* Action buttons - hidden in print */}
       <div className="flex flex-wrap gap-2 print:hidden">
-        <Button onClick={handlePrint} variant="outline" className="gap-2">
+        <Button onClick={handlePrint} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700">
           <Printer className="h-4 w-4" />
           Export PDF
         </Button>
-        <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2">
+        <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2 shadow-md shadow-teal-500/20">
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -298,9 +298,9 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               <Separator className="mb-6 print:mb-4" />
 
               {/* S - Situation */}
-              <div className="mb-5 border-l-4 border-teal-400 pl-4">
+              <div className="mb-5 border-l-4 border-teal-400 bg-teal-50/30 dark:bg-teal-950/10 rounded-r-lg p-4">
                 <h2 className="text-base font-semibold text-teal-700 dark:text-teal-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
+                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
                   S — Situation
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -309,9 +309,9 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               </div>
 
               {/* B - Background */}
-              <div className="mb-5 border-l-4 border-sky-400 pl-4">
+              <div className="mb-5 border-l-4 border-sky-400 bg-sky-50/30 dark:bg-sky-950/10 rounded-r-lg p-4">
                 <h2 className="text-base font-semibold text-sky-700 dark:text-sky-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
+                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
                   B — Background
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -320,9 +320,9 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               </div>
 
               {/* A - Assessment */}
-              <div className="mb-5 border-l-4 border-amber-400 pl-4">
+              <div className="mb-5 border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10 rounded-r-lg p-4">
                 <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
+                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
                   A — Assessment
                 </h2>
                 {aiSummary && (
@@ -336,22 +336,22 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 {/* Quick stats */}
                 {stats && (
                   <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mt-4 print:grid-cols-7 print:gap-2 print:mt-2">
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Avg Pain</p>
-                      <p className="text-lg font-bold">{stats.avgPain.toFixed(1)}</p>
+                      <p className="text-xl font-extrabold">{stats.avgPain.toFixed(1)}</p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Avg Frequency</p>
-                      <p className="text-lg font-bold">{stats.avgStool.toFixed(1)}/day</p>
+                      <p className="text-xl font-extrabold">{stats.avgStool.toFixed(1)}/day</p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Avg Stress</p>
-                      <p className="text-lg font-bold">{stats.avgStress.toFixed(1)}</p>
+                      <p className="text-xl font-extrabold">{stats.avgStress.toFixed(1)}</p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Trend</p>
                       <p
-                        className={`text-lg font-bold ${
+                        className={`text-xl font-extrabold ${
                           stats.trend === "Improving"
                             ? "text-emerald-600"
                             : stats.trend === "Worsening"
@@ -362,26 +362,26 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                         {stats.trend}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Med Adherence</p>
-                      <p className="text-lg font-bold text-teal-600">{stats.medAdherence}%</p>
+                      <p className="text-xl font-extrabold text-teal-600">{stats.medAdherence}%</p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Blood Days</p>
-                      <p className="text-lg font-bold text-rose-600">{stats.bloodDays} ({stats.bloodPct}%)</p>
+                      <p className="text-xl font-extrabold text-rose-600">{stats.bloodDays} ({stats.bloodPct}%)</p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100">
+                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
                       <p className="text-xs text-muted-foreground">Avg Urgency</p>
-                      <p className="text-lg font-bold">{stats.avgUrgency.toFixed(1)}/3</p>
+                      <p className="text-xl font-extrabold">{stats.avgUrgency.toFixed(1)}/3</p>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* R - Recommendation */}
-              <div className="mb-6 border-l-4 border-violet-400 pl-4">
+              <div className="mb-6 border-l-4 border-violet-400 bg-violet-50/30 dark:bg-violet-950/10 rounded-r-lg p-4">
                 <h2 className="text-base font-semibold text-violet-700 dark:text-violet-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
+                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
                   R — Recommendation
                 </h2>
                 <p className="text-sm leading-relaxed print:text-xs">
@@ -400,7 +400,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                   &larr; Scroll horizontally to see all columns &rarr;
                 </p>
                 <div className="overflow-x-auto rounded-lg border print:rounded-none">
-                  <Table>
+                  <Table className="table-row-hover">
                     <TableHeader>
                       <TableRow className="bg-muted/50">
                         <TableHead>Date</TableHead>

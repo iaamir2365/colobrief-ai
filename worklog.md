@@ -764,3 +764,140 @@ ColoBrief AI is a **production-ready hackathon prototype** for AI-assisted Ulcer
 5. **MEDIUM**: Offline-first with PWA service worker for mobile use
 6. **LOW**: Internationalization (i18n) for broader patient reach
 7. **LOW**: FHIR-compliant data export for EHR integration
+
+---
+Task ID: 5
+Agent: Main Coordinator
+Task: QA testing, styling improvements, new features, and SDK bug fix
+
+## Current Project Status Assessment
+
+The ColoBrief AI application is in a **stable, feature-rich state** suitable for hackathon presentation. All 4 tabs (Overview, Log Symptoms, My Records, Doctor Handout) are fully functional with zero runtime errors. The app compiles cleanly, passes ESLint, and renders correctly in both light and dark modes across desktop and mobile viewports.
+
+VLM visual quality assessment: **8/10** — clean layout, clear hierarchy, cohesive color coding, well-organized data visualizations.
+
+## Work Log
+
+### QA Testing (agent-browser)
+- Tested all 4 tabs: Overview, Log Symptoms, My Records, Doctor Handout
+- Verified dark mode toggle works correctly
+- Verified mobile responsive layout (390×844 iPhone viewport)
+- Tested search/filter functionality in Records tab
+- Verified data export (CSV/JSON) buttons
+- Tested Load Demo Data button (14-day UC symptom data generation)
+- Confirmed zero console errors across all interactions
+- Used VLM to analyze screenshots and identify visual improvement areas
+
+### Bug Fixes
+- **CRITICAL**: Fixed `z-ai-web-dev-sdk` API usage in both `/api/symptoms/ai-chat/route.ts` and `/api/symptoms/ai-extract/route.ts`
+  - Previous code used non-existent `createLLM()` and `llm.chat()` APIs
+  - Fixed to correct API: `ZAI.create()` → `zai.chat.completions.create()`
+  - Verified AI chat returns correct responses with real symptom data
+
+### Styling Improvements (Mandatory)
+1. **Global CSS** (`globals.css` — 310→554 lines):
+   - Added `.card-elevated` — multi-layer box-shadow with hover lift effect
+   - Added `.bg-gradient-subtle` — radial gradient depth overlay
+   - Added `.progress-gradient` — teal gradient progress bars with shimmer
+   - Added `.badge-glow` — primary-colored glow ring on badges
+   - Added `.table-row-hover` — smooth row highlight with primary left accent
+   - Added `.glass-panel` — glassmorphism with backdrop-filter blur
+   - Added `.animate-fade-in-up`, `.animate-pulse-soft`, `.shimmer` — micro-animations
+   - Added `.section-divider` — gradient fade line
+   - Enhanced print styles with page break hints
+   - Improved dark mode scrollbar with theme variables
+   - Added popover enter animation via Radix attribute selector
+
+2. **Overview Tab** (`overview-tab.tsx`):
+   - Enhanced flare alert banners with gradient backgrounds, icon circle containers, bolder text
+   - Applied `card-elevated` to metric cards
+   - Applied `bg-gradient-subtle` to Weekly Insights card
+
+3. **Records Tab** (`my-records-tab.tsx`):
+   - Improved table row hover (`hover:bg-muted/50 transition-colors`)
+   - Better pagination: rounded container, active page styling, consistent button sizing
+   - Enhanced average stats bar: rounded container, color-coded dots, larger values
+   - Better empty state for search with icon and clear button
+   - Polished export buttons with on-brand teal hover effects
+
+4. **Log Tab** (`log-symptoms-tab.tsx`):
+   - Section dividers with icons and gradient lines (Pain & Discomfort, Mental Health, Triggers, Medication & Additional, Notes & AI Assist)
+   - Form card gradient top border accent
+   - Enhanced save button (larger, gradient, shadow, tactile scale feedback)
+   - AI extract section: dashed border with sparkle gradient background
+   - Voice button: prominent rose active state with pulse ring, on-brand idle hover
+
+5. **Doctor Handout Tab** (`doctor-handout-tab.tsx`):
+   - SBAR sections: color-matched background tints, rounded corners, enlarged icon circles
+   - Quick stats grid: `card-elevated` cells, larger/bolder stat values
+   - Export PDF button: teal hover effects
+   - Generate AI Summary button: shadow emphasis
+   - Data table: `table-row-hover` class
+
+### New Features (Mandatory)
+
+1. **AI Symptom Insights Chat** (`ai-insights-panel.tsx` + `/api/symptoms/ai-chat/route.ts`):
+   - Floating collapsible chat panel (fixed bottom-right, z-40)
+   - Teal pill "Ask AI" button when collapsed
+   - 400×500px chat panel with header, quick-question chips, message bubbles
+   - 4 quick questions: "What's my worst trigger?", "Am I improving?", "When should I see a doctor?", "Explain my trends"
+   - Custom markdown parser (bold, italic, lists, line breaks) — no external dependency
+   - Animated typing indicator (3 bouncing dots)
+   - Chat history limited to 10 messages for token efficiency
+   - Server-side AI via `z-ai-web-dev-sdk` with UC-specialized system prompt
+   - Framer Motion open/close animations
+
+2. **Trigger Impact Analysis** (`trigger-correlation.tsx`):
+   - Statistical correlation analysis: compares avg pain/stool/stress when trigger present vs absent
+   - Requires ≥3 total entries and ≥2 days with/without each trigger for validity
+   - Visual: horizontal gradient bars (rose for harmful, emerald for protective)
+   - Strength badges: Strong (>2pts), Moderate (>1pt), Weak
+   - Sub-meta: sample sizes, pain comparison, stool frequency impact
+   - Staggered framer-motion entry animations
+   - Medical disclaimer footer
+   - Integrated into Overview tab between Medication Tracker and AI Insights
+
+3. **Period Comparison Chart** (inline in `overview-tab.tsx`):
+   - Splits logged data into two halves by date
+   - Compares: avg pain, avg stool frequency, avg stress, blood %, top trigger
+   - 3-column layout: First Half | Delta indicator | Second Half
+   - Color-coded delta arrows: green for improvements, red for declines, gray for stable
+   - Only renders when ≥4 data points
+   - Uses GitCompareArrows and ArrowRight icons
+
+### Files Created
+- **NEW**: `src/app/api/symptoms/ai-chat/route.ts` — AI chat backend
+- **NEW**: `src/components/colobrief/ai-insights-panel.tsx` — Chat widget component
+- **NEW**: `src/components/colobrief/trigger-correlation.tsx` — Trigger analysis component
+
+### Files Modified
+- `src/app/globals.css` — 12 new CSS utility classes + enhanced existing styles
+- `src/components/colobrief/overview-tab.tsx` — Flare alert redesign, card-elevated, period comparison, trigger correlation integration, AI panel integration
+- `src/components/colobrief/my-records-tab.tsx` — Row hover, pagination, stats bar, export buttons, search empty state
+- `src/components/colobrief/log-symptoms-tab.tsx` — Section dividers, form card accent, save button, AI extract section, voice button
+- `src/components/colobrief/doctor-handout-tab.tsx` — SBAR section styling, stats grid, buttons, table hover
+- `src/app/api/symptoms/ai-extract/route.ts` — Fixed z-ai-web-dev-sdk API usage
+- `src/app/api/symptoms/ai-chat/route.ts` — Fixed z-ai-web-dev-sdk API usage (corrected from initial creation)
+
+## Verification Results
+- ✅ ESLint: zero errors
+- ✅ agent-browser E2E: all 4 tabs, dark mode, mobile viewport — zero console errors
+- ✅ AI Chat API: tested with curl, returns clinically relevant responses
+- ✅ VLM visual quality: 8/10 rating
+- ✅ Compilation: clean, no TypeScript errors in project files
+
+## Unresolved Issues & Risks
+1. **AI Chat panel auto-closes**: After receiving AI response, the panel may collapse on re-render. Need to ensure panel state persists across parent re-renders (cosmetic, not data-loss)
+2. **No authentication**: App uses a hardcoded demo user — suitable for hackathon but not production
+3. **Single-user architecture**: All API routes query the first user in the DB
+4. **SQLite limitations**: No concurrent write support — acceptable for single-user demo
+
+## Priority Recommendations for Next Phase
+1. **HIGH**: Fix AI panel state persistence across re-renders
+2. **HIGH**: Add multi-user auth (NextAuth.js is already available)
+3. **HIGH**: Data visualization export (chart screenshots for sharing with doctors)
+4. **MEDIUM**: Push notifications for medication reminders
+5. **MEDIUM**: Food diary integration with nutrition database
+6. **MEDIUM**: Offline-first with PWA service worker
+7. **LOW**: Internationalization (i18n)
+8. **LOW**: FHIR-compliant data export for EHR integration

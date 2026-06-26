@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2 } from "lucide-react";
+import { Search, SearchX, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -430,7 +430,7 @@ export default function MyRecordsTab({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8"
+            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
             onClick={() => window.open("/api/symptoms/export?format=csv", "_blank")}
           >
             <Download className="h-3.5 w-3.5" />
@@ -439,7 +439,7 @@ export default function MyRecordsTab({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8"
+            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
             onClick={() => window.open("/api/symptoms/export?format=json", "_blank")}
           >
             <Download className="h-3.5 w-3.5" />
@@ -472,10 +472,33 @@ export default function MyRecordsTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paged.map((log, i) => (
+                {paged.length === 0 && search.trim() ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-48 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                        <div className="rounded-full bg-muted p-3">
+                          <SearchX className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">No matching records</p>
+                          <p className="text-xs mt-0.5">Try adjusting your search terms for "{search}"</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-teal-600 hover:text-teal-700"
+                          onClick={() => { setSearch(""); setPage(0); }}
+                        >
+                          Clear search
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paged.map((log, i) => (
                   <React.Fragment key={log.id}>
                   <TableRow
-                    className="cursor-pointer hover:bg-muted/30"
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
                   >
                     <TableCell className="pl-4 font-medium">
@@ -578,7 +601,7 @@ export default function MyRecordsTab({
                     </TableCell>
                   </TableRow>
                   {expandedId === log.id && (
-                    <TableRow>
+                    <TableRow className="hover:bg-transparent transition-colors">
                       <TableCell colSpan={9} className="bg-muted/20 px-6 py-3">
                         <div className="text-sm">
                           <span className="font-medium text-muted-foreground">Notes: </span>
@@ -595,7 +618,8 @@ export default function MyRecordsTab({
                     </TableRow>
                   )}
                   </React.Fragment>
-                ))}
+                ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -604,25 +628,44 @@ export default function MyRecordsTab({
 
       {/* Summary Averages */}
       {filtered.length > 0 && (
-        <div className="flex gap-6 mt-3 px-4 text-sm text-muted-foreground">
-          <span>Avg Pain: <strong className="text-foreground">{avgPain.toFixed(1)}</strong>/10</span>
-          <span>Avg Freq: <strong className="text-foreground">{avgFreq.toFixed(1)}</strong>/day</span>
-          <span>Avg Stress: <strong className="text-foreground">{avgStress.toFixed(1)}</strong>/10</span>
+        <div className="flex items-center gap-4 mt-3 px-1">
+          <div className="flex items-center gap-6 rounded-xl bg-muted/50 border border-border/50 px-5 py-3 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-rose-400" />
+              <span className="text-xs text-muted-foreground">Avg Pain</span>
+              <span className="text-lg font-bold text-foreground tabular-nums">{avgPain.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">/10</span>
+            </div>
+            <div className="h-5 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-teal-400" />
+              <span className="text-xs text-muted-foreground">Avg Freq</span>
+              <span className="text-lg font-bold text-foreground tabular-nums">{avgFreq.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">/day</span>
+            </div>
+            <div className="h-5 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-amber-400" />
+              <span className="text-xs text-muted-foreground">Avg Stress</span>
+              <span className="text-lg font-bold text-foreground tabular-nums">{avgStress.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">/10</span>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1">
-          <Button variant="outline" size="sm" onClick={() => setPage(0)} disabled={page === 0}>&laquo;</Button>
-          <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>&lsaquo;</Button>
+        <div className="flex items-center justify-center gap-1 rounded-xl bg-muted/30 border border-border/40 px-3 py-2 shadow-sm">
+          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(0)} disabled={page === 0}>&laquo;</Button>
+          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>&lsaquo;</Button>
           {totalPages <= 7
             ? Array.from({ length: totalPages }, (_, i) => (
                 <Button
                   key={i}
                   variant={i === page ? "default" : "outline"}
                   size="sm"
-                  className="w-8 h-8 p-0"
+                  className={i === page ? "w-8 h-8 p-0 bg-primary text-primary-foreground shadow-sm" : "w-8 h-8 p-0 hover:bg-muted/60"}
                   onClick={() => setPage(i)}
                 >
                   {i + 1}
@@ -645,7 +688,7 @@ export default function MyRecordsTab({
                       key={p}
                       variant={p === page ? "default" : "outline"}
                       size="sm"
-                      className="w-8 h-8 p-0"
+                      className={p === page ? "w-8 h-8 p-0 bg-primary text-primary-foreground shadow-sm" : "w-8 h-8 p-0 hover:bg-muted/60"}
                       onClick={() => setPage(p)}
                     >
                       {p + 1}
@@ -653,8 +696,8 @@ export default function MyRecordsTab({
                   )
                 );
               })()}
-          <Button variant="outline" size="sm" onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}>&rsaquo;</Button>
-          <Button variant="outline" size="sm" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>&raquo;</Button>
+          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}>&rsaquo;</Button>
+          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>&raquo;</Button>
         </div>
       )}
 

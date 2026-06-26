@@ -20,6 +20,8 @@ import {
   Trophy,
   ShieldAlert,
   Flame,
+  GitCompareArrows,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +53,9 @@ import { format, subDays, parseISO, isAfter } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
 import HealthScoreCard from "@/components/colobrief/health-score-card";
 import MedicationTracker from "@/components/colobrief/medication-tracker";
+import TriggerCorrelation from "@/components/colobrief/trigger-correlation";
 import SymptomCalendar from "@/components/colobrief/symptom-calendar";
+import AIInsightsPanel from "@/components/colobrief/ai-insights-panel";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Type 1: Hard lumps",
@@ -182,7 +186,7 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
     >
-      <Card className={`rounded-xl border-0 shadow-sm border-l-4 ${card.borderColor} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-teal-200 dark:hover:border-teal-800`}>
+      <Card className={`rounded-xl border-0 shadow-sm card-elevated border-l-4 ${card.borderColor} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-teal-200 dark:hover:border-teal-800`}>
         <CardContent className="p-5 relative">
           {card.gaugeMax && (
             <div className="absolute top-2 right-2">
@@ -344,6 +348,53 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       worstDay: worstDay ? format(parseISO(worstDay.date), "MMM d") : "—",
       bestDay: bestDay ? format(parseISO(bestDay.date), "MMM d") : "—",
       topTrigger: topTrigger ? topTrigger[0] : "None",
+    };
+  }, [symptoms]);
+
+  // Period comparison data for first half vs second half
+  const periodComparison = useMemo(() => {
+    if (symptoms.length < 4) return null;
+    const sorted = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
+    const mid = Math.floor(sorted.length / 2);
+    const firstHalf = sorted.slice(0, mid);
+    const secondHalf = sorted.slice(mid);
+
+    const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+
+    const firstAvgPain = avg(firstHalf.map((s) => s.painLevel));
+    const secondAvgPain = avg(secondHalf.map((s) => s.painLevel));
+    const firstAvgStool = avg(firstHalf.map((s) => s.stoolFrequency));
+    const secondAvgStool = avg(secondHalf.map((s) => s.stoolFrequency));
+    const firstAvgStress = avg(firstHalf.map((s) => s.stressLevel));
+    const secondAvgStress = avg(secondHalf.map((s) => s.stressLevel));
+    const firstBloodPct = firstHalf.length ? Math.round((firstHalf.filter((s) => s.bloodInStool).length / firstHalf.length) * 100) : 0;
+    const secondBloodPct = secondHalf.length ? Math.round((secondHalf.filter((s) => s.bloodInStool).length / secondHalf.length) * 100) : 0;
+
+    // Most common trigger per half
+    const topTrigger = (arr: typeof symptoms) => {
+      const map: Record<string, number> = {};
+      arr.forEach((s) => s.triggers.forEach((t) => { map[t] = (map[t] || 0) + 1; }));
+      const entry = Object.entries(map).sort(([, a], [, b]) => b - a)[0];
+      return entry ? entry[0] : "None";
+    };
+
+    return {
+      first: {
+        avgPain: firstAvgPain,
+        avgStool: firstAvgStool,
+        avgStress: firstAvgStress,
+        bloodPct: firstBloodPct,
+        topTrigger: topTrigger(firstHalf),
+        dateRange: `${format(parseISO(firstHalf[0].date), "MMM d")} — ${format(parseISO(firstHalf[firstHalf.length - 1].date), "MMM d")}`,
+      },
+      second: {
+        avgPain: secondAvgPain,
+        avgStool: secondAvgStool,
+        avgStress: secondAvgStress,
+        bloodPct: secondBloodPct,
+        topTrigger: topTrigger(secondHalf),
+        dateRange: `${format(parseISO(secondHalf[0].date), "MMM d")} — ${format(parseISO(secondHalf[secondHalf.length - 1].date), "MMM d")}`,
+      },
     };
   }, [symptoms]);
 
@@ -522,10 +573,12 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             >
               <div className="h-full">
                 {flareAlert.level === "high" && (
-                  <div className="h-full rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800/50 p-4 flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
+                  <div className="h-full rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 dark:border-rose-700/60 p-4 flex items-start gap-3">
+                    <div className="rounded-full bg-rose-100 dark:bg-rose-900/60 p-1.5 shrink-0">
+                      <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                    </div>
                     <div>
-                      <h4 className="font-semibold text-rose-800 dark:text-rose-300 text-sm">High Flare Risk</h4>
+                      <h4 className="font-bold text-rose-800 dark:text-rose-300 text-sm">High Flare Risk</h4>
                       <p className="text-rose-700 dark:text-rose-400 text-sm mt-0.5">
                         Your average pain level over the last 3 days is {flareAlert.avg.toFixed(1)}/10. Consider contacting your healthcare provider.
                       </p>
@@ -533,10 +586,12 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   </div>
                 )}
                 {flareAlert.level === "moderate" && (
-                  <div className="h-full rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 p-4 flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                  <div className="h-full rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 dark:border-amber-700/60 p-4 flex items-start gap-3">
+                    <div className="rounded-full bg-amber-100 dark:bg-amber-900/60 p-1.5 shrink-0">
+                      <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
                     <div>
-                      <h4 className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Moderate Symptoms</h4>
+                      <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm">Moderate Symptoms</h4>
                       <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
                         Your recent pain levels are elevated. Continue monitoring and consider dietary adjustments.
                       </p>
@@ -544,10 +599,12 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   </div>
                 )}
                 {flareAlert.level === "stable" && (
-                  <div className="h-full rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/50 p-4 flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                  <div className="h-full rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 dark:border-emerald-700/60 p-4 flex items-start gap-3">
+                    <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/60 p-1.5 shrink-0">
+                      <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
                     <div>
-                      <h4 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Symptoms Stable</h4>
+                      <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Symptoms Stable</h4>
                       <p className="text-emerald-700 dark:text-emerald-400 text-sm mt-0.5">
                         Your recent readings look good. Keep up the great self-management!
                       </p>
@@ -578,7 +635,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
         >
-          <Card className="rounded-xl border-0 shadow-sm">
+          <Card className="rounded-xl border-0 shadow-sm bg-gradient-subtle">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-amber-500" />
@@ -725,6 +782,128 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Period Comparison */}
+      {periodComparison && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+          <Card className="rounded-xl border-0 shadow-sm card-elevated">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <GitCompareArrows className="h-4 w-4 text-teal-600" />
+                  Period Comparison
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground mb-4">Compare your first and second half of logged data to spot trends.</p>
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center mb-3">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-muted-foreground">First Half</p>
+                  <p className="text-xs text-muted-foreground/70">{periodComparison.first.dateRange}</p>
+                </div>
+                <div className="w-8" />
+                <div className="text-center">
+                  <p className="text-xs font-medium text-muted-foreground">Second Half</p>
+                  <p className="text-xs text-muted-foreground/70">{periodComparison.second.dateRange}</p>
+                </div>
+              </div>
+              {/* Comparison rows */}
+              {[
+                {
+                  label: "Avg Pain",
+                  first: periodComparison.first.avgPain.toFixed(1),
+                  second: periodComparison.second.avgPain.toFixed(1),
+                  lowerIsBetter: true,
+                  suffix: "/10",
+                },
+                {
+                  label: "Avg Stool Freq",
+                  first: periodComparison.first.avgStool.toFixed(1),
+                  second: periodComparison.second.avgStool.toFixed(1),
+                  lowerIsBetter: true,
+                  suffix: "/day",
+                },
+                {
+                  label: "Avg Stress",
+                  first: periodComparison.first.avgStress.toFixed(1),
+                  second: periodComparison.second.avgStress.toFixed(1),
+                  lowerIsBetter: true,
+                  suffix: "/10",
+                },
+                {
+                  label: "Blood Days",
+                  first: `${periodComparison.first.bloodPct}%`,
+                  second: `${periodComparison.second.bloodPct}%`,
+                  lowerIsBetter: true,
+                  suffix: "",
+                  numeric: [periodComparison.first.bloodPct, periodComparison.second.bloodPct],
+                },
+                {
+                  label: "Top Trigger",
+                  first: periodComparison.first.topTrigger,
+                  second: periodComparison.second.topTrigger,
+                  isText: true,
+                },
+              ].map((row) => {
+                const delta =
+                  row.numeric
+                    ? row.numeric[1] - row.numeric[0]
+                    : row.isText
+                      ? 0
+                      : parseFloat(row.second) - parseFloat(row.first);
+                const improved = row.lowerIsBetter ? delta < 0 : delta > 0;
+                const worsened = row.lowerIsBetter ? delta > 0 : delta < 0;
+                const stable = Math.abs(delta) < 0.3 && !row.isText;
+                const changed = row.isText && row.first !== row.second;
+
+                return (
+                  <div
+                    key={row.label}
+                    className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center py-2.5 border-b last:border-b-0"
+                  >
+                    <div className="text-center rounded-lg bg-muted/40 px-3 py-2">
+                      <p className="text-sm font-semibold">{row.first}{row.suffix}</p>
+                    </div>
+                    <div className="flex flex-col items-center w-8">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">{row.label}</p>
+                      {row.isText ? (
+                        changed ? (
+                          <ArrowRight className="h-3.5 w-3.5 text-amber-500" />
+                        ) : (
+                          <Minus className="h-3.5 w-3.5 text-muted-foreground/40" />
+                        )
+                      ) : stable ? (
+                        <Minus className="h-3.5 w-3.5 text-gray-400" />
+                      ) : improved ? (
+                        <TrendingDown className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <TrendingUp className="h-3.5 w-3.5 text-rose-500" />
+                      )}
+                    </div>
+                    <div className="text-center rounded-lg bg-muted/40 px-3 py-2">
+                      <p
+                        className={`text-sm font-semibold ${
+                          row.isText
+                            ? ""
+                            : worsened
+                              ? "text-rose-600 dark:text-rose-400"
+                              : improved
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : ""
+                        }`}
+                      >
+                        {row.second}{row.suffix}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -876,6 +1055,12 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
 
       {/* Medication Tracker */}
       <MedicationTracker symptoms={symptoms} isLoading={isLoading} />
+
+      {/* Trigger Correlation Analysis */}
+      <TriggerCorrelation symptoms={symptoms} isLoading={isLoading} />
+
+      {/* AI Insights Chat Panel */}
+      <AIInsightsPanel symptoms={symptoms} />
     </div>
   );
 }

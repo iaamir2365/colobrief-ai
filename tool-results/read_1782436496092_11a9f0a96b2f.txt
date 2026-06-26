@@ -1,0 +1,885 @@
+     1→"use client";
+     2→
+     3→import { useMemo } from "react";
+     4→import { useAnimatedNumber } from "@/hooks/use-animated-number";
+     5→import { motion } from "framer-motion";
+     6→import {
+     7→  Activity,
+     8→  UtensilsCrossed,
+     9→  Brain,
+    10→  FileText,
+    11→  Pill,
+    12→  Droplets,
+    13→  TrendingUp,
+    14→  TrendingDown,
+    15→  Minus,
+    16→  AlertTriangle,
+    17→  AlertCircle,
+    18→  CheckCircle,
+    19→  CalendarDays,
+    20→  Trophy,
+    21→  ShieldAlert,
+    22→  Flame,
+    23→} from "lucide-react";
+    24→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    25→import { Badge } from "@/components/ui/badge";
+    26→import { Skeleton } from "@/components/ui/skeleton";
+    27→import {
+    28→  ChartContainer,
+    29→  ChartTooltip,
+    30→  ChartTooltipContent,
+    31→  ChartLegend,
+    32→  ChartLegendContent,
+    33→  type ChartConfig,
+    34→} from "@/components/ui/chart";
+    35→import {
+    36→  LineChart,
+    37→  Line,
+    38→  Area,
+    39→  XAxis,
+    40→  YAxis,
+    41→  CartesianGrid,
+    42→  PieChart,
+    43→  Pie,
+    44→  Cell,
+    45→  BarChart,
+    46→  Bar,
+    47→  ScatterChart,
+    48→  Scatter,
+    49→} from "recharts";
+    50→import { format, subDays, parseISO, isAfter } from "date-fns";
+    51→import type { SymptomLog } from "@/types/symptom";
+    52→import HealthScoreCard from "@/components/colobrief/health-score-card";
+    53→import MedicationTracker from "@/components/colobrief/medication-tracker";
+    54→import SymptomCalendar from "@/components/colobrief/symptom-calendar";
+    55→import AIInsightsPanel from "@/components/colobrief/ai-insights-panel";
+    56→
+    57→const BRISTOL_LABELS: Record<number, string> = {
+    58→  1: "Type 1: Hard lumps",
+    59→  2: "Type 2: Lumpy sausage",
+    60→  3: "Type 3: Sausage w/ cracks",
+    61→  4: "Type 4: Smooth soft",
+    62→  5: "Type 5: Soft blobs",
+    63→  6: "Type 6: Mushy",
+    64→  7: "Type 7: Watery",
+    65→};
+    66→
+    67→const BRISTOL_COLORS = ["#94a3b8", "#a8a29e", "#a3e635", "#34d399", "#fbbf24", "#f97316", "#ef4444"];
+    68→
+    69→const lineChartConfig: ChartConfig = {
+    70→  stoolFrequency: {
+    71→    label: "Stool Frequency",
+    72→    color: "#0d9488",
+    73→  },
+    74→  painLevel: {
+    75→    label: "Pain Level",
+    76→    color: "#f43f5e",
+    77→  },
+    78→  stressLevel: {
+    79→    label: "Stress Level",
+    80→    color: "#f59e0b",
+    81→  },
+    82→};
+    83→
+    84→const pieChartConfig: ChartConfig = {
+    85→  type1: { label: "Type 1", color: BRISTOL_COLORS[0] },
+    86→  type2: { label: "Type 2", color: BRISTOL_COLORS[1] },
+    87→  type3: { label: "Type 3", color: BRISTOL_COLORS[2] },
+    88→  type4: { label: "Type 4", color: BRISTOL_COLORS[3] },
+    89→  type5: { label: "Type 5", color: BRISTOL_COLORS[4] },
+    90→  type6: { label: "Type 6", color: BRISTOL_COLORS[5] },
+    91→  type7: { label: "Type 7", color: BRISTOL_COLORS[6] },
+    92→};
+    93→
+    94→const barChartConfig: ChartConfig = {
+    95→  count: { label: "Occurrences", color: "#0d9488" },
+    96→};
+    97→
+    98→const scatterConfig: ChartConfig = {
+    99→  scatter: { label: "Pain vs Stress", color: "#0d9488" },
+   100→};
+   101→
+   102→function getStoolEmoji(type: number): string {
+   103→  if (type <= 2) return "🪨";
+   104→  if (type <= 4) return "✅";
+   105→  if (type <= 6) return "⚠️";
+   106→  return "🚨";
+   107→}
+   108→
+   109→function CircularGauge({ value, max = 10, size = 48, strokeWidth = 4, color = "#0d9488" }: { value: number; max?: number; size?: number; strokeWidth?: number; color?: string }) {
+   110→  const radius = (size - strokeWidth) / 2;
+   111→  const circumference = radius * 2 * Math.PI;
+   112→  const progress = Math.min(value / max, 1) * circumference;
+   113→
+   114→  return (
+   115→    <svg width={size} height={size} className="-rotate-90">
+   116→      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-muted/30" />
+   117→      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={circumference - progress} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+   118→    </svg>
+   119→  );
+   120→}
+   121→
+   122→interface MetricCardData {
+   123→  label: string;
+   124→  value: string;
+   125→  rawValue: number;
+   126→  suffix: string;
+   127→  decimals: number;
+   128→  icon: React.ComponentType<{ className?: string }>;
+   129→  prev: number | null | undefined;
+   130→  color: string;
+   131→  bgColor: string;
+   132→  borderColor: string;
+   133→  sparklineColor: string;
+   134→  sparkData: number[];
+   135→  gaugeMax?: number;
+   136→  gaugeColor?: string;
+   137→}
+   138→
+   139→interface OverviewTabProps {
+   140→  symptoms: SymptomLog[];
+   141→  isLoading: boolean;
+   142→}
+   143→
+   144→function TrendIndicator({ current, previous }: { current: number; previous: number }) {
+   145→  if (previous === 0 && current === 0) return <Minus className="h-4 w-4 text-muted-foreground" />;
+   146→  const diff = current - previous;
+   147→  if (Math.abs(diff) < 0.5) return <Minus className="h-4 w-4 text-muted-foreground" />;
+   148→  if (diff < 0) return <TrendingDown className="h-4 w-4 text-emerald-500" />;
+   149→  return <TrendingUp className="h-4 w-4 text-rose-500" />;
+   150→}
+   151→
+   152→function MiniSparkline({ dataPoints, color }: { dataPoints: number[]; color: string }) {
+   153→  if (dataPoints.length === 0) return null;
+   154→  const max = Math.max(...dataPoints, 1);
+   155→  return (
+   156→    <div className="flex items-end gap-[3px] h-6 mt-2">
+   157→      {dataPoints.slice(-5).map((val, i) => {
+   158→        const height = Math.max(Math.round((val / max) * 24), 2);
+   159→        return (
+   160→          <div
+   161→            key={i}
+   162→            className="w-[6px] rounded-sm opacity-60"
+   163→            style={{
+   164→              height: `${height}px`,
+   165→              backgroundColor: color,
+   166→            }}
+   167→          />
+   168→        );
+   169→      })}
+   170→    </div>
+   171→  );
+   172→}
+   173→
+   174→function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: number }) {
+   175→  const animatedValue = useAnimatedNumber(card.rawValue);
+   176→  const displayValue = card.decimals > 0
+   177→    ? animatedValue.toFixed(card.decimals)
+   178→    : String(Math.round(animatedValue));
+   179→
+   180→  return (
+   181→    <motion.div
+   182→      initial={{ opacity: 0, y: 20 }}
+   183→      animate={{ opacity: 1, y: 0 }}
+   184→      transition={{ delay: index * 0.1 }}
+   185→    >
+   186→      <Card className={`rounded-xl border-0 shadow-sm border-l-4 ${card.borderColor} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-teal-200 dark:hover:border-teal-800`}>
+   187→        <CardContent className="p-5 relative">
+   188→          {card.gaugeMax && (
+   189→            <div className="absolute top-2 right-2">
+   190→              <CircularGauge value={card.rawValue} max={card.gaugeMax} color={card.gaugeColor} />
+   191→            </div>
+   192→          )}
+   193→          <div className="flex items-center justify-between">
+   194→            <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
+   195→              <card.icon className={`h-5 w-5 ${card.color}`} />
+   196→            </div>
+   197→            {card.prev !== null && (
+   198→              <TrendIndicator current={card.rawValue} previous={card.prev!} />
+   199→            )}
+   200→          </div>
+   201→          <div className="mt-3">
+   202→            <p className="text-sm text-muted-foreground">{card.label}</p>
+   203→            <p className="text-2xl font-bold mt-0.5">
+   204→              {displayValue}<span className="text-base font-medium text-muted-foreground ml-0.5">{card.suffix}</span>
+   205→            </p>
+   206→          </div>
+   207→          {card.sparkData.length > 0 && (
+   208→            <MiniSparkline dataPoints={card.sparkData} color={card.sparklineColor} />
+   209→          )}
+   210→        </CardContent>
+   211→      </Card>
+   212→    </motion.div>
+   213→  );
+   214→}
+   215→
+   216→export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
+   217→  const sevenDaysAgo = useMemo(() => subDays(new Date(), 7), []);
+   218→  const threeDaysAgo = useMemo(() => subDays(new Date(), 3), []);
+   219→
+   220→  const metrics = useMemo(() => {
+   221→    if (!symptoms.length) return null;
+   222→    const recent = symptoms.filter((s) => isAfter(parseISO(s.date), sevenDaysAgo));
+   223→    const older = symptoms.filter((s) => {
+   224→      const d = parseISO(s.date);
+   225→      return isAfter(d, subDays(sevenDaysAgo, 7)) && !isAfter(d, sevenDaysAgo);
+   226→    });
+   227→
+   228→    const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+   229→    const avgOld = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+   230→
+   231→    // Medication adherence: % of days with medication logged
+   232→    const medAdherence = symptoms.length
+   233→      ? (symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length / symptoms.length) * 100
+   234→      : 0;
+   235→    // Blood incidents: count of days with bloodInStool=true
+   236→    const bloodIncidents = symptoms.filter((s) => s.bloodInStool).length;
+   237→
+   238→    return {
+   239→      avgPain: avg(recent.map((s) => s.painLevel)),
+   240→      prevPain: avgOld(older.map((s) => s.painLevel)),
+   241→      avgStool: avg(recent.map((s) => s.stoolFrequency)),
+   242→      prevStool: avgOld(older.map((s) => s.stoolFrequency)),
+   243→      avgStress: avg(recent.map((s) => s.stressLevel)),
+   244→      prevStress: avgOld(older.map((s) => s.stressLevel)),
+   245→      totalLogs: symptoms.length,
+   246→      medAdherence,
+   247→      bloodIncidents,
+   248→    };
+   249→  }, [symptoms, sevenDaysAgo]);
+   250→
+   251→  const chartData = useMemo(() => {
+   252→    return [...symptoms]
+   253→      .sort((a, b) => a.date.localeCompare(b.date))
+   254→      .map((s) => ({
+   255→        date: format(parseISO(s.date), "MMM d"),
+   256→        fullDate: s.date,
+   257→        stoolFrequency: s.stoolFrequency,
+   258→        painLevel: s.painLevel,
+   259→        stressLevel: s.stressLevel,
+   260→        bloodInStool: s.bloodInStool,
+   261→      }));
+   262→  }, [symptoms]);
+   263→
+   264→  const stoolTypeDistribution = useMemo(() => {
+   265→    const counts: Record<number, number> = {};
+   266→    symptoms.forEach((s) => {
+   267→      const t = Math.round(s.stoolType);
+   268→      counts[t] = (counts[t] || 0) + 1;
+   269→    });
+   270→    return Object.entries(counts)
+   271→      .sort(([a], [b]) => Number(a) - Number(b))
+   272→      .map(([type, count]) => ({
+   273→        name: BRISTOL_LABELS[Number(type)] || `Type ${type}`,
+   274→        value: count,
+   275→        fill: BRISTOL_COLORS[Number(type) - 1] || "#94a3b8",
+   276→        type: Number(type),
+   277→      }));
+   278→  }, [symptoms]);
+   279→
+   280→  const mostCommonStoolType = useMemo(() => {
+   281→    if (!stoolTypeDistribution.length) return null;
+   282→    return stoolTypeDistribution.reduce((best, cur) => (cur.value > best.value ? cur : best));
+   283→  }, [stoolTypeDistribution]);
+   284→
+   285→  const triggerCounts = useMemo(() => {
+   286→    const counts: Record<string, number> = {};
+   287→    symptoms.forEach((s) => {
+   288→      s.triggers.forEach((t) => {
+   289→        counts[t] = (counts[t] || 0) + 1;
+   290→      });
+   291→    });
+   292→    return Object.entries(counts)
+   293→      .sort(([, a], [, b]) => b - a)
+   294→      .slice(0, 5)
+   295→      .map(([trigger, count]) => ({ trigger, count }));
+   296→  }, [symptoms]);
+   297→
+   298→  // Flare Risk Alert: 3-day rolling average of pain
+   299→  const flareAlert = useMemo(() => {
+   300→    const last3 = symptoms
+   301→      .filter((s) => isAfter(parseISO(s.date), threeDaysAgo))
+   302→      .map((s) => s.painLevel);
+   303→    if (last3.length === 0) return null;
+   304→    const avg = last3.reduce((a, b) => a + b, 0) / last3.length;
+   305→    if (avg > 6) return { level: "high" as const, avg };
+   306→    if (avg >= 4) return { level: "moderate" as const, avg };
+   307→    return { level: "stable" as const, avg };
+   308→  }, [symptoms, threeDaysAgo]);
+   309→
+   310→  // Weekly Insights
+   311→  const weeklyInsights = useMemo(() => {
+   312→    if (symptoms.length < 2) return null;
+   313→    const sorted = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
+   314→    const mid = Math.ceil(sorted.length / 2);
+   315→    const firstHalf = sorted.slice(0, mid);
+   316→    const secondHalf = sorted.slice(mid);
+   317→
+   318→    const avg = (arr: SymptomLog[], key: "painLevel" | "stressLevel" | "stoolFrequency") =>
+   319→      arr.length ? arr.reduce((sum, s) => sum + s[key], 0) / arr.length : 0;
+   320→
+   321→    // Most improved metric (biggest decrease from first half to second half)
+   322→    const improvements = [
+   323→      { name: "Pain", diff: avg(firstHalf, "painLevel") - avg(secondHalf, "painLevel") },
+   324→      { name: "Stress", diff: avg(firstHalf, "stressLevel") - avg(secondHalf, "stressLevel") },
+   325→      { name: "Stool Freq", diff: avg(firstHalf, "stoolFrequency") - avg(secondHalf, "stoolFrequency") },
+   326→    ];
+   327→    const mostImproved = improvements.reduce((best, cur) => (cur.diff > best.diff ? cur : best), improvements[0]);
+   328→
+   329→    // Worst & best days (pain*2 + stress)
+   330→    let worstDay: { date: string; score: number } | null = null;
+   331→    let bestDay: { date: string; score: number } | null = null;
+   332→    sorted.forEach((s) => {
+   333→      const score = s.painLevel * 2 + s.stressLevel;
+   334→      if (!worstDay || score > worstDay.score) worstDay = { date: s.date, score };
+   335→      if (!bestDay || score < bestDay.score) bestDay = { date: s.date, score };
+   336→    });
+   337→
+   338→    // Top trigger
+   339→    const triggerMap: Record<string, number> = {};
+   340→    symptoms.forEach((s) => s.triggers.forEach((t) => { triggerMap[t] = (triggerMap[t] || 0) + 1; }));
+   341→    const topTrigger = Object.entries(triggerMap).sort(([, a], [, b]) => b - a)[0];
+   342→
+   343→    return {
+   344→      mostImproved: mostImproved.diff > 0 ? mostImproved.name : null,
+   345→      worstDay: worstDay ? format(parseISO(worstDay.date), "MMM d") : "—",
+   346→      bestDay: bestDay ? format(parseISO(bestDay.date), "MMM d") : "—",
+   347→      topTrigger: topTrigger ? topTrigger[0] : "None",
+   348→    };
+   349→  }, [symptoms]);
+   350→
+   351→  // Sparkline data for each metric
+   352→  const sparklineData = useMemo(() => {
+   353→    const sorted = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
+   354→    return {
+   355→      pain: sorted.slice(-5).map((s) => s.painLevel),
+   356→      stool: sorted.slice(-5).map((s) => s.stoolFrequency),
+   357→      stress: sorted.slice(-5).map((s) => s.stressLevel),
+   358→    };
+   359→  }, [symptoms]);
+   360→
+   361→  if (isLoading) {
+   362→    return (
+   363→      <div className="space-y-6">
+   364→        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+   365→          {[...Array(6)].map((_, i) => (
+   366→            <Skeleton key={i} className="h-28 rounded-xl" />
+   367→          ))}
+   368→        </div>
+   369→        <Skeleton className="h-80 rounded-xl" />
+   370→        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   371→          <Skeleton className="h-64 rounded-xl" />
+   372→          <Skeleton className="h-64 rounded-xl" />
+   373→        </div>
+   374→      </div>
+   375→    );
+   376→  }
+   377→
+   378→  if (!symptoms.length) {
+   379→    return (
+   380→      <motion.div
+   381→        initial={{ opacity: 0, y: 20 }}
+   382→        animate={{ opacity: 1, y: 0 }}
+   383→        className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto"
+   384→      >
+   385→        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+   386→          <div className="relative">
+   387→            <Activity className="h-14 w-14 text-teal-600 mx-auto" />
+   388→            <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-400 rounded-full animate-bounce" />
+   389→            <div className="absolute -bottom-1 -left-1 h-3 w-3 bg-rose-400 rounded-full animate-bounce [animation-delay:0.15s]" />
+   390→          </div>
+   391→        </div>
+   392→        <h3 className="text-xl font-semibold text-foreground mb-2">Welcome to ColoBrief AI</h3>
+   393→        <p className="text-muted-foreground mb-6">
+   394→          Start tracking your Ulcerative Colitis symptoms to unlock personalized insights, 
+   395→          trend analysis, and clinical handouts for your doctor.
+   396→        </p>
+   397→        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+   398→          {[
+   399→            { icon: "🎤", title: "Voice Log", desc: "Speak your symptoms naturally" },
+   400→            { icon: "✨", title: "AI Extract", desc: "AI parses your notes into data" },
+   401→            { icon: "📊", title: "Live Charts", desc: "See trends as you log" },
+   402→          ].map((tip) => (
+   403→            <div key={tip.title} className="rounded-lg border bg-card p-3 text-center">
+   404→              <span className="text-2xl">{tip.icon}</span>
+   405→              <p className="text-sm font-medium mt-1">{tip.title}</p>
+   406→              <p className="text-xs text-muted-foreground">{tip.desc}</p>
+   407→            </div>
+   408→          ))}
+   409→        </div>
+   410→        <p className="text-xs text-muted-foreground mt-6">
+   411→          Click <strong>"Load Demo Data"</strong> in the sidebar to explore with sample data
+   412→        </p>
+   413→      </motion.div>
+   414→    );
+   415→  }
+   416→
+   417→  const metricCards = [
+   418→    {
+   419→      label: "Avg Pain Level",
+   420→      value: metrics ? `${metrics.avgPain.toFixed(1)}` : "—",
+   421→      rawValue: metrics?.avgPain ?? 0,
+   422→      suffix: "/10",
+   423→      decimals: 1,
+   424→      icon: Activity,
+   425→      prev: metrics?.prevPain,
+   426→      color: "text-rose-500",
+   427→      bgColor: "bg-rose-50",
+   428→      borderColor: "border-l-rose-400",
+   429→      sparklineColor: "#f43f5e",
+   430→      sparkData: sparklineData.pain,
+   431→      gaugeMax: 10,
+   432→      gaugeColor: "#f43f5e",
+   433→    },
+   434→    {
+   435→      label: "Avg Stool Frequency",
+   436→      value: metrics ? `${metrics.avgStool.toFixed(1)}` : "—",
+   437→      rawValue: metrics?.avgStool ?? 0,
+   438→      suffix: "/day",
+   439→      decimals: 1,
+   440→      icon: UtensilsCrossed,
+   441→      prev: metrics?.prevStool,
+   442→      color: "text-teal-600",
+   443→      bgColor: "bg-teal-50",
+   444→      borderColor: "border-l-teal-400",
+   445→      sparklineColor: "#0d9488",
+   446→      sparkData: sparklineData.stool,
+   447→    },
+   448→    {
+   449→      label: "Avg Stress Level",
+   450→      value: metrics ? `${metrics.avgStress.toFixed(1)}` : "—",
+   451→      rawValue: metrics?.avgStress ?? 0,
+   452→      suffix: "/10",
+   453→      decimals: 1,
+   454→      icon: Brain,
+   455→      prev: metrics?.prevStress,
+   456→      color: "text-amber-500",
+   457→      bgColor: "bg-amber-50",
+   458→      borderColor: "border-l-amber-400",
+   459→      sparklineColor: "#f59e0b",
+   460→      sparkData: sparklineData.stress,
+   461→      gaugeMax: 10,
+   462→      gaugeColor: "#f59e0b",
+   463→    },
+   464→    {
+   465→      label: "Total Logs",
+   466→      value: String(symptoms.length),
+   467→      rawValue: symptoms.length,
+   468→      suffix: "",
+   469→      decimals: 0,
+   470→      icon: FileText,
+   471→      prev: null,
+   472→      color: "text-teal-600",
+   473→      bgColor: "bg-teal-50",
+   474→      borderColor: "border-l-teal-400",
+   475→      sparklineColor: "#0d9488",
+   476→      sparkData: [],
+   477→    },
+   478→    {
+   479→      label: "Medication Adherence",
+   480→      value: metrics ? `${metrics.medAdherence.toFixed(0)}` : "—",
+   481→      rawValue: metrics?.medAdherence ?? 0,
+   482→      suffix: "%",
+   483→      decimals: 0,
+   484→      icon: Pill,
+   485→      prev: null,
+   486→      color: "text-teal-600",
+   487→      bgColor: "bg-teal-50",
+   488→      borderColor: "border-l-teal-400",
+   489→      sparklineColor: "#0d9488",
+   490→      sparkData: [],
+   491→      gaugeMax: 100,
+   492→      gaugeColor: "#0d9488",
+   493→    },
+   494→    {
+   495→      label: "Blood Incidents",
+   496→      value: String(metrics?.bloodIncidents ?? 0),
+   497→      rawValue: metrics?.bloodIncidents ?? 0,
+   498→      suffix: " days",
+   499→      decimals: 0,
+   500→      icon: Droplets,
+   501→      prev: null,
+   502→      color: "text-rose-500",
+   503→      bgColor: "bg-rose-50",
+   504→      borderColor: "border-l-rose-400",
+   505→      sparklineColor: "#ef4444",
+   506→      sparkData: [],
+   507→    },
+   508→  ];
+   509→
+   510→  return (
+   511→    <div className="space-y-6">
+   512→      {/* Health Score + Flare Alert Row */}
+   513→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   514→        <HealthScoreCard symptoms={symptoms} isLoading={false} />
+   515→        <div className="lg:col-span-2">
+   516→          {/* Flare Risk Alert Banner */}
+   517→          {flareAlert ? (
+   518→            <motion.div
+   519→              initial={{ opacity: 0, y: -10 }}
+   520→              animate={{ opacity: 1, y: 0 }}
+   521→              transition={{ duration: 0.4 }}
+   522→              className="h-full"
+   523→            >
+   524→              <div className="h-full">
+   525→                {flareAlert.level === "high" && (
+   526→                  <div className="h-full rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800/50 p-4 flex items-start gap-3">
+   527→                    <AlertTriangle className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
+   528→                    <div>
+   529→                      <h4 className="font-semibold text-rose-800 dark:text-rose-300 text-sm">High Flare Risk</h4>
+   530→                      <p className="text-rose-700 dark:text-rose-400 text-sm mt-0.5">
+   531→                        Your average pain level over the last 3 days is {flareAlert.avg.toFixed(1)}/10. Consider contacting your healthcare provider.
+   532→                      </p>
+   533→                    </div>
+   534→                  </div>
+   535→                )}
+   536→                {flareAlert.level === "moderate" && (
+   537→                  <div className="h-full rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 p-4 flex items-start gap-3">
+   538→                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+   539→                    <div>
+   540→                      <h4 className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Moderate Symptoms</h4>
+   541→                      <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
+   542→                        Your recent pain levels are elevated. Continue monitoring and consider dietary adjustments.
+   543→                      </p>
+   544→                    </div>
+   545→                  </div>
+   546→                )}
+   547→                {flareAlert.level === "stable" && (
+   548→                  <div className="h-full rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/50 p-4 flex items-start gap-3">
+   549→                    <CheckCircle className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+   550→                    <div>
+   551→                      <h4 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Symptoms Stable</h4>
+   552→                      <p className="text-emerald-700 dark:text-emerald-400 text-sm mt-0.5">
+   553→                        Your recent readings look good. Keep up the great self-management!
+   554→                      </p>
+   555→                    </div>
+   556→                  </div>
+   557→                )}
+   558→              </div>
+   559→            </motion.div>
+   560→          ) : (
+   561→            <div className="h-full rounded-xl border-0 shadow-sm bg-card flex items-center justify-center p-4">
+   562→              <p className="text-sm text-muted-foreground">No recent flare data available yet.</p>
+   563→            </div>
+   564→          )}
+   565→        </div>
+   566→      </div>
+   567→
+   568→      {/* Metric Cards */}
+   569→      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+   570→        {metricCards.map((card, i) => (
+   571→          <AnimatedMetricCard key={card.label} card={card} index={i} />
+   572→        ))}
+   573→      </div>
+   574→
+   575→      {/* Weekly Insights */}
+   576→      {weeklyInsights && (
+   577→        <motion.div
+   578→          initial={{ opacity: 0, y: 20 }}
+   579→          animate={{ opacity: 1, y: 0 }}
+   580→          transition={{ delay: 0.12 }}
+   581→        >
+   582→          <Card className="rounded-xl border-0 shadow-sm">
+   583→            <CardHeader className="pb-3">
+   584→              <CardTitle className="text-base font-semibold flex items-center gap-2">
+   585→                <Trophy className="h-4 w-4 text-amber-500" />
+   586→                Weekly Insights
+   587→              </CardTitle>
+   588→            </CardHeader>
+   589→            <CardContent className="pt-0">
+   590→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+   591→                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 p-3">
+   592→                  <div className="flex items-center gap-2 mb-1">
+   593→                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+   594→                    <span className="text-xs text-muted-foreground">Most Improved</span>
+   595→                  </div>
+   596→                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+   597→                    {weeklyInsights.mostImproved || "No change yet"}
+   598→                  </p>
+   599→                </div>
+   600→                <div className="rounded-lg bg-rose-50 dark:bg-rose-950/30 p-3">
+   601→                  <div className="flex items-center gap-2 mb-1">
+   602→                    <ShieldAlert className="h-4 w-4 text-rose-500" />
+   603→                    <span className="text-xs text-muted-foreground">Worst Day</span>
+   604→                  </div>
+   605→                  <p className="text-sm font-semibold text-rose-800 dark:text-rose-300">{weeklyInsights.worstDay}</p>
+   606→                </div>
+   607→                <div className="rounded-lg bg-teal-50 dark:bg-teal-950/30 p-3">
+   608→                  <div className="flex items-center gap-2 mb-1">
+   609→                    <CheckCircle className="h-4 w-4 text-teal-600" />
+   610→                    <span className="text-xs text-muted-foreground">Best Day</span>
+   611→                  </div>
+   612→                  <p className="text-sm font-semibold text-teal-800 dark:text-teal-300">{weeklyInsights.bestDay}</p>
+   613→                </div>
+   614→                <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-3">
+   615→                  <div className="flex items-center gap-2 mb-1">
+   616→                    <Flame className="h-4 w-4 text-amber-500" />
+   617→                    <span className="text-xs text-muted-foreground">Top Trigger</span>
+   618→                  </div>
+   619→                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{weeklyInsights.topTrigger}</p>
+   620→                </div>
+   621→              </div>
+   622→            </CardContent>
+   623→          </Card>
+   624→        </motion.div>
+   625→      )}
+   626→
+   627→      {/* Symptom Calendar Heatmap */}
+   628→      <SymptomCalendar symptoms={symptoms} isLoading={false} />
+   629→
+   630→      {/* Main Line Chart */}
+   631→      <motion.div
+   632→        initial={{ opacity: 0, y: 20 }}
+   633→        animate={{ opacity: 1, y: 0 }}
+   634→        transition={{ delay: 0.15 }}
+   635→      >
+   636→        <Card className="rounded-xl border-0 shadow-sm">
+   637→          <CardHeader className="pb-2">
+   638→            <CardTitle className="text-base font-semibold">Symptom Trends</CardTitle>
+   639→          </CardHeader>
+   640→          <CardContent className="pt-0">
+   641→            <ChartContainer config={lineChartConfig} className="h-[320px] w-full">
+   642→              <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+   643→                <defs>
+   644→                  <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
+   645→                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
+   646→                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+   647→                  </linearGradient>
+   648→                  <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
+   649→                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
+   650→                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+   651→                  </linearGradient>
+   652→                  <linearGradient id="stressGradient" x1="0" y1="0" x2="0" y2="1">
+   653→                    <stop offset="5%" stopColor="var(--color-stressLevel)" stopOpacity={0.15} />
+   654→                    <stop offset="95%" stopColor="var(--color-stressLevel)" stopOpacity={0} />
+   655→                  </linearGradient>
+   656→                </defs>
+   657→                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+   658→                <XAxis dataKey="date" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+   659→                <YAxis yAxisId="left" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+   660→                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+   661→                <ChartTooltip content={<ChartTooltipContent />} />
+   662→                <ChartLegend content={<ChartLegendContent />} />
+   663→                {/* Area fills */}
+   664→                <Area
+   665→                  yAxisId="left"
+   666→                  type="monotone"
+   667→                  dataKey="stoolFrequency"
+   668→                  stroke="none"
+   669→                  fill="url(#tealGradient)"
+   670→                />
+   671→                <Area
+   672→                  yAxisId="right"
+   673→                  type="monotone"
+   674→                  dataKey="painLevel"
+   675→                  stroke="none"
+   676→                  fill="url(#roseGradient)"
+   677→                />
+   678→                <Area
+   679→                  type="monotone"
+   680→                  dataKey="stressLevel"
+   681→                  stroke="var(--color-stressLevel)"
+   682→                  fill="url(#stressGradient)"
+   683→                  strokeWidth={2}
+   684→                  strokeDasharray="5 5"
+   685→                  yAxisId="right"
+   686→                  dot={false}
+   687→                />
+   688→                {/* Lines on top */}
+   689→                <Line
+   690→                  yAxisId="left"
+   691→                  type="monotone"
+   692→                  dataKey="stoolFrequency"
+   693→                  stroke="var(--color-stoolFrequency)"
+   694→                  strokeWidth={2.5}
+   695→                  strokeLinecap="round"
+   696→                  strokeLinejoin="round"
+   697→                  dot={{ r: 4, fill: "var(--color-stoolFrequency)" }}
+   698→                  activeDot={{ r: 6 }}
+   699→                />
+   700→                <Line
+   701→                  yAxisId="right"
+   702→                  type="monotone"
+   703→                  dataKey="painLevel"
+   704→                  stroke="var(--color-painLevel)"
+   705→                  strokeWidth={2.5}
+   706→                  strokeLinecap="round"
+   707→                  strokeLinejoin="round"
+   708→                  dot={{ r: 4, fill: "var(--color-painLevel)" }}
+   709→                  activeDot={{ r: 6 }}
+   710→                />
+   711→                <Line
+   712→                  yAxisId="right"
+   713→                  type="monotone"
+   714→                  dataKey="stressLevel"
+   715→                  stroke="var(--color-stressLevel)"
+   716→                  strokeWidth={2}
+   717→                  strokeDasharray="5 5"
+   718→                  strokeLinecap="round"
+   719→                  strokeLinejoin="round"
+   720→                  dot={false}
+   721→                  activeDot={{ r: 5 }}
+   722→                />
+   723→                {/* Blood indicator dots rendered via custom activeDot on pain line */}
+   724→              </LineChart>
+   725→            </ChartContainer>
+   726→          </CardContent>
+   727→        </Card>
+   728→      </motion.div>
+   729→
+   730→      {/* Bottom Row */}
+   731→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   732→        {/* Most Common Triggers */}
+   733→        <motion.div
+   734→          initial={{ opacity: 0, y: 20 }}
+   735→          animate={{ opacity: 1, y: 0 }}
+   736→          transition={{ delay: 0.2 }}
+   737→        >
+   738→          <Card className="rounded-xl border-0 shadow-sm h-full">
+   739→            <CardHeader className="pb-2">
+   740→              <CardTitle className="text-base font-semibold">Most Common Triggers</CardTitle>
+   741→            </CardHeader>
+   742→            <CardContent className="pt-0">
+   743→              {triggerCounts.length ? (
+   744→                <div className="rounded-lg bg-muted/40 p-3 space-y-3">
+   745→                  {triggerCounts.map((t) => (
+   746→                    <div key={t.trigger} className="flex items-center gap-3">
+   747→                      <div className="flex-1 min-w-0">
+   748→                        <div className="flex items-center gap-2 text-sm mb-1">
+   749→                          <span className="h-2 w-2 rounded-full bg-teal-500 shrink-0" />
+   750→                          <span className="font-bold">{t.count}</span>
+   751→                          <span className="font-medium truncate text-muted-foreground">{t.trigger}</span>
+   752→                        </div>
+   753→                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+   754→                          <motion.div
+   755→                            className="h-full bg-teal-500 rounded-full"
+   756→                            initial={{ width: 0 }}
+   757→                            animate={{ width: `${(t.count / (triggerCounts[0]?.count || 1)) * 100}%` }}
+   758→                            transition={{ duration: 0.8, ease: "easeOut" }}
+   759→                          />
+   760→                        </div>
+   761→                      </div>
+   762→                    </div>
+   763→                  ))}
+   764→                </div>
+   765→              ) : (
+   766→                <p className="text-sm text-muted-foreground text-center py-8">
+   767→                  No triggers logged yet.
+   768→                </p>
+   769→              )}
+   770→            </CardContent>
+   771→          </Card>
+   772→        </motion.div>
+   773→
+   774→        {/* Pain-Stress Correlation */}
+   775→        <motion.div
+   776→          initial={{ opacity: 0, y: 20 }}
+   777→          animate={{ opacity: 1, y: 0 }}
+   778→          transition={{ delay: 0.3 }}
+   779→        >
+   780→          <Card className="rounded-xl border-0 shadow-sm h-full">
+   781→            <CardHeader className="pb-2">
+   782→              <CardTitle className="text-base font-semibold">Pain vs Stress Correlation</CardTitle>
+   783→            </CardHeader>
+   784→            <CardContent className="pt-0">
+   785→              {symptoms.length >= 2 ? (
+   786→                <ChartContainer config={scatterConfig} className="h-[200px] w-full">
+   787→                  <ScatterChart>
+   788→                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+   789→                    <XAxis dataKey="stressLevel" name="Stress" type="number" domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" label={{ value: "Stress →", position: "bottom", fontSize: 11, fill: "var(--color-muted-foreground)" }} />
+   790→                    <YAxis dataKey="painLevel" name="Pain" type="number" domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" label={{ value: "Pain ↑", angle: -90, position: "insideLeft", fontSize: 11, fill: "var(--color-muted-foreground)" }} />
+   791→                    <ChartTooltip content={<ChartTooltipContent />} />
+   792→                    <Scatter data={symptoms.map(s => ({ x: s.stressLevel, y: s.painLevel, date: format(parseISO(s.date), "MMM d") }))} fill="var(--color-scatter)">
+   793→                      {symptoms.map((s, i) => (
+   794→                        <Cell key={i} fill={s.painLevel > 6 ? "#f43f5e" : s.painLevel > 3 ? "#f59e0b" : "#10b981"} />
+   795→                      ))}
+   796→                    </Scatter>
+   797→                  </ScatterChart>
+   798→                </ChartContainer>
+   799→              ) : (
+   800→                <p className="text-sm text-muted-foreground text-center py-8">Need at least 2 data points.</p>
+   801→              )}
+   802→            </CardContent>
+   803→          </Card>
+   804→        </motion.div>
+   805→
+   806→        {/* Stool Type Distribution */}
+   807→        <motion.div
+   808→          initial={{ opacity: 0, y: 20 }}
+   809→          animate={{ opacity: 1, y: 0 }}
+   810→          transition={{ delay: 0.25 }}
+   811→        >
+   812→          <Card className="rounded-xl border-0 shadow-sm h-full">
+   813→            <CardHeader className="pb-2">
+   814→              <CardTitle className="text-base font-semibold">Bristol Stool Type Distribution</CardTitle>
+   815→            </CardHeader>
+   816→            <CardContent className="pt-0">
+   817→              {stoolTypeDistribution.length ? (
+   818→                <div className="flex items-center gap-4">
+   819→                  <div className="relative">
+   820→                    <ChartContainer config={pieChartConfig} className="h-[200px] w-[200px] shrink-0">
+   821→                      <PieChart>
+   822→                        <defs>
+   823→                          <filter id="donutShadow" x="-20%" y="-20%" width="140%" height="140%">
+   824→                            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
+   825→                          </filter>
+   826→                        </defs>
+   827→                        <Pie
+   828→                          data={stoolTypeDistribution}
+   829→                          cx="50%"
+   830→                          cy="50%"
+   831→                          innerRadius={50}
+   832→                          outerRadius={85}
+   833→                          dataKey="value"
+   834→                          nameKey="type"
+   835→                          stroke="none"
+   836→                          filter="url(#donutShadow)"
+   837→                        >
+   838→                          {stoolTypeDistribution.map((entry, index) => (
+   839→                            <Cell key={index} fill={entry.fill} />
+   840→                          ))}
+   841→                        </Pie>
+   842→                        <ChartTooltip content={<ChartTooltipContent />} />
+   843→                      </PieChart>
+   844→                    </ChartContainer>
+   845→                    {/* Center label */}
+   846→                    {mostCommonStoolType && (
+   847→                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+   848→                        <span className="text-2xl font-bold text-foreground">Type {mostCommonStoolType.type}</span>
+   849→                        <span className="text-xs text-muted-foreground">Most Common</span>
+   850→                      </div>
+   851→                    )}
+   852→                  </div>
+   853→                  <div className="flex flex-col gap-2 min-w-0">
+   854→                    {stoolTypeDistribution.map((entry) => (
+   855→                      <div key={entry.type} className="flex items-center gap-2 text-sm">
+   856→                        <div
+   857→                          className="h-3 w-3 rounded-sm shrink-0"
+   858→                          style={{ backgroundColor: entry.fill }}
+   859→                        />
+   860→                        <span className="text-muted-foreground truncate">{getStoolEmoji(entry.type)} Type {entry.type}</span>
+   861→                        <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
+   862→                          {entry.value}
+   863→                        </Badge>
+   864→                      </div>
+   865→                    ))}
+   866→                  </div>
+   867→                </div>
+   868→              ) : (
+   869→                <p className="text-sm text-muted-foreground text-center py-8">
+   870→                  No stool type data yet.
+   871→                </p>
+   872→              )}
+   873→            </CardContent>
+   874→          </Card>
+   875→        </motion.div>
+   876→      </div>
+   877→
+   878→      {/* Medication Tracker */}
+   879→      <MedicationTracker symptoms={symptoms} isLoading={isLoading} />
+   880→
+   881→      {/* AI Insights Chat Panel */}
+   882→      <AIInsightsPanel symptoms={symptoms} />
+   883→    </div>
+   884→  );
+   885→}

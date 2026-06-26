@@ -153,15 +153,19 @@
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
 }
-/* Dark mode scrollbar colors */
+/* Dark mode scrollbar colors — uses theme variables for consistency */
 .dark .custom-scrollbar {
-  scrollbar-color: #4b5563 transparent;
+  scrollbar-color: var(--border) transparent;
 }
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563;
+  background: var(--border);
+  border-radius: 3px;
 }
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: var(--muted-foreground);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 /* Animated gradient background for empty states */
@@ -197,11 +201,17 @@
   border: 1px solid rgba(42, 53, 68, 0.5);
 }
 
-/* Smooth focus ring animation */
+/* Smooth focus ring animation — enhanced visibility with primary color glow */
 *:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  transition: outline-color 0.2s;
+ outline: 2px solid var(--ring);
+ outline-offset: 2px;
+ transition: outline-color 0.2s ease, box-shadow 0.2s ease;
+ box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent);
+ border-radius: 4px;
+}
+*:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Card hover glow effect */
@@ -306,5 +316,240 @@ main {
     margin-bottom: 8px;
     border-bottom: 1px solid #ccc;
     padding-bottom: 4px;
+  }
+  /* Refined print: page breaks & formatting */
+  .print-area .print-page-break {
+    page-break-before: always;
+  }
+  .print-area .print-avoid-break {
+    page-break-inside: avoid;
+  }
+  .print-area h1, .print-area h2, .print-area h3 {
+    page-break-after: avoid;
+  }
+  .print-area tr {
+    page-break-inside: avoid;
+  }
+  .print-area p {
+    orphans: 3;
+    widows: 3;
+  }
+  .print-area {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+  .print-area .no-print {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   UTILITY CLASSES — ColoBrief AI Dashboard
+   ========================================================================== */
+
+/* 1. Card Elevation System — multi-layered shadow for premium depth */
+.card-elevated {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 12px 24px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.card-elevated:hover {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 2px 6px rgba(0, 0, 0, 0.05),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 20px 40px rgba(0, 0, 0, 0.07);
+  transform: translateY(-1px);
+}
+.dark .card-elevated {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 12px 24px rgba(0, 0, 0, 0.3);
+}
+.dark .card-elevated:hover {
+  box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    0 8px 16px rgba(0, 0, 0, 0.25),
+    0 20px 40px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+/* 2. Gradient Background Accents — subtle section depth */
+.bg-gradient-subtle {
+  background:
+    radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--primary) 4%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--primary) 3%, transparent) 0%, transparent 50%),
+    var(--background);
+}
+.dark .bg-gradient-subtle {
+  background:
+    radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--primary) 4%, transparent) 0%, transparent 50%),
+    var(--background);
+}
+
+/* 3. Refined Progress Bar — teal gradient fill */
+.progress-gradient [data-slot="indicator"] {
+  background: linear-gradient(90deg, var(--primary), #14b8a6, #2dd4bf);
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+.dark .progress-gradient [data-slot="indicator"] {
+  background: linear-gradient(90deg, #0f766e, var(--primary), #5eead4);
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+@keyframes progress-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 4. Badge Glow — subtle glow for active/important badges */
+.badge-glow {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
+              0 0 8px 1px color-mix(in srgb, var(--primary) 15%, transparent);
+  transition: box-shadow 0.2s ease;
+}
+.badge-glow:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent),
+              0 0 14px 2px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.dark .badge-glow {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent),
+              0 0 10px 1px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+.dark .badge-glow:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+              0 0 18px 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* 5. Table Row Hover — smooth highlight for data tables */
+.table-row-hover tbody tr {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.table-row-hover tbody tr:hover {
+  background-color: color-mix(in srgb, var(--primary) 5%, var(--card));
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.dark .table-row-hover tbody tr:hover {
+  background-color: color-mix(in srgb, var(--primary) 8%, var(--card));
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+/* 7. Glass Panel — glassmorphism for popovers/dropdowns/panels */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+.dark .glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* 8. Micro-animation Utilities */
+/* Fade in up — subtle entry animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
+/* Pulse soft — gentler than default Tailwind pulse */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+/* Shimmer — loading placeholder shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in srgb, var(--muted-foreground) 8%, var(--muted)) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+  border-radius: var(--radius);
+}
+.dark .shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in srgb, var(--muted-foreground) 12%, var(--muted)) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* 10. Section Divider — gradient line for visual separation */
+.section-divider {
+  height: 1px;
+  border: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 20%, transparent) 20%,
+    color-mix(in srgb, var(--primary) 40%, var(--border)) 50%,
+    color-mix(in srgb, var(--primary) 20%, transparent) 80%,
+    transparent 100%
+  );
+  margin: 1.5rem 0;
+}
+.dark .section-divider {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 15%, transparent) 20%,
+    color-mix(in srgb, var(--primary) 30%, var(--border)) 50%,
+    color-mix(in srgb, var(--primary) 15%, transparent) 80%,
+    transparent 100%
+  );
+}
+
+/* 12. Radix Popover/Tooltip Styling — consistent popover appearance */
+[data-radix-popper-content-wrapper] {
+  z-index: 50;
+}
+[data-radix-popper-content-wrapper] [data-state="open"] {
+  animation: popover-enter 0.15s ease-out;
+}
+@keyframes popover-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

@@ -14,10 +14,10 @@ export async function POST(request: NextRequest) {
       : `Extract symptom data from these patient notes about their Ulcerative Colitis:\n"${notes}"`;
 
     // Use the z-ai-web-dev-sdk for AI
-    const { createLLM } = await import("z-ai-web-dev-sdk");
-    const llm = createLLM();
+    const ZAI = (await import("z-ai-web-dev-sdk")).default;
+    const zai = await ZAI.create();
 
-    const response = await llm.chat({
+    const response = await zai.chat.completions.create({
       model: "glm-4-flash",
       messages: [
         { role: "system", content: systemPrompt },
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       temperature: 0.3,
     });
 
-    const content = typeof response === "string" ? response : response?.content || response?.toString() || "";
+    const content = response?.choices?.[0]?.message?.content || "";
 
     // Try to parse as JSON
     let parsed;
