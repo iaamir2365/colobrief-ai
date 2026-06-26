@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Printer, Sparkles, Loader2, FileText, ClipboardList, Stethoscope, BookOpen, Activity, Lightbulb } from "lucide-react";
+import { Printer, Sparkles, Loader2, FileText, ClipboardList, Stethoscope, BookOpen, Activity, Lightbulb, Pill } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -294,6 +294,53 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                   </span>
                 </div>
               </div>
+
+              <Separator className="mb-6 print:mb-4" />
+
+              {/* Medication Adherence Summary */}
+              {stats && (
+                <div className="mb-5 rounded-xl border border-teal-200/60 dark:border-teal-800/40 bg-gradient-to-r from-teal-50/50 via-white to-emerald-50/30 dark:from-teal-950/20 dark:via-card dark:to-emerald-950/10 p-4 print:p-3 print:bg-white print:border">
+                  <h2 className="text-sm font-semibold text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 shrink-0">
+                      <Pill className="h-3.5 w-3.5" />
+                    </span>
+                    Medication Adherence Summary
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-12">
+                        <svg className="-rotate-90 h-12 w-12" viewBox="0 0 48 48">
+                          <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-muted/20" />
+                          <circle cx="24" cy="24" r="20" fill="none" stroke="#0d9488" strokeWidth="4" strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 20}`}
+                            strokeDashoffset={`${2 * Math.PI * 20 * (1 - stats.medAdherence / 100)}`}
+                            className="transition-all duration-1000" />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-teal-700 dark:text-teal-400">
+                          {stats.medAdherence}%
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{stats.medAdherence >= 80 ? "Good" : stats.medAdherence >= 50 ? "Partial" : "Low"} Adherence</p>
+                        <p className="text-xs text-muted-foreground">
+                          {symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length} of {symptoms.length} days
+                        </p>
+                      </div>
+                    </div>
+                    <div className="h-8 w-px bg-border print:hidden" />
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground text-xs">Blood Days</span>
+                        <p className="font-semibold text-rose-600">{stats.bloodDays} <span className="text-xs font-normal text-muted-foreground">({stats.bloodPct}%)</span></p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Avg Urgency</span>
+                        <p className="font-semibold">{stats.avgUrgency.toFixed(1)}<span className="text-xs font-normal text-muted-foreground">/3</span></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <Separator className="mb-6 print:mb-4" />
 

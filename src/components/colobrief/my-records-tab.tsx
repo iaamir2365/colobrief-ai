@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, SearchX, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2 } from "lucide-react";
+import { Search, SearchX, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2, Pill } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -468,13 +468,14 @@ export default function MyRecordsTab({
                   <TableHead>Triggers</TableHead>
                   <TableHead>Blood</TableHead>
                   <TableHead>Urgency</TableHead>
+                  <TableHead>Med</TableHead>
                   <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paged.length === 0 && search.trim() ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-48 text-center">
+                    <TableCell colSpan={10} className="h-48 text-center">
                       <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
                         <div className="rounded-full bg-muted p-3">
                           <SearchX className="h-6 w-6" />
@@ -539,7 +540,7 @@ export default function MyRecordsTab({
                     </TableCell>
                     <TableCell>
                       {log.bloodInStool ? (
-                        <Droplets className="h-4 w-4 text-rose-500" />
+                        <Badge variant="destructive" className="gap-1 text-[10px]"><Droplets className="h-3 w-3" />Yes</Badge>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -555,6 +556,16 @@ export default function MyRecordsTab({
                       >
                         {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {log.medicationTaken ? (
+                        <span className="flex items-center gap-1 text-xs text-teal-700 dark:text-teal-400 max-w-[100px] truncate">
+                          <Pill className="h-3 w-3 shrink-0" />
+                          {log.medicationTaken}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="pr-4 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -602,7 +613,7 @@ export default function MyRecordsTab({
                   </TableRow>
                   {expandedId === log.id && (
                     <TableRow className="hover:bg-transparent transition-colors">
-                      <TableCell colSpan={9} className="bg-muted/20 px-6 py-3">
+                      <TableCell colSpan={10} className="bg-muted/20 px-6 py-3">
                         <div className="text-sm">
                           <span className="font-medium text-muted-foreground">Notes: </span>
                           {log.notes || "No notes recorded for this entry."}

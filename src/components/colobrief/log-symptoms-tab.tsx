@@ -467,7 +467,7 @@ export default function LogSymptomsTab({ onSaved }: LogSymptomsTabProps) {
             <CardTitle className="text-base font-semibold flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Triggers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
               {COMMON_TRIGGERS.map((trigger) => (
                 <label
                   key={trigger}

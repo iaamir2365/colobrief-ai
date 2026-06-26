@@ -124,7 +124,7 @@ export default function SymptomCalendar({ symptoms, isLoading }: SymptomCalendar
           <Skeleton className="h-5 w-44" />
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-7 gap-1.5">
+          <div className="grid grid-cols-7 gap-2">
             {WEEKDAYS.map(() => (
               <Skeleton key={Math.random()} className="h-4 w-full" />
             ))}
@@ -169,7 +169,7 @@ export default function SymptomCalendar({ symptoms, isLoading }: SymptomCalendar
           {/* Desktop view */}
           <div className="hidden sm:block">
             {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+            <div className="grid grid-cols-7 gap-2 mb-2">
               {WEEKDAYS.map((day) => (
                 <div
                   key={day}
@@ -181,7 +181,7 @@ export default function SymptomCalendar({ symptoms, isLoading }: SymptomCalendar
             </div>
 
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-1.5 relative">
+            <div className="grid grid-cols-7 gap-2 relative">
               {days.map((dayData, idx) => {
                 if (!dayData.hasData && format(dayData.date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) {
                   // Today but no data
@@ -293,7 +293,7 @@ export default function SymptomCalendar({ symptoms, isLoading }: SymptomCalendar
 
           {/* Mobile compact view - just colored dots with dates */}
           <div className="sm:hidden space-y-2">
-            <div className="grid grid-cols-7 gap-1.5 mb-2">
+            <div className="grid grid-cols-7 gap-2 mb-2">
               {WEEKDAYS.map((day) => (
                 <div
                   key={day}
@@ -303,7 +303,7 @@ export default function SymptomCalendar({ symptoms, isLoading }: SymptomCalendar
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1.5">
+            <div className="grid grid-cols-7 gap-2">
               {days.map((dayData, idx) => {
                 const today = isToday(dayData.date);
                 return (

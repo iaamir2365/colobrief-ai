@@ -44,6 +44,7 @@ import OverviewTab from "@/components/colobrief/overview-tab";
 import LogSymptomsTab from "@/components/colobrief/log-symptoms-tab";
 import MyRecordsTab from "@/components/colobrief/my-records-tab";
 import DoctorHandoutTab from "@/components/colobrief/doctor-handout-tab";
+import OnboardingTour from "@/components/colobrief/onboarding-tour";
 
 const NAV_ITEMS = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, shortcut: "O" },
@@ -195,6 +196,11 @@ function AppContent() {
       </Sidebar>
 
       <SidebarInset>
+        <OnboardingTour
+          onLoadDemo={() => demoMutation.mutate()}
+          onStartLogging={() => setActiveTab("log")}
+          symptomCount={symptoms.length}
+        />
         <div className="min-h-screen flex flex-col">
           {/* Top Header */}
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 print:hidden">

@@ -901,3 +901,98 @@ VLM visual quality assessment: **8/10** — clean layout, clear hierarchy, cohes
 6. **MEDIUM**: Offline-first with PWA service worker
 7. **LOW**: Internationalization (i18n)
 8. **LOW**: FHIR-compliant data export for EHR integration
+
+---
+Task ID: 6
+Agent: Main Coordinator
+Task: Round 6 — QA, styling polish, onboarding tour, streak counter, handout enhancement
+
+## Current Project Status Assessment
+
+ColoBrief AI is in a **production-ready hackathon state**. All features are functional, the app passes ESLint with zero errors, and agent-browser E2E testing shows zero console errors across all tabs, dark/light modes, and mobile viewport. VLM visual quality assessment: **8/10**.
+
+## Work Log
+
+### QA Testing (agent-browser)
+- Full E2E across all 4 tabs + onboarding tour + dark mode + mobile
+- Verified onboarding tour 5-step flow works correctly (steps navigate, "Load Demo Data" from step 5 loads data and dismisses tour)
+- Confirmed AI chat panel persists after receiving responses (previous bug resolved)
+- Verified new streak counter displays "14 day streak" + "Champion!" badge with demo data
+- Verified new "Med" column in Records table shows medication info
+- Verified Medication Adherence Summary in Doctor Handout with circular progress
+- Confirmed blood-in-stool now shows as destructive badge
+- All 8 screenshots saved to `/download/qa6-*.png`
+
+### Styling Improvements
+1. **Health Score Hover** (`health-score-card.tsx`): Added `cursor-pointer group transition-transform duration-200 hover:scale-[1.04]` for interactive feedback
+2. **Calendar Heatmap Spacing** (`symptom-calendar.tsx`): Increased grid gaps from 1.5 to 2 across all 5 grid containers
+3. **Slider Polish** (`globals.css`): New CSS rules for slider thumb — 20px size, 3px white border, box-shadow, hover scale 1.15×, active scale 1.05×
+4. **Trigger Checkbox Spacing** (`log-symptoms-tab.tsx`): Increased vertical gap from 2.5 to 3
+5. **Blood Highlight** (`my-records-tab.tsx`): Blood "Yes" now renders as `<Badge variant="destructive">` with Droplets icon
+6. **Medication Column** (`my-records-tab.tsx`): New "Med" table column showing teal Pill icon + truncated medication name; updated colSpan 9→10
+
+### New Features
+
+1. **Onboarding Tour** (`onboarding-tour.tsx` + page.tsx integration):
+   - 5-step animated tour with Framer Motion slide transitions
+   - Step 1: Welcome to ColoBrief AI (animated gradient Heart branding)
+   - Step 2: Track Your Symptoms (Voice, AI Extract, Manual Form feature cards)
+   - Step 3: Visualize Trends (2×2 mini-preview grid of dashboard features)
+   - Step 4: Share with Your Doctor (SBAR format explanation)
+   - Step 5: Get Started (Load Demo Data / Start Logging CTAs)
+   - Full-screen overlay with backdrop blur, progress bar, dot indicators
+   - localStorage persistence (`colobrief-tour-completed`)
+   - Only shows when no data is loaded (first-time user experience)
+
+2. **Daily Streak Counter** (`streak-counter.tsx` + overview-tab.tsx):
+   - Calculates consecutive daily logging streak from today backward
+   - Tracks total unique days, current week count (X/7), best streak ever
+   - Visual states: 0 ("Start your streak!"), 1-2 (basic), 3-6 ("On fire!" + Zap), 7-13 ("Consistent!" + Trophy), 14+ ("Champion!" + gradient gold Trophy)
+   - Warm gradient banner (amber→orange→rose) with flame icon animation
+   - Framer Motion spring animation on streak number
+   - Compact horizontal layout between flare alert and metric cards
+
+3. **Medication Adherence in Handout** (`doctor-handout-tab.tsx`):
+   - New section between header and SBAR with teal Pill icon header
+   - Circular SVG progress gauge showing adherence percentage
+   - Qualitative label (Good ≥80%, Partial ≥50%, Low <50%)
+   - "X of Y days" summary
+   - Blood Days and Avg Urgency stats alongside
+   - Print-safe styling (white background, border)
+   - Gradient background in screen mode
+
+### Bug Fix
+- Added missing `Pill` import in `doctor-handout-tab.tsx`
+
+### Files Created
+- `src/components/colobrief/onboarding-tour.tsx` — 5-step onboarding tour
+- `src/components/colobrief/streak-counter.tsx` — Gamification streak widget
+
+### Files Modified
+- `src/components/colobrief/health-score-card.tsx` — Hover scale effect
+- `src/components/colobrief/symptom-calendar.tsx` — Grid spacing
+- `src/app/globals.css` — Slider thumb CSS
+- `src/components/colobrief/log-symptoms-tab.tsx` — Trigger checkbox spacing
+- `src/components/colobrief/my-records-tab.tsx` — Blood badge, Med column, colSpan fix
+- `src/components/colobrief/doctor-handout-tab.tsx` — Medication adherence section, Pill import
+- `src/components/colobrief/overview-tab.tsx` — Streak counter integration
+
+## Verification Results
+- ✅ ESLint: zero errors (after initial Pill import fix)
+- ✅ agent-browser E2E: onboarding tour, all 4 tabs, AI chat, dark mode, mobile — zero console errors
+- ✅ VLM visual quality: 8/10 (dark mode)
+- ✅ Compilation: clean
+
+## Unresolved Issues & Risks
+1. **Streak counter shows 0 for non-consecutive data**: By design — only shows "Start your streak today!" when no consecutive days ending at today. Demo data starts from today so it works, but real users need to log daily.
+2. **No authentication**: Single hardcoded demo user
+3. **SQLite limitations**: No concurrent writes
+4. **Onboarding tour only shows once**: Uses localStorage — clearing browser data re-triggers it (acceptable)
+
+## Priority Recommendations for Next Phase
+1. **HIGH**: Add export chart as image feature (html2canvas) for sharing with doctors
+2. **HIGH**: Multi-user support with NextAuth.js
+3. **MEDIUM**: Push notification reminders for daily logging
+4. **MEDIUM**: Food/meal diary with photo upload
+5. **MEDIUM**: PWA offline support for mobile use
+6. **LOW**: FHIR data export for EHR integration

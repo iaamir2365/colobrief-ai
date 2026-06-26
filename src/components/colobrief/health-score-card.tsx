@@ -57,7 +57,7 @@ function CircularGaugeLarge({ value, color }: { value: number; color: string }) 
   const center = size / 2;
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div className="relative inline-flex items-center justify-center cursor-pointer group transition-transform duration-200 hover:scale-[1.04]">
       <svg width={size} height={size} className="-rotate-90">
         {/* Background track */}
         <circle

@@ -194,6 +194,22 @@
   background: transparent;
 }
 
+/* Enhanced slider thumb */
+.slider-gradient-green-red [data-slot="slider-thumb"] {
+  width: 20px;
+  height: 20px;
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.slider-gradient-green-red [data-slot="slider-thumb"]:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+}
+.slider-gradient-green-red [data-slot="slider-thumb"]:active {
+  transform: scale(1.05);
+}
+
 /* Card glassmorphism for dark mode */
 .dark .glass-card {
   background: rgba(21, 28, 37, 0.8);

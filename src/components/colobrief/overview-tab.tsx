@@ -56,6 +56,7 @@ import MedicationTracker from "@/components/colobrief/medication-tracker";
 import TriggerCorrelation from "@/components/colobrief/trigger-correlation";
 import SymptomCalendar from "@/components/colobrief/symptom-calendar";
 import AIInsightsPanel from "@/components/colobrief/ai-insights-panel";
+import StreakCounter from "@/components/colobrief/streak-counter";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Type 1: Hard lumps",
@@ -620,6 +621,14 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           )}
         </div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+      >
+        <StreakCounter symptoms={symptoms} />
+      </motion.div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
