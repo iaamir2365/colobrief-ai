@@ -1,4 +1,5 @@
 # Render deployment config for ColoBrief AI
+
 services:
   - type: web
     name: colobrief-ai
