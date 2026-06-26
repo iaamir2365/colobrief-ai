@@ -1,8 +1,12 @@
 import { MailtrapClient } from "mailtrap";
 
-const MAILTRAP_TOKEN = process.env.MAILTRAP_TOKEN || "3a156cfaf31785e6473ffc377a81fb29";
-const SENDER_EMAIL = process.env.MAILTRAP_SENDER_EMAIL || "hello@mail.goldpriceinfo.com";
+const MAILTRAP_TOKEN = process.env.MAILTRAP_TOKEN;
+const SENDER_EMAIL = process.env.MAILTRAP_SENDER_EMAIL;
 const SENDER_NAME = process.env.MAILTRAP_SENDER_NAME || "ColoBrief AI";
+
+if (!MAILTRAP_TOKEN || !SENDER_EMAIL) {
+  throw new Error("Missing Mailtrap env vars: MAILTRAP_TOKEN and MAILTRAP_SENDER_EMAIL are required.");
+}
 
 const client = new MailtrapClient({
   token: MAILTRAP_TOKEN,

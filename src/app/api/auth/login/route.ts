@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { comparePassword, signToken } from "@/lib/auth";
+import { sendVerificationEmail } from "@/lib/email";
+import { randomBytes } from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +35,19 @@ export async function POST(request: NextRequest) {
         { error: "Invalid email or password" },
         { status: 401 }
       );
+    }
+
+    // Send a fresh verification code if email is not yet verified
+    if (!user.emailVerified) {
+      const code = randomBytes(3).toString("hex").toUpperCase();
+      const verificationToken = `${code}-${Date.now()}`;
+      await db.user.update({
+        where: { id: user.id },
+        data: { verificationToken },
+      });
+      sendVerificationEmail(user.email, code).catch((err) => {
+        console.error("Background verification email error:", err);
+      });
     }
 
     // Generate JWT

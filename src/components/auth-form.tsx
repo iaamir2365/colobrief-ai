@@ -30,8 +30,12 @@ import { useAuthStore } from "@/stores/auth-store";
 
 type AuthMode = "login" | "signup" | "verify-email";
 
-export default function AuthForm() {
-  const [mode, setMode] = useState<AuthMode>("login");
+interface AuthFormProps {
+  requireVerification?: boolean;
+}
+
+export default function AuthForm({ requireVerification = false }: AuthFormProps) {
+  const [mode, setMode] = useState<AuthMode>(requireVerification ? "verify-email" : "login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,6 +60,7 @@ export default function AuthForm() {
   const login = useAuthStore((s) => s.login);
   const signup = useAuthStore((s) => s.signup);
   const refreshUser = useAuthStore((s) => s.refreshUser);
+  const logout = useAuthStore((s) => s.logout);
   const userEmail = useAuthStore((s) => s.user?.email);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
 
@@ -110,7 +115,6 @@ export default function AuthForm() {
         await login(email, password);
       } else {
         await signup(name, email, password, doctorName || undefined);
-        // After signup, switch to verification mode
         setMode("verify-email");
         setIsLoading(false);
         return;
@@ -354,10 +358,19 @@ export default function AuthForm() {
                   <div className="text-center">
                     <button
                       type="button"
-                      onClick={switchToLogin}
+                      onClick={() => {
+                        if (requireVerification) {
+                          logout();
+                          setMode("login");
+                          setVerificationCode("");
+                          setVerificationError("");
+                        } else {
+                          switchToLogin();
+                        }
+                      }}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      Back to Sign In
+                      {requireVerification ? "Use a different account" : "Back to Sign In"}
                     </button>
                   </div>
                 </CardContent>
@@ -532,7 +545,7 @@ export default function AuthForm() {
                             <Stethoscope className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="doctor"
-                              placeholder="Dr. Sarah Chen"
+                              placeholder="Dr. Jane Smith"
                               value={doctorName}
                               onChange={(e) => setDoctorName(e.target.value)}
                               className="pl-9"

@@ -1,5 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api-auth";
+import { requireVerifiedAuth } from "@/lib/api-auth";
+
+const ZAI_BASE_URL = process.env.ZAI_BASE_URL || "https://open.bigmodel.cn/api/paas/v4";
+const ZAI_API_KEY = process.env.ZAI_API_KEY || "";
+
+async function callGLM(messages: { role: string; content: string }[], temperature = 0.3) {
+  const res = await fetch(`${ZAI_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ZAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "GLM-4.7-Flash",
+      messages,
+      temperature,
+      thinking: { type: "disabled" },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GLM API error ${res.status}: ${err}`);
+  }
+  return res.json();
+}
 
 const EXTRACT_SYSTEM_PROMPT = `Analyze this unstructured patient daily log for Ulcerative Colitis. Extract the symptoms and map them strictly to this JSON format. If a symptom is not mentioned, use null or default values:
 {
@@ -17,7 +41,7 @@ const CLINICAL_SYSTEM_PROMPT = "You are a clinical data analyst specializing in 
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const body = await request.json();
@@ -31,18 +55,10 @@ export async function POST(request: NextRequest) {
       ? `Analyze this UC patient data and generate a clinical summary:\n${notes}`
       : `Extract symptom data from these patient notes about their Ulcerative Colitis:\n"${notes}"`;
 
-    // Use the z-ai-web-dev-sdk for AI
-    const ZAI = (await import("z-ai-web-dev-sdk")).default;
-    const zai = await ZAI.create();
-
-    const response = await zai.chat.completions.create({
-      model: "glm-4-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      temperature: 0.3,
-    });
+    const response = await callGLM([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ], 0.3);
 
     const content = response?.choices?.[0]?.message?.content || "";
 

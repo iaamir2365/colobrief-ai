@@ -1,5 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const ZAI_BASE_URL = process.env.ZAI_BASE_URL || "https://open.bigmodel.cn/api/paas/v4";
+const ZAI_API_KEY = process.env.ZAI_API_KEY || "";
+
+async function callGLM(messages: { role: string; content: string }[], temperature = 0.4) {
+  const res = await fetch(`${ZAI_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ZAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "GLM-4.7-Flash",
+      messages,
+      temperature,
+      thinking: { type: "disabled" },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GLM API error ${res.status}: ${err}`);
+  }
+  return res.json();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -29,17 +53,10 @@ export async function POST(request: NextRequest) {
 
     const userContent = `Here is my symptom data in JSON:\n${symptomData}\n\nMy question: ${lastUserMessage.content}`;
 
-    const ZAI = (await import("z-ai-web-dev-sdk")).default;
-    const zai = await ZAI.create();
-
-    const response = await zai.chat.completions.create({
-      model: "glm-4-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      temperature: 0.4,
-    });
+    const response = await callGLM([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ], 0.4);
 
     const content = response?.choices?.[0]?.message?.content || "";
 

@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
 import { format } from "date-fns";
-import { requireAuth } from "@/lib/api-auth";
+import { requireVerifiedAuth } from "@/lib/api-auth";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const { searchParams } = new URL(request.url);

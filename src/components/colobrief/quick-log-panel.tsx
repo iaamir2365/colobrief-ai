@@ -19,9 +19,9 @@ interface QuickLogPanelProps {
 
 export default function QuickLogPanel({ onSuccess }: QuickLogPanelProps) {
   const [expanded, setExpanded] = useState(false);
-  const [pain, setPain] = useState([3]);
-  const [stress, setStress] = useState([3]);
-  const [stoolFreq, setStoolFreq] = useState([2]);
+  const [pain, setPain] = useState([0]);
+  const [stress, setStress] = useState([0]);
+  const [stoolFreq, setStoolFreq] = useState([0]);
   const [isLogging, setIsLogging] = useState(false);
 
   const handleLog = async () => {
@@ -34,7 +34,7 @@ export default function QuickLogPanel({ onSuccess }: QuickLogPanelProps) {
           painLevel: pain[0],
           stressLevel: stress[0],
           stoolFrequency: stoolFreq[0],
-          stoolType: 4,
+          stoolType: null, // unmentioned
           triggers: [],
           bloodInStool: false,
           urgencyLevel: 0,
@@ -42,9 +42,9 @@ export default function QuickLogPanel({ onSuccess }: QuickLogPanelProps) {
       });
       if (!res.ok) throw new Error("Failed to log");
       toast.success("Quick log saved! ✅");
-      setPain([3]);
-      setStress([3]);
-      setStoolFreq([2]);
+      setPain([0]);
+      setStress([0]);
+      setStoolFreq([0]);
       setExpanded(false);
       onSuccess();
     } catch {
@@ -91,7 +91,7 @@ export default function QuickLogPanel({ onSuccess }: QuickLogPanelProps) {
                 <Slider
                   value={pain}
                   onValueChange={setPain}
-                  min={1}
+                  min={0}
                   max={10}
                   step={1}
                   className="w-full [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-thumb]]:size-3"
@@ -109,7 +109,7 @@ export default function QuickLogPanel({ onSuccess }: QuickLogPanelProps) {
                 <Slider
                   value={stress}
                   onValueChange={setStress}
-                  min={1}
+                  min={0}
                   max={10}
                   step={1}
                   className="w-full [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-thumb]]:size-3"

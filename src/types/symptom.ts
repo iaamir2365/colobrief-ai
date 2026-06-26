@@ -4,7 +4,7 @@ export interface SymptomLog {
   date: string;
   painLevel: number;
   stoolFrequency: number;
-  stoolType: number;
+  stoolType: number | null;
   stressLevel: number;
   triggers: string[];
   notes?: string;

@@ -1,10 +1,10 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api-auth";
+import { requireVerifiedAuth } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const logs = await db.symptomLog.findMany({
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       date: log.date,
       painLevel: log.painLevel,
       stoolFrequency: log.stoolFrequency,
-      stoolType: log.stoolType,
+      stoolType: log.stoolType, // can be null
       stressLevel: log.stressLevel,
       triggers: JSON.parse(log.triggers),
       notes: log.notes ?? undefined,
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const body = await request.json();
@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
       data: {
         userId: uid,
         date: logDate,
-        painLevel: Number(painLevel) || 0,
-        stoolFrequency: Number(stoolFrequency) || 0,
-        stoolType: Number(stoolType) || 1,
-        stressLevel: Number(stressLevel) || 0,
+        painLevel: Number(painLevel) ?? 0,
+        stoolFrequency: Number(stoolFrequency) ?? 0,
+        stoolType: stoolType ? Number(stoolType) : null, // null if unmentioned
+        stressLevel: Number(stressLevel) ?? 0,
         triggers: JSON.stringify(triggers || []),
         notes: notes || null,
         medicationTaken: body.medicationTaken || null,
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const { searchParams } = new URL(request.url);

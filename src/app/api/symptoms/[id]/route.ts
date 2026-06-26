@@ -1,13 +1,13 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api-auth";
+import { requireVerifiedAuth } from "@/lib/api-auth";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const { id } = await params;
@@ -75,7 +75,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const { id } = await params;

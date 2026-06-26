@@ -56,6 +56,7 @@ const COMMON_TRIGGERS = [
 ];
 
 const BRISTOL_TYPES = [
+  { value: "", label: "Unmentioned" },
   { value: "1", label: "Type 1: Separate hard lumps" },
   { value: "2", label: "Type 2: Lumpy sausage shape" },
   { value: "3", label: "Type 3: Sausage with cracks" },
@@ -105,10 +106,10 @@ interface LogSymptomsTabProps {
   onSaved: () => void;
 }
 
-const DEFAULT_PAIN = 3;
-const DEFAULT_STOOL_FREQ = 3;
-const DEFAULT_STOOL_TYPE = "4";
-const DEFAULT_STRESS = 3;
+const DEFAULT_PAIN = 0;
+const DEFAULT_STOOL_FREQ = 0;
+const DEFAULT_STOOL_TYPE = "";
+const DEFAULT_STRESS = 0;
 
 function isFormDefault({
   date,
@@ -388,11 +389,11 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
 
   const applyAIResult = useCallback((data: NonNullable<typeof aiResult>) => {
     let filledCount = 0;
-    if (data.painLevel != null && data.painLevel > 0) {
-      setPainLevel([Math.min(10, Math.max(1, Math.round(data.painLevel)))]);
+    if (data.painLevel != null) {
+      setPainLevel([Math.min(10, Math.max(0, Math.round(data.painLevel)))]);
       filledCount++;
     }
-    if (data.stoolFrequency != null && data.stoolFrequency > 0) {
+    if (data.stoolFrequency != null) {
       setStoolFrequency(Math.min(20, Math.max(0, Math.round(data.stoolFrequency))));
       filledCount++;
     }
@@ -400,8 +401,8 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
       setStoolType(String(Math.round(data.stoolType)));
       filledCount++;
     }
-    if (data.stressLevel != null && data.stressLevel > 0) {
-      setStressLevel([Math.min(10, Math.max(1, Math.round(data.stressLevel)))]);
+    if (data.stressLevel != null) {
+      setStressLevel([Math.min(10, Math.max(0, Math.round(data.stressLevel)))]);
       filledCount++;
     }
     if (data.bloodInStool === true) {
@@ -507,6 +508,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
   };
 
   const getPainColor = (val: number) => {
+    if (val <= 0) return "text-emerald-600";
     if (val <= 3) return "text-emerald-600";
     if (val <= 6) return "text-amber-500";
     return "text-rose-500";
@@ -623,7 +625,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       <Slider
                         value={painLevel}
                         onValueChange={setPainLevel}
-                        min={1}
+                        min={0}
                         max={10}
                         step={1}
                       />
@@ -719,7 +721,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       <Slider
                         value={stressLevel}
                         onValueChange={setStressLevel}
-                        min={1}
+                        min={0}
                         max={10}
                         step={1}
                       />

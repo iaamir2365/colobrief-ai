@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/api-auth';
+import { requireVerifiedAuth } from '@/lib/api-auth';
 
 const UC_TRIGGERS = [
   'Dairy',
@@ -70,7 +70,7 @@ function formatDate(daysAgo: number): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     // Clear existing logs for this user

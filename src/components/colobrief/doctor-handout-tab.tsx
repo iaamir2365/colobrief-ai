@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { format, parseISO, min, max } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
-import { getAuthHeaders } from "@/stores/auth-store";
+import { getAuthHeaders, useAuthStore } from "@/stores/auth-store";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Hard lumps",
@@ -38,6 +38,10 @@ interface DoctorHandoutTabProps {
 }
 
 export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutTabProps) {
+  const user = useAuthStore((s) => s.user);
+  const patientName = user?.name?.trim() || "Not specified";
+  const attendingName = user?.doctorName?.trim() || "Not specified";
+
   const [aiSummary, setAiSummary] = useState<{
     situation: string;
     background: string;
@@ -224,8 +228,33 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const { pdf } = await import("@react-pdf/renderer");
+      const { HandoutPDF } = await import("./handout-pdf");
+      const blob = await pdf(
+        <HandoutPDF
+          symptoms={symptoms}
+          aiSummary={aiSummary}
+          patientName={patientName}
+          attendingName={attendingName}
+        />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `colobrief-handout-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      toast.error("Failed to export PDF. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (isLoading) {
@@ -278,9 +307,15 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
     <div className="space-y-4">
       {/* Action buttons - hidden in print */}
       <div className="flex flex-wrap gap-2 print:hidden">
-        <Button onClick={handlePrint} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 hover:shadow-md hover:shadow-teal-500/10 transition-all">
-          <Printer className="h-4 w-4" />
-          <span className="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Export PDF</span>
+        <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 hover:shadow-md hover:shadow-teal-500/10 transition-all">
+          {isExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Printer className="h-4 w-4" />
+          )}
+          <span className="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent font-semibold">
+            {isExporting ? "Generating PDF..." : "Download PDF"}
+          </span>
         </Button>
         <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2 shadow-md shadow-teal-500/20 btn-premium">
           {isGenerating ? (
@@ -340,13 +375,13 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 </h1>
                 <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-muted-foreground">
                   <span>
-                    <strong>Patient:</strong> Demo Patient
+                    <strong>Patient:</strong> {patientName}
                   </span>
                   <span>
                     <strong>Period:</strong> {stats?.dateRange.from} — {stats?.dateRange.to}
                   </span>
                   <span>
-                    <strong>Attending:</strong> Dr. Sarah Chen, MD
+                    <strong>Attending:</strong> {attendingName}
                   </span>
                   <span>
                     <strong>Generated:</strong> {format(new Date(), "MMM d, yyyy")}

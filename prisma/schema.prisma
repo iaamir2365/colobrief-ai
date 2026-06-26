@@ -26,7 +26,7 @@ model SymptomLog {
   date           String
   painLevel      Float    @default(0)
   stoolFrequency Float    @default(0)
-  stoolType      Float    @default(1)
+  stoolType      Float?
   stressLevel    Float    @default(0)
   triggers        String   @default("[]")
   notes           String?

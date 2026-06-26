@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/api-auth";
+import { requireVerifiedAuth } from "@/lib/api-auth";
 import { NextResponse } from "next/server";
 
 // Expected CSV columns (case-insensitive matching)
@@ -240,7 +240,7 @@ function parseCSVRow(row: Record<string, string>, rowIndex: number): { data: Rec
 
 export async function POST(request: Request) {
   try {
-    const userId = await requireAuth(request);
+    const userId = await requireVerifiedAuth(request);
     if (userId instanceof NextResponse) return userId;
 
     const formData = await request.formData();

@@ -42,3 +42,27 @@ export async function requireAuth(
 
   return user.id;
 }
+
+/**
+ * Like requireAuth, but also rejects users who have not verified their email.
+ */
+export async function requireVerifiedAuth(
+  request: Request
+): Promise<string | NextResponse> {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+
+  const user = await db.user.findUnique({
+    where: { id: authResult },
+    select: { id: true, emailVerified: true },
+  });
+
+  if (!user?.emailVerified) {
+    return NextResponse.json(
+      { error: "Email verification required" },
+      { status: 403 }
+    );
+  }
+
+  return user.id;
+}
