@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ZAI_BASE_URL = process.env.ZAI_BASE_URL || "https://open.bigmodel.cn/api/paas/v4";
-const ZAI_API_KEY = process.env.ZAI_API_KEY || "";
+const ZHIPU_BASE_URL = process.env.ZHIPU_BASE_URL || "https://open.bigmodel.cn/api/paas/v4";
+const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || "";
 
 async function callGLM(messages: { role: string; content: string }[], temperature = 0.4) {
-  const res = await fetch(`${ZAI_BASE_URL}/chat/completions`, {
+  const res = await fetch(`${ZHIPU_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ZAI_API_KEY}`,
+      "Authorization": `Bearer ${ZHIPU_API_KEY}`,
     },
     body: JSON.stringify({
       model: "GLM-4.7-Flash",

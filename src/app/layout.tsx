@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description:
     "An empathetic, AI-assisted symptom log for Ulcerative Colitis, bridging the gap between daily flares and clinical consultations.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.svg",
   },
 };
 
