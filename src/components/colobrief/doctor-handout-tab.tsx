@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useAnimatedNumber } from "@/hooks/use-animated-number";
 import { motion } from "framer-motion";
-import { Printer, Sparkles, Loader2, FileText, ClipboardList, Stethoscope, BookOpen, Activity, Lightbulb, Pill } from "lucide-react";
+import { Printer, Sparkles, Loader2, FileText, ClipboardList, Stethoscope, BookOpen, Activity, Lightbulb, Pill, Flame, Waves, Brain, TrendingUp, TrendingDown, Minus, ShieldCheck, Droplets, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -146,6 +147,27 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
     };
   }, [symptoms]);
 
+  // Animated stat numbers (must be after stats definition)
+  const animAvgPain = useAnimatedNumber(stats?.avgPain ?? 0);
+  const animAvgStool = useAnimatedNumber(stats?.avgStool ?? 0);
+  const animAvgStress = useAnimatedNumber(stats?.avgStress ?? 0);
+  const animMedAdherence = useAnimatedNumber(stats?.medAdherence ?? 0);
+  const animBloodDays = useAnimatedNumber(stats?.bloodDays ?? 0);
+  const animAvgUrgency = useAnimatedNumber(stats?.avgUrgency ?? 0);
+
+  // Determine worst stat key for clinical pulse attention
+  const worstStatKey = useMemo(() => {
+    if (!stats) return null;
+    const entries: [string, number][] = [
+      ["avgPain", stats.avgPain],
+      ["avgStool", stats.avgStool],
+      ["avgStress", stats.avgStress],
+      ["avgUrgency", stats.avgUrgency * (10 / 3)], // normalize to 0-10 scale
+      ["bloodPct", stats.bloodPct / 10], // normalize
+    ];
+    return entries.reduce((worst, [key, val]) => (val > (worst?.[1] ?? 0) ? [key, val] as [string, number] : worst), null as [string, number] | null)?.[0] ?? null;
+  }, [stats]);
+
   const situation = useMemo(() => {
     if (!stats) return "";
     if (stats.avgPain <= 3)
@@ -257,7 +279,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       <div className="flex flex-wrap gap-2 print:hidden">
         <Button onClick={handlePrint} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 hover:shadow-md hover:shadow-teal-500/10 transition-all">
           <Printer className="h-4 w-4" />
-          Export PDF
+          <span className="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Export PDF</span>
         </Button>
         <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2 shadow-md shadow-teal-500/20 btn-premium">
           {isGenerating ? (
@@ -271,21 +293,21 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
       {/* Bristol Stool Scale Reference Card */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="rounded-xl border-0 shadow-sm print:hidden">
+        <Card className="rounded-xl border-0 shadow-sm print:hidden bg-gradient-to-br from-slate-50/80 via-white to-teal-50/40 dark:from-slate-950/80 dark:via-card dark:to-teal-950/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Bristol Stool Scale Reference</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: "Constipation", color: "bg-stone-100 border-stone-200", desc: "Hard, lumpy — Types 1-2", icon: "🪨" },
-                { label: "Normal", color: "bg-emerald-50 border-emerald-200", desc: "Smooth, soft — Types 3-4", icon: "✅" },
-                { label: "Mild Diarrhea", color: "bg-amber-50 border-amber-200", desc: "Soft, mushy — Types 5-6", icon: "⚠️" },
-                { label: "Severe Diarrhea", color: "bg-rose-50 border-rose-200", desc: "Watery — Type 7", icon: "🚨" },
+                { label: "Constipation", color: "bg-stone-100 border-stone-200 dark:bg-stone-900/40 dark:border-stone-700/50", desc: "Hard, lumpy — Types 1-2", icon: "🪨" },
+                { label: "Normal", color: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/40", desc: "Smooth, soft — Types 3-4", icon: "✅" },
+                { label: "Mild Diarrhea", color: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/40", desc: "Soft, mushy — Types 5-6", icon: "⚠️" },
+                { label: "Severe Diarrhea", color: "bg-rose-50 border-rose-200 dark:bg-rose-950/30 dark:border-rose-800/40", desc: "Watery — Type 7", icon: "🚨" },
               ].map((item) => (
-                <div key={item.label} className={`rounded-lg border p-3 ${item.color}`}>
+                <div key={item.label} className={`rounded-lg border p-3 bristol-item ${item.color}`}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{item.icon}</span>
+                    <span className="bristol-emoji">{item.icon}</span>
                     <span className="text-sm font-medium">{item.label}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">{item.desc}</p>
@@ -298,6 +320,12 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
       {/* Print area */}
       <div className="print-area space-y-6">
+        {/* Professional print-only header */}
+        <div className="print-header">
+          <h2>ColoBrief AI — Clinical Handout</h2>
+          <p>{format(new Date(), "EEEE, MMMM d, yyyy 'at' h:mm a")}</p>
+        </div>
+
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           <Card className="rounded-xl border-0 shadow-sm print:shadow-none print:border print:rounded-none card-glow relative overflow-hidden">
             <CardContent className="p-6 print:p-4">
@@ -427,101 +455,113 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               <Separator className="mb-6 print:mb-4" />
 
               {/* S - Situation */}
-              <div className="mb-5 border-l-4 border-teal-400 bg-teal-50/30 dark:bg-teal-950/10 rounded-r-lg p-4 card-premium">
-                <h2 className="text-base font-semibold text-teal-700 dark:text-teal-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
-                  S — Situation
-                </h2>
-                <p className="text-sm leading-relaxed print:text-xs">
-                  {aiSummary?.situation || situation}
-                </p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0 }}
+                className="mb-5 print-avoid-break"
+              >
+                <div className="border-l-4 border-teal-400 bg-teal-50/30 dark:bg-teal-950/10 rounded-r-lg p-4 card-premium">
+                  <h2 className="text-base font-semibold text-teal-700 dark:text-teal-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
+                    S — Situation
+                  </h2>
+                  <p className="text-sm leading-relaxed print:text-xs">
+                    {aiSummary?.situation || situation}
+                  </p>
+                </div>
+              </motion.div>
 
               {/* B - Background */}
-              <div className="mb-5 border-l-4 border-sky-400 bg-sky-50/30 dark:bg-sky-950/10 rounded-r-lg p-4 card-premium">
-                <h2 className="text-base font-semibold text-sky-700 dark:text-sky-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
-                  B — Background
-                </h2>
-                <p className="text-sm leading-relaxed print:text-xs">
-                  {aiSummary?.background || background}
-                </p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="mb-5 print-avoid-break"
+              >
+                <div className="border-l-4 border-sky-400 bg-sky-50/30 dark:bg-sky-950/10 rounded-r-lg p-4 card-premium">
+                  <h2 className="text-base font-semibold text-sky-700 dark:text-sky-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
+                    B — Background
+                  </h2>
+                  <p className="text-sm leading-relaxed print:text-xs">
+                    {aiSummary?.background || background}
+                  </p>
+                </div>
+              </motion.div>
 
               {/* A - Assessment */}
-              <div className="mb-5 border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10 rounded-r-lg p-4 card-premium">
-                <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
-                  A — Assessment
-                </h2>
-                {aiSummary && (
-                  <Badge variant="secondary" className="mb-2 print:hidden">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    AI-Generated
-                  </Badge>
-                )}
-                <p className="text-sm leading-relaxed print:text-xs">{assessment}</p>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="mb-5 print-avoid-break"
+              >
+                <div className="border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10 rounded-r-lg p-4 card-premium">
+                  <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
+                    A — Assessment
+                  </h2>
+                  {aiSummary && (
+                    <Badge variant="secondary" className="mb-2 print:hidden">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      AI-Generated
+                    </Badge>
+                  )}
+                  <p className="text-sm leading-relaxed print:text-xs">{assessment}</p>
 
-                {/* Quick stats */}
-                {stats && (
-                  <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mt-4 print:grid-cols-7 print:gap-2 print:mt-2">
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Avg Pain</p>
-                      <p className="text-xl font-extrabold">{stats.avgPain.toFixed(1)}</p>
+                  {/* Quick stats — enhanced with animated numbers, colored borders, icons, and worst-pulse */}
+                  {stats && (
+                    <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mt-4 print:grid-cols-7 print:gap-2 print:mt-2">
+                      {[
+                        { key: "avgPain", label: "Avg Pain", value: animAvgPain.toFixed(1), accent: "metric-accent-rose", icon: <Flame className="h-3 w-3" />, iconBg: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400" },
+                        { key: "avgStool", label: "Avg Frequency", value: `${animAvgStool.toFixed(1)}/day`, accent: "metric-accent-teal", icon: <Waves className="h-3 w-3" />, iconBg: "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" },
+                        { key: "avgStress", label: "Avg Stress", value: animAvgStress.toFixed(1), accent: "metric-accent-amber", icon: <Brain className="h-3 w-3" />, iconBg: "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" },
+                        { key: "trend", label: "Trend", value: stats.trend, accent: "metric-accent-violet", icon: stats.trend === "Improving" ? <TrendingUp className="h-3 w-3" /> : stats.trend === "Worsening" ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />, iconBg: stats.trend === "Improving" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400" : stats.trend === "Worsening" ? "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400" : "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400", valueClass: stats.trend === "Improving" ? "text-emerald-600" : stats.trend === "Worsening" ? "text-rose-600" : "text-amber-600" },
+                        { key: "medAdherence", label: "Med Adherence", value: `${Math.round(animMedAdherence)}%`, accent: "metric-accent-teal", icon: <ShieldCheck className="h-3 w-3" />, iconBg: "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400", valueClass: "text-teal-600" },
+                        { key: "bloodDays", label: "Blood Days", value: `${Math.round(animBloodDays)} (${stats.bloodPct}%)`, accent: "metric-accent-rose", icon: <Droplets className="h-3 w-3" />, iconBg: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400", valueClass: "text-rose-600" },
+                        { key: "avgUrgency", label: "Avg Urgency", value: `${animAvgUrgency.toFixed(1)}/3`, accent: "metric-accent-amber", icon: <Zap className="h-3 w-3" />, iconBg: "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" },
+                      ].map((stat) => (
+                        <div
+                          key={stat.key}
+                          className={`rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift ${stat.accent} ${worstStatKey === stat.key ? "stat-pulse-worst" : ""} print-avoid-break`}
+                        >
+                          <div className="flex items-center justify-center gap-1.5 mb-1">
+                            <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full ${stat.iconBg} shrink-0`}>
+                              {stat.icon}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{stat.label}</span>
+                          </div>
+                          <p className={`text-xl font-extrabold ${stat.valueClass ?? ""}`}>{stat.value}</p>
+                        </div>
+                      ))}
                     </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Avg Frequency</p>
-                      <p className="text-xl font-extrabold">{stats.avgStool.toFixed(1)}/day</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Avg Stress</p>
-                      <p className="text-xl font-extrabold">{stats.avgStress.toFixed(1)}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Trend</p>
-                      <p
-                        className={`text-xl font-extrabold ${
-                          stats.trend === "Improving"
-                            ? "text-emerald-600"
-                            : stats.trend === "Worsening"
-                            ? "text-rose-600"
-                            : "text-amber-600"
-                        }`}
-                      >
-                        {stats.trend}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Med Adherence</p>
-                      <p className="text-xl font-extrabold text-teal-600">{stats.medAdherence}%</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Blood Days</p>
-                      <p className="text-xl font-extrabold text-rose-600">{stats.bloodDays} ({stats.bloodPct}%)</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift">
-                      <p className="text-xs text-muted-foreground">Avg Urgency</p>
-                      <p className="text-xl font-extrabold">{stats.avgUrgency.toFixed(1)}/3</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </motion.div>
 
               {/* R - Recommendation */}
-              <div className="mb-6 border-l-4 border-violet-400 bg-violet-50/30 dark:bg-violet-950/10 rounded-r-lg p-4 card-premium">
-                <h2 className="text-base font-semibold text-violet-700 dark:text-violet-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
-                  R — Recommendation
-                </h2>
-                <p className="text-sm leading-relaxed print:text-xs">
-                  {aiSummary?.recommendation || recommendation}
-                </p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mb-6 print-avoid-break"
+              >
+                <div className="border-l-4 border-violet-400 bg-violet-50/30 dark:bg-violet-950/10 rounded-r-lg p-4 card-premium">
+                  <h2 className="text-base font-semibold text-violet-700 dark:text-violet-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
+                    R — Recommendation
+                  </h2>
+                  <p className="text-sm leading-relaxed print:text-xs">
+                    {aiSummary?.recommendation || recommendation}
+                  </p>
+                </div>
+              </motion.div>
 
               <Separator className="mb-6 print:mb-4" />
 
               {/* Data Table */}
-              <div>
+              <div className="border-l-4 border-teal-400 pl-4 print:border-l-0 print:pl-0">
                 <h2 className="text-base font-semibold mb-3 print:text-sm print:mt-4 print:mb-1">
                   Recent Symptom Log
                 </h2>
@@ -529,7 +569,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                   &larr; Scroll horizontally to see all columns &rarr;
                 </p>
                 <div className="overflow-x-auto rounded-lg border print:rounded-none">
-                  <Table className="table-row-hover table-row-premium">
+                  <Table className="table-row-hover table-row-premium table-zebra">
                     <TableHeader>
                       <TableRow className="bg-muted/50">
                         <TableHead>Date</TableHead>

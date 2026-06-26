@@ -59,6 +59,9 @@ export default function OnboardingTour({
       // Small delay for smooth mount
       const t = requestAnimationFrame(() => setVisible(true));
       return () => cancelAnimationFrame(t);
+    } else if (visible) {
+      // Auto-dismiss tour if data loads while tour is visible
+      setVisible(false);
     }
   }, [symptomCount]);
 

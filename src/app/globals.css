@@ -1099,4 +1099,89 @@ html {
   0% { --angle: 0deg; }
   100% { --angle: 360deg; }
 }
+/* 56. Stat card worst-value pulse — draws clinical attention */
+@keyframes stat-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.35); }
+  70% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+.stat-pulse-worst {
+  animation: stat-pulse-ring 2s ease-in-out infinite;
+  position: relative;
+}
+
+/* 57. Bristol card item hover scale */
+.bristol-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.bristol-item:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.dark .bristol-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+/* 58. Bristol emoji bounce on hover */
+.bristol-emoji {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 1.35rem;
+}
+.bristol-item:hover .bristol-emoji {
+  animation: emoji-bounce 0.4s ease;
+}
+@keyframes emoji-bounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* 59. Data table zebra striping */
+.table-zebra tbody tr:nth-child(even) {
+  background: rgba(0,0,0,0.02);
+}
+.dark .table-zebra tbody tr:nth-child(even) {
+  background: rgba(255,255,255,0.02);
+}
+
+/* 60. Print header — visible only in print */
+.print-header {
+  display: none;
+}
+@media print {
+  .print-header {
+    display: block;
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #0d9488;
+  }
+  .print-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0d9488;
+    margin: 0 0 2px 0;
+    letter-spacing: 0.02em;
+  }
+  .print-header p {
+    font-size: 11px;
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+/* 61. Print shadow reduction */
+@media print {
+  .print-area .card-premium,
+  .print-area .card-glow,
+  .print-area .hover-lift {
+    box-shadow: none !important;
+  }
+  .print-area .stat-pulse-worst {
+    animation: none !important;
+  }
+}
+
 /* CACHE BUST */

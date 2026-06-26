@@ -1,0 +1,1103 @@
+     1→@import "tailwindcss";
+     2→@import "tw-animate-css";
+     3→
+     4→@custom-variant dark (&:is(.dark *));
+     5→
+     6→@theme inline {
+     7→  --color-background: var(--background);
+     8→  --color-foreground: var(--foreground);
+     9→  --font-sans: var(--font-geist-sans);
+    10→  --font-mono: var(--font-geist-mono);
+    11→  --color-sidebar-ring: var(--sidebar-ring);
+    12→  --color-sidebar-border: var(--sidebar-border);
+    13→  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    14→  --color-sidebar-accent: var(--sidebar-accent);
+    15→  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    16→  --color-sidebar-primary: var(--sidebar-primary);
+    17→  --color-sidebar-foreground: var(--sidebar-foreground);
+    18→  --color-sidebar: var(--sidebar);
+    19→  --color-chart-5: var(--chart-5);
+    20→  --color-chart-4: var(--chart-4);
+    21→  --color-chart-3: var(--chart-3);
+    22→  --color-chart-2: var(--chart-2);
+    23→  --color-chart-1: var(--chart-1);
+    24→  --color-ring: var(--ring);
+    25→  --color-input: var(--input);
+    26→  --color-border: var(--border);
+    27→  --color-destructive: var(--destructive);
+    28→  --color-accent-foreground: var(--accent-foreground);
+    29→  --color-accent: var(--accent);
+    30→  --color-muted-foreground: var(--muted-foreground);
+    31→  --color-muted: var(--muted);
+    32→  --color-secondary-foreground: var(--secondary-foreground);
+    33→  --color-secondary: var(--secondary);
+    34→  --color-primary-foreground: var(--primary-foreground);
+    35→  --color-primary: var(--primary);
+    36→  --color-popover-foreground: var(--popover-foreground);
+    37→  --color-popover: var(--popover);
+    38→  --color-card-foreground: var(--card-foreground);
+    39→  --color-card: var(--card);
+    40→  --radius-sm: calc(var(--radius) - 4px);
+    41→  --radius-md: calc(var(--radius) - 2px);
+    42→  --radius-lg: var(--radius);
+    43→  --radius-xl: calc(var(--radius) + 4px);
+    44→  --color-teal-50: #f0fdfa;
+    45→  --color-teal-100: #ccfbf1;
+    46→  --color-teal-200: #99f6e4;
+    47→  --color-teal-300: #5eead4;
+    48→  --color-teal-400: #2dd4bf;
+    49→  --color-teal-500: #14b8a6;
+    50→  --color-teal-600: #0d9488;
+    51→  --color-teal-700: #0f766e;
+    52→  --color-teal-800: #115e59;
+    53→  --color-teal-900: #134e4a;
+    54→  --color-coral-400: #fb7185;
+    55→  --color-coral-500: #f43f5e;
+    56→  --color-coral-600: #e11d48;
+    57→}
+    58→
+    59→:root {
+    60→  --radius: 0.75rem;
+    61→  --background: #FAFAF8;
+    62→  --foreground: #1a1a1a;
+    63→  --card: #ffffff;
+    64→  --card-foreground: #1a1a1a;
+    65→  --popover: #ffffff;
+    66→  --popover-foreground: #1a1a1a;
+    67→  --primary: #0d9488;
+    68→  --primary-foreground: #ffffff;
+    69→  --secondary: #f0fdfa;
+    70→  --secondary-foreground: #115e59;
+    71→  --muted: #f5f5f3;
+    72→  --muted-foreground: #6b7280;
+    73→  --accent: #f0fdfa;
+    74→  --accent-foreground: #0f766e;
+    75→  --destructive: #e11d48;
+    76→  --border: #e5e7eb;
+    77→  --input: #e5e7eb;
+    78→  --ring: #0d9488;
+    79→  --chart-1: #0d9488;
+    80→  --chart-2: #f43f5e;
+    81→  --chart-3: #14b8a6;
+    82→  --chart-4: #fb7185;
+    83→  --chart-5: #99f6e4;
+    84→  --sidebar: #f0fdfa;
+    85→  --sidebar-foreground: #1a1a1a;
+    86→  --sidebar-primary: #0d9488;
+    87→  --sidebar-primary-foreground: #ffffff;
+    88→  --sidebar-accent: #ccfbf1;
+    89→  --sidebar-accent-foreground: #0f766e;
+    90→  --sidebar-border: #99f6e4;
+    91→  --sidebar-ring: #0d9488;
+    92→}
+    93→
+    94→.dark {
+    95→  --background: #0a0f16;
+    96→  --foreground: #e8eaed;
+    97→  --card: #111827;
+    98→  --card-foreground: #e8eaed;
+    99→  --popover: #111827;
+   100→  --popover-foreground: #e8eaed;
+   101→  --primary: #2dd4bf;
+   102→  --primary-foreground: #0a0f16;
+   103→  --secondary: #1e293b;
+   104→  --secondary-foreground: #e8eaed;
+   105→  --muted: #1e293b;
+   106→  --muted-foreground: #94a3b8;
+   107→  --accent: #1e293b;
+   108→  --accent-foreground: #e8eaed;
+   109→  --destructive: #fb7185;
+   110→  --border: #1e293b;
+   111→  --input: #1e293b;
+   112→  --ring: #2dd4bf;
+   113→  --chart-1: #2dd4bf;
+   114→  --chart-2: #fb7185;
+   115→  --chart-3: #14b8a6;
+   116→  --chart-4: #f43f5e;
+   117→  --chart-5: #5eead4;
+   118→  --sidebar: #0d1420;
+   119→  --sidebar-foreground: #e8eaed;
+   120→  --sidebar-primary: #2dd4bf;
+   121→  --sidebar-primary-foreground: #0a0f16;
+   122→  --sidebar-accent: #1e293b;
+   123→  --sidebar-accent-foreground: #e8eaed;
+   124→  --sidebar-border: #1e293b;
+   125→  --sidebar-ring: #2dd4bf;
+   126→}
+   127→
+   128→@layer base {
+   129→  * {
+   130→    @apply border-border outline-ring/50;
+   131→  }
+   132→  body {
+   133→    @apply bg-background text-foreground;
+   134→  }
+   135→}
+   136→
+   137→/* Custom scrollbar styles */
+   138→.custom-scrollbar::-webkit-scrollbar {
+   139→  width: 6px;
+   140→}
+   141→.custom-scrollbar::-webkit-scrollbar-track {
+   142→  background: transparent;
+   143→}
+   144→.custom-scrollbar::-webkit-scrollbar-thumb {
+   145→  background: #d1d5db;
+   146→  border-radius: 3px;
+   147→}
+   148→.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+   149→  background: #9ca3af;
+   150→}
+   151→/* Firefox scrollbar support */
+   152→.custom-scrollbar {
+   153→  scrollbar-width: thin;
+   154→  scrollbar-color: #d1d5db transparent;
+   155→}
+   156→/* Dark mode scrollbar colors — uses theme variables for consistency */
+   157→.dark .custom-scrollbar {
+   158→  scrollbar-color: var(--border) transparent;
+   159→}
+   160→.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+   161→  background: var(--border);
+   162→  border-radius: 3px;
+   163→}
+   164→.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+   165→  background: var(--muted-foreground);
+   166→}
+   167→.dark .custom-scrollbar::-webkit-scrollbar-track {
+   168→  background: rgba(255, 255, 255, 0.02);
+   169→}
+   170→
+   171→/* Animated gradient background for empty states */
+   172→@keyframes gradient-shift {
+   173→  0%, 100% { background-position: 0% 50%; }
+   174→  50% { background-position: 100% 50%; }
+   175→}
+   176→
+   177→.animate-gradient-bg {
+   178→  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 25%, #f0fdfa 50%, #d1fae5 75%, #f0fdfa 100%);
+   179→  background-size: 200% 200%;
+   180→  animation: gradient-shift 8s ease infinite;
+   181→}
+   182→
+   183→.dark .animate-gradient-bg {
+   184→  background: linear-gradient(135deg, #0d1420 0%, #134e4a 25%, #0d1420 50%, #1a2430 75%, #0d1420 100%);
+   185→  background-size: 200% 200%;
+   186→  animation: gradient-shift 8s ease infinite;
+   187→}
+   188→
+   189→/* Slider gradient track for pain/stress */
+   190→.slider-gradient-green-red [data-slot="slider-track"] {
+   191→  background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
+   192→}
+   193→.slider-gradient-green-red [data-slot="slider-range"] {
+   194→  background: transparent;
+   195→}
+   196→
+   197→/* Enhanced slider thumb */
+   198→.slider-gradient-green-red [data-slot="slider-thumb"] {
+   199→  width: 20px;
+   200→  height: 20px;
+   201→  border: 3px solid white;
+   202→  box-shadow: 0 1px 4px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+   203→  transition: transform 0.15s ease, box-shadow 0.15s ease;
+   204→}
+   205→.slider-gradient-green-red [data-slot="slider-thumb"]:hover {
+   206→  transform: scale(1.15);
+   207→  box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+   208→}
+   209→.slider-gradient-green-red [data-slot="slider-thumb"]:active {
+   210→  transform: scale(1.05);
+   211→}
+   212→
+   213→/* Card glassmorphism for dark mode */
+   214→.dark .glass-card {
+   215→  background: rgba(21, 28, 37, 0.8);
+   216→  backdrop-filter: blur(12px);
+   217→  border: 1px solid rgba(42, 53, 68, 0.5);
+   218→}
+   219→
+   220→/* Smooth focus ring animation — enhanced visibility with primary color glow */
+   221→*:focus-visible {
+   222→ outline: 2px solid var(--ring);
+   223→ outline-offset: 2px;
+   224→ transition: outline-color 0.2s ease, box-shadow 0.2s ease;
+   225→ box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent);
+   226→ border-radius: 4px;
+   227→}
+   228→*:focus:not(:focus-visible) {
+   229→  outline: none;
+   230→  box-shadow: none;
+   231→}
+   232→
+   233→/* Card hover glow effect */
+   234→.card-glow {
+   235→  transition: box-shadow 0.2s ease;
+   236→}
+   237→.card-glow:hover {
+   238→  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.1), 0 4px 12px rgba(13, 148, 136, 0.08);
+   239→}
+   240→.dark .card-glow:hover {
+   241→  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 4px 12px rgba(45, 212, 191, 0.08);
+   242→}
+   243→
+   244→/* Subtle dot grid background pattern */
+   245→body::before {
+   246→  content: "";
+   247→  position: fixed;
+   248→  top: 0;
+   249→  left: 0;
+   250→  width: 100%;
+   251→  height: 100%;
+   252→  background-image: radial-gradient(circle, currentColor 0.5px, transparent 0.5px);
+   253→  background-size: 24px 24px;
+   254→  opacity: 0.03;
+   255→  pointer-events: none;
+   256→  z-index: 0;
+   257→}
+   258→
+   259→/* Custom scrollbar for main content */
+   260→main::-webkit-scrollbar { width: 6px; }
+   261→main::-webkit-scrollbar-track { background: transparent; }
+   262→main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+   263→main::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+   264→main {
+   265→  scrollbar-width: thin;
+   266→  scrollbar-color: var(--border) transparent;
+   267→}
+   268→
+   269→/* Sonner toast styling */
+   270→[data-sonner-toaster] [data-sonner-toast] {
+   271→  border-radius: 12px;
+   272→}
+   273→
+   274→/* Smooth recording pulse */
+   275→@keyframes gentle-pulse {
+   276→  0%, 100% { opacity: 1; transform: scale(1); }
+   277→  50% { opacity: 0.7; transform: scale(1.05); }
+   278→}
+   279→
+   280→.recording-pulse {
+   281→  animation: gentle-pulse 2s ease-in-out infinite;
+   282→}
+   283→
+   284→/* Print watermark hidden by default, visible only in print area context */
+   285→.print-watermark {
+   286→  position: absolute;
+   287→  top: 50%;
+   288→  left: 50%;
+   289→  transform: translate(-50%, -50%) rotate(-30deg);
+   290→  font-size: 6rem;
+   291→  font-weight: 900;
+   292→  color: currentColor;
+   293→  opacity: 0.025;
+   294→  pointer-events: none;
+   295→  white-space: nowrap;
+   296→  z-index: 0;
+   297→  user-select: none;
+   298→}
+   299→
+   300→@media print {
+   301→  /* Hide everything except the handout content */
+   302→  body * {
+   303→    visibility: hidden;
+   304→  }
+   305→  .print-area, .print-area * {
+   306→    visibility: visible;
+   307→  }
+   308→  .print-area {
+   309→    position: absolute;
+   310→    left: 0;
+   311→    top: 0;
+   312→    width: 100%;
+   313→  }
+   314→  /* Clean medical document styling */
+   315→  .print-area table {
+   316→    border-collapse: collapse;
+   317→    width: 100%;
+   318→  }
+   319→  .print-area th, .print-area td {
+   320→    border: 1px solid #ddd;
+   321→    padding: 6px 10px;
+   322→    text-align: left;
+   323→    font-size: 11px;
+   324→  }
+   325→  .print-area h1 {
+   326→    font-size: 18px;
+   327→    margin-bottom: 4px;
+   328→  }
+   329→  .print-area h2 {
+   330→    font-size: 14px;
+   331→    margin-top: 16px;
+   332→    margin-bottom: 8px;
+   333→    border-bottom: 1px solid #ccc;
+   334→    padding-bottom: 4px;
+   335→  }
+   336→  /* Refined print: page breaks & formatting */
+   337→  .print-area .print-page-break {
+   338→    page-break-before: always;
+   339→  }
+   340→  .print-area .print-avoid-break {
+   341→    page-break-inside: avoid;
+   342→  }
+   343→  .print-area h1, .print-area h2, .print-area h3 {
+   344→    page-break-after: avoid;
+   345→  }
+   346→  .print-area tr {
+   347→    page-break-inside: avoid;
+   348→  }
+   349→  .print-area p {
+   350→    orphans: 3;
+   351→    widows: 3;
+   352→  }
+   353→  .print-area {
+   354→    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+   355→    color: #1a1a1a;
+   356→    line-height: 1.5;
+   357→  }
+   358→  .print-area .no-print {
+   359→    display: none !important;
+   360→  }
+   361→}
+   362→
+   363→/* ==========================================================================
+   364→   UTILITY CLASSES — ColoBrief AI Dashboard
+   365→   ========================================================================== */
+   366→
+   367→/* 1. Card Elevation System — multi-layered shadow for premium depth */
+   368→.card-elevated {
+   369→  box-shadow:
+   370→    0 0 0 1px rgba(0, 0, 0, 0.03),
+   371→    0 1px 3px rgba(0, 0, 0, 0.04),
+   372→    0 4px 8px rgba(0, 0, 0, 0.04),
+   373→    0 12px 24px rgba(0, 0, 0, 0.05);
+   374→  transition: box-shadow 0.25s ease, transform 0.25s ease;
+   375→}
+   376→.card-elevated:hover {
+   377→  box-shadow:
+   378→    0 0 0 1px rgba(0, 0, 0, 0.04),
+   379→    0 2px 6px rgba(0, 0, 0, 0.05),
+   380→    0 8px 16px rgba(0, 0, 0, 0.06),
+   381→    0 20px 40px rgba(0, 0, 0, 0.07);
+   382→  transform: translateY(-1px);
+   383→}
+   384→.dark .card-elevated {
+   385→  box-shadow:
+   386→    0 0 0 1px rgba(255, 255, 255, 0.04),
+   387→    0 1px 3px rgba(0, 0, 0, 0.2),
+   388→    0 4px 8px rgba(0, 0, 0, 0.2),
+   389→    0 12px 24px rgba(0, 0, 0, 0.3);
+   390→}
+   391→.dark .card-elevated:hover {
+   392→  box-shadow:
+   393→    0 0 0 1px rgba(45, 212, 191, 0.1),
+   394→    0 2px 6px rgba(0, 0, 0, 0.25),
+   395→    0 8px 16px rgba(0, 0, 0, 0.25),
+   396→    0 20px 40px rgba(0, 0, 0, 0.35);
+   397→  transform: translateY(-1px);
+   398→}
+   399→
+   400→/* 2. Gradient Background Accents — subtle section depth */
+   401→.bg-gradient-subtle {
+   402→  background:
+   403→    radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--primary) 4%, transparent) 0%, transparent 60%),
+   404→    radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--primary) 3%, transparent) 0%, transparent 50%),
+   405→    var(--background);
+   406→}
+   407→.dark .bg-gradient-subtle {
+   408→  background:
+   409→    radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 60%),
+   410→    radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--primary) 4%, transparent) 0%, transparent 50%),
+   411→    var(--background);
+   412→}
+   413→
+   414→/* 3. Refined Progress Bar — teal gradient fill */
+   415→.progress-gradient [data-slot="indicator"] {
+   416→  background: linear-gradient(90deg, var(--primary), #14b8a6, #2dd4bf);
+   417→  background-size: 200% 100%;
+   418→  animation: progress-shimmer 2s ease-in-out infinite;
+   419→}
+   420→.dark .progress-gradient [data-slot="indicator"] {
+   421→  background: linear-gradient(90deg, #0f766e, var(--primary), #5eead4);
+   422→  background-size: 200% 100%;
+   423→  animation: progress-shimmer 2s ease-in-out infinite;
+   424→}
+   425→@keyframes progress-shimmer {
+   426→  0%, 100% { background-position: 0% 50%; }
+   427→  50% { background-position: 100% 50%; }
+   428→}
+   429→
+   430→/* 4. Badge Glow — subtle glow for active/important badges */
+   431→.badge-glow {
+   432→  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
+   433→              0 0 8px 1px color-mix(in srgb, var(--primary) 15%, transparent);
+   434→  transition: box-shadow 0.2s ease;
+   435→}
+   436→.badge-glow:hover {
+   437→  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent),
+   438→              0 0 14px 2px color-mix(in srgb, var(--primary) 25%, transparent);
+   439→}
+   440→.dark .badge-glow {
+   441→  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent),
+   442→              0 0 10px 1px color-mix(in srgb, var(--primary) 12%, transparent);
+   443→}
+   444→.dark .badge-glow:hover {
+   445→  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+   446→              0 0 18px 2px color-mix(in srgb, var(--primary) 20%, transparent);
+   447→}
+   448→
+   449→/* 5. Table Row Hover — smooth highlight for data tables */
+   450→.table-row-hover tbody tr {
+   451→  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+   452→}
+   453→.table-row-hover tbody tr:hover {
+   454→  background-color: color-mix(in srgb, var(--primary) 5%, var(--card));
+   455→  box-shadow: inset 3px 0 0 var(--primary);
+   456→}
+   457→.dark .table-row-hover tbody tr:hover {
+   458→  background-color: color-mix(in srgb, var(--primary) 8%, var(--card));
+   459→  box-shadow: inset 3px 0 0 var(--primary);
+   460→}
+   461→
+   462→/* 7. Glass Panel — glassmorphism for popovers/dropdowns/panels */
+   463→.glass-panel {
+   464→  background: rgba(255, 255, 255, 0.72);
+   465→  backdrop-filter: blur(16px) saturate(1.8);
+   466→  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+   467→  border: 1px solid rgba(255, 255, 255, 0.3);
+   468→  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+   469→}
+   470→.dark .glass-panel {
+   471→  background: rgba(17, 24, 39, 0.75);
+   472→  backdrop-filter: blur(16px) saturate(1.6);
+   473→  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+   474→  border: 1px solid rgba(255, 255, 255, 0.06);
+   475→  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04);
+   476→}
+   477→
+   478→/* 8. Micro-animation Utilities */
+   479→/* Fade in up — subtle entry animation */
+   480→@keyframes fade-in-up {
+   481→  from {
+   482→    opacity: 0;
+   483→    transform: translateY(8px);
+   484→  }
+   485→  to {
+   486→    opacity: 1;
+   487→    transform: translateY(0);
+   488→  }
+   489→}
+   490→.animate-fade-in-up {
+   491→  animation: fade-in-up 0.4s ease-out both;
+   492→}
+   493→
+   494→/* Pulse soft — gentler than default Tailwind pulse */
+   495→@keyframes pulse-soft {
+   496→  0%, 100% { opacity: 1; }
+   497→  50% { opacity: 0.6; }
+   498→}
+   499→.animate-pulse-soft {
+   500→  animation: pulse-soft 3s ease-in-out infinite;
+   501→}
+   502→
+   503→@keyframes pulse-glow {
+   504→  0%, 100% { box-shadow: 0 2px 8px -2px rgba(13, 148, 136, 0.4); }
+   505→  50% { box-shadow: 0 2px 16px -2px rgba(13, 148, 136, 0.7); }
+   506→}
+   507→
+   508→/* Shimmer — loading placeholder shimmer */
+   509→@keyframes shimmer {
+   510→  0% { background-position: -200% 0; }
+   511→  100% { background-position: 200% 0; }
+   512→}
+   513→.shimmer {
+   514→  background: linear-gradient(
+   515→    90deg,
+   516→    var(--muted) 25%,
+   517→    color-mix(in srgb, var(--muted-foreground) 8%, var(--muted)) 50%,
+   518→    var(--muted) 75%
+   519→  );
+   520→  background-size: 200% 100%;
+   521→  animation: shimmer 2s linear infinite;
+   522→  border-radius: var(--radius);
+   523→}
+   524→.dark .shimmer {
+   525→  background: linear-gradient(
+   526→    90deg,
+   527→    var(--muted) 25%,
+   528→    color-mix(in srgb, var(--muted-foreground) 12%, var(--muted)) 50%,
+   529→    var(--muted) 75%
+   530→  );
+   531→  background-size: 200% 100%;
+   532→  animation: shimmer 2s linear infinite;
+   533→}
+   534→
+   535→/* 10. Section Divider — gradient line for visual separation */
+   536→.section-divider {
+   537→  height: 1px;
+   538→  border: none;
+   539→  background: linear-gradient(
+   540→    90deg,
+   541→    transparent 0%,
+   542→    color-mix(in srgb, var(--primary) 20%, transparent) 20%,
+   543→    color-mix(in srgb, var(--primary) 40%, var(--border)) 50%,
+   544→    color-mix(in srgb, var(--primary) 20%, transparent) 80%,
+   545→    transparent 100%
+   546→  );
+   547→  margin: 1.5rem 0;
+   548→}
+   549→.dark .section-divider {
+   550→  background: linear-gradient(
+   551→    90deg,
+   552→    transparent 0%,
+   553→    color-mix(in srgb, var(--primary) 15%, transparent) 20%,
+   554→    color-mix(in srgb, var(--primary) 30%, var(--border)) 50%,
+   555→    color-mix(in srgb, var(--primary) 15%, transparent) 80%,
+   556→    transparent 100%
+   557→  );
+   558→}
+   559→
+   560→/* 12. Radix Popover/Tooltip Styling — consistent popover appearance */
+   561→[data-radix-popper-content-wrapper] {
+   562→  z-index: 50;
+   563→}
+   564→[data-radix-popper-content-wrapper] [data-state="open"] {
+   565→  animation: popover-enter 0.15s ease-out;
+   566→}
+   567→@keyframes popover-enter {
+   568→  from {
+   569→    opacity: 0;
+   570→    transform: scale(0.97) translateY(2px);
+   571→  }
+   572→  to {
+   573→    opacity: 1;
+   574→    transform: scale(1) translateY(0);
+   575→  }
+   576→}
+   577→
+   578→/* ==========================================================================
+   579→   ADVANCED STYLING — ColoBrief AI Dashboard v1.3
+   580→   ========================================================================== */
+   581→
+   582→/* 13. Noise texture overlay — adds organic depth to cards */
+   583→.noise-overlay::after {
+   584→  content: "";
+   585→  position: absolute;
+   586→  inset: 0;
+   587→  border-radius: inherit;
+   588→  opacity: 0.015;
+   589→  pointer-events: none;
+   590→  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+   591→  background-size: 128px 128px;
+   592→}
+   593→
+   594→/* 14. Interactive Card Press Effect */
+   595→.card-press {
+   596→  transition: transform 0.15s ease, box-shadow 0.15s ease;
+   597→  cursor: pointer;
+   598→}
+   599→.card-press:active {
+   600→  transform: scale(0.985);
+   601→  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+   602→}
+   603→
+   604→/* 15. Gradient Text Utility */
+   605→.text-gradient-teal {
+   606→  background: linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf);
+   607→  -webkit-background-clip: text;
+   608→  -webkit-text-fill-color: transparent;
+   609→  background-clip: text;
+   610→}
+   611→.dark .text-gradient-teal {
+   612→  background: linear-gradient(135deg, #5eead4, #2dd4bf, #14b8a6);
+   613→  -webkit-background-clip: text;
+   614→  -webkit-text-fill-color: transparent;
+   615→  background-clip: text;
+   616→}
+   617→
+   618→/* 16. Animated Border Gradient — for highlighted cards */
+   619→@property --angle {
+   620→  syntax: "<angle>";
+   621→  initial-value: 0deg;
+   622→  inherits: false;
+   623→}
+   624→.animated-border {
+   625→  --angle: 0deg;
+   626→  border: 2px solid transparent;
+   627→  background-origin: border-box;
+   628→  background-clip: padding-box, border-box;
+   629→  background-image:
+   630→    linear-gradient(var(--card), var(--card)),
+   631→    conic-gradient(from var(--angle), #0d9488, #14b8a6, #2dd4bf, #0d9488);
+   632→  animation: rotate-border 4s linear infinite;
+   633→}
+   634→@keyframes rotate-border {
+   635→  to { --angle: 360deg; }
+   636→}
+   637→.dark .animated-border {
+   638→  background-image:
+   639→    linear-gradient(var(--card), var(--card)),
+   640→    conic-gradient(from var(--angle), #2dd4bf, #14b8a6, #5eead4, #2dd4bf);
+   641→}
+   642→
+   643→/* 17. Stat Number Styling — for metric displays */
+   644→.stat-number {
+   645→  font-variant-numeric: tabular-nums;
+   646→  font-feature-settings: "tnum";
+   647→  letter-spacing: -0.02em;
+   648→}
+   649→
+   650→/* 18. Micro-hover lift — for interactive list items */
+   651→.hover-lift {
+   652→  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+   653→}
+   654→.hover-lift:hover {
+   655→  transform: translateY(-2px);
+   656→  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+   657→}
+   658→
+   659→/* 19. Status Indicator Dot — animated pulse for live indicators */
+   660→.status-dot {
+   661→  position: relative;
+   662→}
+   663→.status-dot::before {
+   664→  content: "";
+   665→  position: absolute;
+   666→  inset: -2px;
+   667→  border-radius: 50%;
+   668→  background: inherit;
+   669→  opacity: 0.4;
+   670→  animation: status-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+   671→}
+   672→@keyframes status-ping {
+   673→  0% { transform: scale(1); opacity: 0.4; }
+   674→  75%, 100% { transform: scale(2.2); opacity: 0; }
+   675→}
+   676→
+   677→/* 20. Tooltip Arrow Enhancement */
+   678→.tooltip-enhanced {
+   679→  position: relative;
+   680→}
+   681→.tooltip-enhanced::after {
+   682→  content: attr(data-tooltip);
+   683→  position: absolute;
+   684→  bottom: calc(100% + 8px);
+   685→  left: 50%;
+   686→  transform: translateX(-50%) translateY(4px);
+   687→  padding: 4px 10px;
+   688→  border-radius: 6px;
+   689→  font-size: 11px;
+   690→  white-space: nowrap;
+   691→  background: var(--foreground);
+   692→  color: var(--background);
+   693→  opacity: 0;
+   694→  pointer-events: none;
+   695→  transition: opacity 0.15s ease, transform 0.15s ease;
+   696→  z-index: 40;
+   697→}
+   698→.tooltip-enhanced:hover::after {
+   699→  opacity: 1;
+   700→  transform: translateX(-50%) translateY(0);
+   701→}
+   702→
+   703→/* 21. Sidebar Active Indicator — enhanced active nav item */
+   704→.sidebar-active-indicator {
+   705→  position: relative;
+   706→}
+   707→.sidebar-active-indicator::before {
+   708→  content: "";
+   709→  position: absolute;
+   710→  left: 0;
+   711→  top: 50%;
+   712→  transform: translateY(-50%);
+   713→  width: 3px;
+   714→  height: 60%;
+   715→  border-radius: 0 3px 3px 0;
+   716→  background: var(--primary);
+   717→}
+   718→
+   719→/* 22. Gradient Mask Fade — for scroll containers */
+   720→.scroll-fade-bottom {
+   721→  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+   722→  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+   723→}
+   724→.scroll-fade-top {
+   725→  mask-image: linear-gradient(to top, black 85%, transparent 100%);
+   726→  -webkit-mask-image: linear-gradient(to top, black 85%, transparent 100%);
+   727→}
+   728→
+   729→/* 23. Responsive Container — consistent max-width with padding */
+   730→.container-dashboard {
+   731→  width: 100%;
+   732→  max-width: 1400px;
+   733→  margin-left: auto;
+   734→  margin-right: auto;
+   735→  padding-left: 1rem;
+   736→  padding-right: 1rem;
+   737→}
+   738→@media (min-width: 640px) {
+   739→  .container-dashboard { padding-left: 1.5rem; padding-right: 1.5rem; }
+   740→}
+   741→@media (min-width: 1024px) {
+   742→  .container-dashboard { padding-left: 2rem; padding-right: 2rem; }
+   743→}
+   744→
+   745→/* 24. Empty State Illustration Container */
+   746→.empty-state-illustration {
+   747→  position: relative;
+   748→}
+   749→.empty-state-illustration::before {
+   750→  content: "";
+   751→  position: absolute;
+   752→  inset: -20px;
+   753→  border-radius: 50%;
+   754→  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 8%, transparent) 0%, transparent 70%);
+   755→  pointer-events: none;
+   756→}
+   757→
+   758→/* 25. Number Counter Animation */
+   759→@keyframes count-up {
+   760→  from { opacity: 0; transform: translateY(8px); }
+   761→  to { opacity: 1; transform: translateY(0); }
+   762→}
+   763→.animate-count-up {
+   764→  animation: count-up 0.6s ease-out both;
+   765→}
+   766→
+   767→/* 26. Smooth Scroll Behavior */
+   768→@media (prefers-reduced-motion: no-preference) {
+   769→  html { scroll-behavior: smooth; }
+   770→}
+   771→
+   772→/* 27. Selection Color */
+   773→::selection {
+   774→  background: color-mix(in srgb, var(--primary) 25%, transparent);
+   775→  color: var(--foreground);
+   776→}
+   777→
+   778→/* 28. Checkbox/Radio Custom Accent */
+   779→input[type="checkbox"]:checked,
+   780→input[type="radio"]:checked {
+   781→  accent-color: var(--primary);
+   782→}
+   783→
+   784→/* ==========================================================================
+   785→   ADDITIONAL POLISH — ColoBrief AI Dashboard v1.4
+   786→   ========================================================================== */
+   787→
+   788→/* 29. Enhanced card glassmorphism for dark mode */
+   789→.dark .card-elevated {
+   790→  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
+   791→  border-color: rgba(45, 212, 191, 0.08);
+   792→  backdrop-filter: blur(20px) saturate(1.4);
+   793→  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+   794→}
+   795→.dark .card-elevated:hover {
+   796→  background: linear-gradient(135deg, rgba(17, 24, 39, 0.98) 0%, rgba(15, 23, 42, 0.9) 100%);
+   797→  border-color: rgba(45, 212, 191, 0.15);
+   798→  box-shadow:
+   799→    0 0 0 1px rgba(45, 212, 191, 0.12),
+   800→    0 4px 16px rgba(0, 0, 0, 0.4),
+   801→    0 16px 32px rgba(0, 0, 0, 0.25);
+   802→}
+   803→
+   804→/* 30. Sidebar glassmorphism for dark mode */
+   805→.dark .sidebar {
+   806→  background: linear-gradient(180deg, rgba(13, 20, 32, 0.95) 0%, rgba(10, 15, 25, 0.9) 100%);
+   807→  backdrop-filter: blur(20px);
+   808→  -webkit-backdrop-filter: blur(20px);
+   809→}
+   810→
+   811→/* 31. Gradient border effect for special cards */
+   812→.gradient-border-teal {
+   813→  position: relative;
+   814→}
+   815→.gradient-border-teal::before {
+   816→  content: "";
+   817→  position: absolute;
+   818→  inset: 0;
+   819→  border-radius: inherit;
+   820→  padding: 1px;
+   821→  background: linear-gradient(135deg, rgba(20, 184, 166, 0.5), rgba(13, 148, 136, 0.1), rgba(45, 212, 191, 0.3));
+   822→  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+   823→  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+   824→  -webkit-mask-composite: xor;
+   825→  mask-composite: exclude;
+   826→  pointer-events: none;
+   827→}
+   828→
+   829→/* 32. Subtle glow behind important stat numbers */
+   830→.text-glow-teal {
+   831→  text-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
+   832→}
+   833→.dark .text-glow-teal {
+   834→  text-shadow: 0 0 24px rgba(45, 212, 191, 0.4);
+   835→}
+   836→
+   837→/* 33. Enhanced scrollbar for all scroll containers in dark mode */
+   838→.dark .overflow-y-auto,
+   839→.dark .overflow-auto {
+   840→  scrollbar-color: rgba(45, 212, 191, 0.2) transparent;
+   841→}
+   842→.dark .overflow-y-auto::-webkit-scrollbar-thumb,
+   843→.dark .overflow-auto::-webkit-scrollbar-thumb {
+   844→  background: rgba(45, 212, 191, 0.2);
+   845→  border-radius: 3px;
+   846→}
+   847→.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+   848→.dark .overflow-auto::-webkit-scrollbar-thumb:hover {
+   849→  background: rgba(45, 212, 191, 0.35);
+   850→}
+   851→
+   852→/* 34. Animated hover underline for nav items */
+   853→.nav-underline {
+   854→  position: relative;
+   855→}
+   856→.nav-underline::after {
+   857→  content: "";
+   858→  position: absolute;
+   859→  bottom: -1px;
+   860→  left: 50%;
+   861→  width: 0;
+   862→  height: 2px;
+   863→  background: var(--primary);
+   864→  border-radius: 1px;
+   865→  transition: all 0.25s ease;
+   866→  transform: translateX(-50%);
+   867→}
+   868→.nav-underline:hover::after,
+   869→.nav-underline.active::after {
+   870→  width: 80%;
+   871→}
+   872→
+   873→/* 35. Shimmer loading effect for data cards */
+   874→@keyframes shimmer-border {
+   875→  0% { background-position: 200% 0; }
+   876→  100% { background-position: -200% 0; }
+   877→}
+   878→.shimmer-border {
+   879→  position: relative;
+   880→  overflow: hidden;
+   881→}
+   882→.shimmer-border::before {
+   883→  content: "";
+   884→  position: absolute;
+   885→  inset: 0;
+   886→  border-radius: inherit;
+   887→  background: linear-gradient(90deg, transparent 25%, rgba(20, 184, 166, 0.08) 50%, transparent 75%);
+   888→  background-size: 200% 100%;
+   889→  animation: shimmer-border 2s linear infinite;
+   890→  pointer-events: none;
+   891→}
+   892→
+   893→/* 36. Metric card hover lift with glow */
+   894→.dark .card-elevated {
+   895→  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   896→}
+   897→.dark .card-elevated:hover {
+   898→  transform: translateY(-2px);
+   899→}
+   900→
+   901→/* 38. Better focus styles for interactive elements */
+   902→button:focus-visible,
+   903→a:focus-visible,
+   904→[role="button"]:focus-visible {
+   905→  outline: 2px solid var(--primary);
+   906→  outline-offset: 2px;
+   907→}
+   908→button:focus:not(:focus-visible),
+   909→a:focus:not(:focus-visible) {
+   910→  outline: none;
+   911→}
+   912→
+   913→/* 39. Tooltip enhancement for dark mode */
+   914→.dark [data-radix-popper-content-wrapper] [data-state="open"] {
+   915→  animation: popover-enter 0.15s ease-out;
+   916→}
+   917→
+   918→/* 40. Print improvements - better table styling */
+   919→@media print {
+   920→  .dark .print-area,
+   921→  .dark .print-area * {
+   922→    color: #1a1a1a !important;
+   923→    background: #ffffff !important;
+   924→    border-color: #e5e7eb !important;
+   925→  }
+   926→  .print-area .rounded-xl {
+   927→    border-radius: 0 !important;
+   928→    box-shadow: none !important;
+   929→  }
+   930→}
+   931→
+   932→/* === v1.4 Premium Visual System === */
+   933→
+   934→/* 41. Card depth system - soft layered shadows */
+   935→.card-premium {
+   936→  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.04), 0 4px 12px 0 rgba(0,0,0,0.06);
+   937→  border: 1px solid rgba(0,0,0,0.04);
+   938→}
+   939→.dark .card-premium {
+   940→  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.2), 0 4px 12px 0 rgba(0,0,0,0.15);
+   941→  border-color: rgba(255,255,255,0.06);
+   942→}
+   943→.card-premium:hover {
+   944→  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.06), 0 8px 24px 0 rgba(0,0,0,0.08);
+   945→}
+   946→
+   947→/* 42. Section title styling */
+   948→.section-title {
+   949→  font-size: 0.75rem;
+   950→  font-weight: 600;
+   951→  letter-spacing: 0.08em;
+   952→  text-transform: uppercase;
+   953→  color: var(--muted-foreground);
+   954→}
+   955→
+   956→/* 43. Stat value styling */
+   957→.stat-value {
+   958→  font-size: 1.5rem;
+   959→  font-weight: 700;
+   960→  line-height: 1.2;
+   961→  letter-spacing: -0.02em;
+   962→  font-variant-numeric: tabular-nums;
+   963→}
+   964→
+   965→/* 44. Gradient text for emphasis */
+   966→.text-gradient-primary {
+   967→  background: linear-gradient(135deg, var(--primary), var(--primary-foreground));
+   968→  -webkit-background-clip: text;
+   969→  -webkit-text-fill-color: transparent;
+   970→  background-clip: text;
+   971→}
+   972→
+   973→/* 45. Subtle inner glow on cards (enhanced) */
+   974→.card-glow {
+   975→  position: relative;
+   976→  overflow: hidden;
+   977→  transition: box-shadow 0.2s ease;
+   978→}
+   979→.card-glow::before {
+   980→  content: "";
+   981→  position: absolute;
+   982→  top: 0;
+   983→  left: 0;
+   984→  right: 0;
+   985→  height: 1px;
+   986→  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+   987→  pointer-events: none;
+   988→}
+   989→.card-glow:hover {
+   990→  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.1), 0 4px 12px rgba(13, 148, 136, 0.08);
+   991→}
+   992→.dark .card-glow:hover {
+   993→  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 4px 12px rgba(45, 212, 191, 0.08);
+   994→}
+   995→
+   996→/* 46. Refined badge styling */
+   997→.badge-refined {
+   998→  font-size: 0.65rem;
+   999→  font-weight: 600;
+  1000→  letter-spacing: 0.03em;
+  1001→  padding: 2px 8px;
+  1002→  border-radius: 6px;
+  1003→}
+  1004→
+  1005→/* 47. Smooth scroll behavior */
+  1006→html {
+  1007→  scroll-behavior: smooth;
+  1008→}
+  1009→
+  1010→/* 48. Improved scrollbar for main content area */
+  1011→.custom-scrollbar::-webkit-scrollbar {
+  1012→  width: 6px;
+  1013→}
+  1014→.custom-scrollbar::-webkit-scrollbar-track {
+  1015→  background: transparent;
+  1016→}
+  1017→.custom-scrollbar::-webkit-scrollbar-thumb {
+  1018→  background: rgba(0,0,0,0.12);
+  1019→  border-radius: 3px;
+  1020→}
+  1021→.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  1022→  background: rgba(0,0,0,0.2);
+  1023→}
+  1024→.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  1025→  background: rgba(255,255,255,0.12);
+  1026→}
+  1027→.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  1028→  background: rgba(255,255,255,0.2);
+  1029→}
+  1030→
+  1031→/* 49. Metric card colored top accent */
+  1032→.metric-accent-rose { border-top: 3px solid #f43f5e; }
+  1033→.metric-accent-teal { border-top: 3px solid #14b8a6; }
+  1034→.metric-accent-amber { border-top: 3px solid #f59e0b; }
+  1035→.metric-accent-violet { border-top: 3px solid #8b5cf6; }
+  1036→
+  1037→/* 50. Hover lift for cards (enhanced) */
+  1038→.hover-lift {
+  1039→  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  1040→}
+  1041→.hover-lift:hover {
+  1042→  transform: translateY(-2px);
+  1043→  box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  1044→}
+  1045→.dark .hover-lift:hover {
+  1046→  box-shadow: 0 8px 25px -5px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.2);
+  1047→}
+  1048→
+  1049→/* 51. Animated background mesh for empty states */
+  1050→@keyframes mesh-gradient {
+  1051→  0%, 100% { background-position: 0% 50%; }
+  1052→  50% { background-position: 100% 50%; }
+  1053→}
+  1054→.bg-mesh {
+  1055→  background: linear-gradient(135deg, #f0fdfa 0%, #f5f3ff 25%, #fef2f2 50%, #fffbeb 75%, #f0fdfa 100%);
+  1056→  background-size: 400% 400%;
+  1057→  animation: mesh-gradient 15s ease infinite;
+  1058→}
+  1059→.dark .bg-mesh {
+  1060→  background: linear-gradient(135deg, rgba(13,20,32,0.8) 0%, rgba(15,23,42,0.8) 25%, rgba(20,10,15,0.8) 50%, rgba(20,18,10,0.8) 75%, rgba(13,20,32,0.8) 100%);
+  1061→  background-size: 400% 400%;
+  1062→  animation: mesh-gradient 15s ease infinite;
+  1063→}
+  1064→
+  1065→/* 52. Teal accent glow ring */
+  1066→.glow-teal {
+  1067→  box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.1), 0 0 15px -3px rgba(20, 184, 166, 0.2);
+  1068→}
+  1069→.dark .glow-teal {
+  1070→  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 0 20px -3px rgba(45, 212, 191, 0.15);
+  1071→}
+  1072→
+  1073→/* 53. Premium button styles */
+  1074→.btn-premium {
+  1075→  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  1076→  color: white;
+  1077→  font-weight: 600;
+  1078→  box-shadow: 0 2px 8px -2px rgba(13, 148, 136, 0.4);
+  1079→  transition: all 0.2s ease;
+  1080→}
+  1081→.btn-premium:hover {
+  1082→  box-shadow: 0 4px 14px -2px rgba(13, 148, 136, 0.5);
+  1083→  transform: translateY(-1px);
+  1084→}
+  1085→.btn-premium:active {
+  1086→  transform: translateY(0);
+  1087→}
+  1088→
+  1089→/* 54. Table row hover enhancement */
+  1090→.table-row-premium:hover {
+  1091→  background: rgba(20, 184, 166, 0.03);
+  1092→}
+  1093→.dark .table-row-premium:hover {
+  1094→  background: rgba(45, 212, 191, 0.05);
+  1095→}
+  1096→
+  1097→/* 55. Animated border for special elements */
+  1098→@keyframes border-rotate {
+  1099→  0% { --angle: 0deg; }
+  1100→  100% { --angle: 360deg; }
+  1101→}
+  1102→/* CACHE BUST */
+  1103→

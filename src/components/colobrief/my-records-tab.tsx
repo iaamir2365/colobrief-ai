@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Search, SearchX, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2, Pill } from "lucide-react";
+import { Search, SearchX, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2, Pill, Upload } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -332,6 +332,8 @@ export default function MyRecordsTab({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingLog, setEditingLog] = useState<SymptomLog | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return symptoms;
@@ -360,6 +362,53 @@ export default function MyRecordsTab({
       setDeletingId(null);
     }
   };
+
+  const handleImportCSV = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".csv")) {
+      toast.error("Please select a .csv file");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/symptoms/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const errorMessages = data.errors?.join("\n") || "Import failed";
+        toast.error(`Import failed: ${errorMessages}`);
+        return;
+      }
+
+      if (data.errors?.length > 0) {
+        toast.warning(`Imported ${data.imported} records with ${data.errors.length} warnings`, {
+          description: data.errors.slice(0, 3).join("\n") + (data.errors.length > 3 ? `\n...and ${data.errors.length - 3} more` : ""),
+          duration: 6000,
+        });
+      } else {
+        toast.success(`Imported ${data.imported} records successfully`);
+      }
+
+      onDeleted(); // Refresh the data
+    } catch {
+      toast.error("Failed to import CSV file");
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, [onDeleted]);
 
   const avgPain = filtered.length ? filtered.reduce((s, l) => s + l.painLevel, 0) / filtered.length : 0;
   const avgFreq = filtered.length ? filtered.reduce((s, l) => s + l.stoolFrequency, 0) / filtered.length : 0;
@@ -476,6 +525,27 @@ export default function MyRecordsTab({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleImportCSV}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+          >
+            {isImporting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            {isImporting ? "Importing…" : "Import CSV"}
+          </Button>
           <Button
             variant="outline"
             size="sm"

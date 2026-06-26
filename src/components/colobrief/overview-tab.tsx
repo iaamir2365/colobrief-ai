@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { useAnimatedNumber } from "@/hooks/use-animated-number";
 import { motion } from "framer-motion";
 import {
@@ -22,8 +22,11 @@ import {
   Flame,
   GitCompareArrows,
   ArrowRight,
+  Camera,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -66,7 +69,9 @@ import FlareRiskPredictor from "@/components/colobrief/flare-risk-predictor";
 import BloodTracker from "@/components/colobrief/blood-tracker";
 import SymptomForecast from "@/components/colobrief/symptom-forecast";
 import SymptomRadar from "@/components/colobrief/symptom-radar";
+import SeverityDistribution from "@/components/colobrief/severity-distribution";
 import SymptomInsights from "@/components/colobrief/symptom-insights";
+import { exportChartAsImage } from "@/lib/chart-export";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Type 1: Hard lumps",
@@ -291,6 +296,21 @@ function QuickStatsStrip({ symptoms }: { symptoms: SymptomLog[] }) {
 }
 
 export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
+  const [isExporting, setIsExporting] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleExportDashboard = useCallback(async () => {
+    if (!contentRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportChartAsImage(contentRef.current, `colobrief-overview-${format(new Date(), "yyyy-MM-dd")}.png`);
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting]);
+
   const sevenDaysAgo = useMemo(() => subDays(new Date(), 7), []);
   const threeDaysAgo = useMemo(() => subDays(new Date(), 3), []);
 
@@ -686,12 +706,28 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" ref={contentRef} id="overview-content">
       {/* Emergency Alert Banner */}
       <EmergencyAlertBanner symptoms={symptoms} isLoading={isLoading} />
 
-      {/* Quick Stats Mini Bar */}
-      <QuickStatsStrip symptoms={symptoms} />
+      {/* Quick Stats Mini Bar + Export */}
+      <div className="flex items-center justify-between gap-3">
+        <QuickStatsStrip symptoms={symptoms} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportDashboard}
+          disabled={isExporting}
+          className="shrink-0 btn-premium gap-1.5 text-xs"
+        >
+          {isExporting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Camera className="h-3.5 w-3.5" />
+          )}
+          {isExporting ? "Exporting..." : "Share Screenshot"}
+        </Button>
+      </div>
 
       {/* 7-Day Symptom Forecast */}
       <SymptomForecast symptoms={symptoms} isLoading={isLoading} />
@@ -1344,6 +1380,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </Card>
         </motion.div>
       </div>
+
+      {/* Severity Distribution */}
+      <SeverityDistribution symptoms={symptoms} isLoading={isLoading} />
 
       {/* Week-over-Week Radar */}
       <SymptomRadar symptoms={symptoms} isLoading={isLoading} />

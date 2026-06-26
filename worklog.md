@@ -1330,3 +1330,226 @@ New components placed in overview-tab.tsx:
 5. **MEDIUM**: PWA offline support for mobile use
 6. **LOW**: FHIR-compliant data export for EHR integration
 7. **LOW**: Internationalization (i18n) support
+
+---
+Task ID: r8-4
+Agent: fullstack-developer
+Task: Add CSV data import feature
+
+Work Log:
+- Read existing export route at /api/symptoms/export/route.ts to understand CSV format conventions
+- Read Prisma schema to confirm SymptomLog model fields (date, painLevel, stoolFrequency, stoolType, stressLevel, triggers, notes, medicationTaken, bloodInStool, urgencyLevel)
+- Created /api/symptoms/import/route.ts (POST handler) with:
+  - Multipart form data parsing for CSV file upload
+  - Robust CSV parser handling quoted fields, escaped quotes, CRLF/LF line endings
+  - Case-insensitive column header matching
+  - Flexible date parsing (YYYY-MM-DD, MM/DD/YYYY, DD.MM.YYYY, Date constructor fallback)
+  - Numeric field validation with range checking (pain 0-10, frequency 0-20, stool type 1-7, stress 0-10, urgency 0-10)
+  - Trigger parsing supporting pipe, semicolon, and comma delimiters
+  - Boolean parsing for blood in stool field
+  - Batch insert via Prisma createMany
+  - Detailed error reporting per row with { success, imported, errors } response
+- Updated my-records-tab.tsx with:
+  - Added Upload icon and useRef import
+  - Added isImporting state and fileInputRef
+  - Added handleImportCSV callback that sends FormData to /api/symptoms/import
+  - Added hidden file input (accept=.csv) and "Import CSV" button matching existing export button styling
+  - Loading state shows spinner and "Importing…" text
+  - Toast notifications: success for clean import, warning for partial import with errors, error for failures
+  - Calls onDeleted() after successful import to refresh data
+- Ran bun run lint — zero errors
+
+Stage Summary:
+- CSV import API route created at POST /api/symptoms/import
+- Import CSV button added to My Records tab alongside existing CSV/JSON export buttons
+- Full edge case handling: missing columns, invalid dates, out-of-range values, empty rows
+- Lint passes with zero errors
+
+---
+Task ID: r8-6+r8-7
+Agent: fullstack-developer
+Task: Add symptom severity distribution chart and blood tracker
+
+Work Log:
+- Verified blood-tracker.tsx already exists — skipped creation per instructions
+- Created src/components/colobrief/severity-distribution.tsx with full requirements:
+  - Composite severity score formula: pain×2 + stoolFreq + stress×0.5 + blood(+5) + urgency×1.5
+  - BarChart histogram with 4 severity buckets (Mild 0–10, Moderate 11–20, High 21–30, Severe 30+)
+  - Color-coded bars: emerald/amber/orange/rose via Recharts Cell components
+  - ChartContainer from shadcn/ui for consistent theming
+  - Count labels and "Most Common Severity" badge
+  - Formula hint footer, loading skeleton, empty state
+  - card-premium class, staggered framer-motion entry animation (delay 0.26)
+- Integrated SeverityDistribution into overview-tab.tsx between Bristol donut grid and SymptomRadar
+- Ran bun run lint — zero errors
+
+Stage Summary:
+- Severity distribution chart added to Overview tab
+- Blood tracker was already present, no changes needed
+- Lint clean, no issues encountered
+
+---
+Task ID: r8-5
+Agent: frontend-styling-expert
+Task: Enhance Doctor Handout tab with animated stat cards and premium polish
+
+Work Log:
+- Added 6 new CSS utilities to globals.css: stat-pulse-worst (clinical attention pulse), bristol-item (hover scale), bristol-emoji (bounce on hover), table-zebra (alternating row striping), print-header (print-only professional header), and print shadow reduction
+- Imported useAnimatedNumber hook and 7 new lucide icons (Flame, Waves, Brain, TrendingUp, TrendingDown, Minus, ShieldCheck, Droplets, Zap) into doctor-handout-tab.tsx
+- Added 6 animated number hooks for count-up animations on Avg Pain, Avg Frequency, Avg Stress, Med Adherence, Blood Days, Avg Urgency
+- Added worstStatKey useMemo to determine the highest-value stat for clinical pulse animation
+- Replaced 7 static stat cards with data-driven array featuring: colored top borders (metric-accent-rose/teal/amber/violet), icon circles before each label, animated count-up values, and stat-pulse-worst class on the worst stat
+- Wrapped all 4 SBAR sections (S, B, A, R) in motion.div with staggered entry animations (delays: 0, 0.05, 0.1, 0.15s) with opacity 0→1 and y 16→0
+- Added print-avoid-break class to each SBAR section and each stat card for print optimization
+- Enhanced Bristol reference card with gradient background (slate→white→teal), dark mode variants, bristol-item hover scale, bristol-emoji larger size with bounce animation on hover
+- Enhanced Export PDF button with gradient text (teal-to-emerald bg-clip-text)
+- Added teal left border accent (border-l-4) to data table section with print-friendly reset
+- Added table-zebra class to data table for alternating row backgrounds
+- Added professional print-only header "ColoBrief AI — Clinical Handout" with formatted date
+- Added print CSS: shadows removed on card-premium/card-glow/hover-lift, stat-pulse-worst animation disabled in print
+- Ran bun run lint — zero errors
+
+Stage Summary:
+- All 5 requirements implemented: animated stat cards, SBAR entry animations, data table polish, Bristol card enhancement, print optimization
+- Zero lint errors
+- File: doctor-handout-tab.tsx grew from 612 to 652 lines
+- CSS: 6 new utility rules (56-61) added to globals.css
+
+---
+Task ID: r8-8+r8-9
+Agent: fullstack-developer
+Task: Add Quick Log sidebar widget and enhance Log Symptoms tab styling
+
+Work Log:
+- Created src/components/colobrief/quick-log-panel.tsx — collapsible "use client" component with 3 compact sliders (Pain, Stress, Stool Frequency) and teal Log button, uses SidebarGroup/SidebarGroupContent/SidebarGroupLabel, framer-motion AnimatePresence for expand/collapse, POST /api/symptoms on submit, sonner toast on success
+- Integrated QuickLogPanel into src/app/page.tsx below the "Load Demo Data" button with a SidebarSeparator, passing onSuccess callback that invalidates TanStack Query ["symptoms"]
+- Passed `symptoms` prop to LogSymptomsTab from page.tsx
+- Rewrote src/components/colobrief/log-symptoms-tab.tsx with three major enhancements:
+  1. Daily Completion indicator — checks symptoms array for today's date; shows green CheckCircle badge "Logged today" with formatted date, or amber pulse "Not yet logged today"
+  2. Collapsible sections — 4 sections (Physical Symptoms, Identified Triggers, Medication & Additional Metrics, Additional Notes & AI Assist) each wrapped in CollapsibleSection component with clickable header + ChevronDown; framer-motion AnimatePresence for smooth height animation; collapse state persisted to localStorage under "colobrief-section-collapsed"
+  3. Copy Previous Day button — teal outline button with Copy icon, visible when previous logs exist and form is in default state; pre-fills all fields except notes and date from most recent log
+- Extracted helper functions: isFormDefault, loadCollapsedState, saveCollapsedState
+- Extracted CollapsibleSection as a local component with sectionKey, title, icon, and onToggle props
+- Ran bun run lint — zero errors
+
+Stage Summary:
+- Quick Log sidebar widget: compact collapsible panel with 3 sliders + teal Log button
+- Daily Completion indicator: green/amber badge showing logging status for today
+- 4 collapsible form sections with framer-motion animations and localStorage persistence
+- Copy Previous Day button pre-fills form from most recent log (excluding notes/date)
+- Zero lint errors across all modified/created files
+
+---
+Task ID: r8
+Agent: Main Coordinator (Cron Review Round 8)
+Task: Comprehensive QA, bug fixes, chart export, CSV import, severity chart, quick log, handout styling
+
+## Current Project Status Assessment
+
+ColoBrief AI v1.5.0 is in **excellent condition**. All 4 tabs render correctly with zero console errors across light mode, dark mode, and mobile viewport. One critical runtime bug was found and fixed (useAnimatedNumber hooks referencing variable before definition). The application now has 21 React components and 8 API routes.
+
+## Work Log
+
+### QA Testing (agent-browser)
+- Opened all 4 tabs in agent-browser (Overview, Log Symptoms, My Records, Doctor Handout)
+- Verified zero console errors on initial load and all tab navigations
+- Tested dark mode toggle — renders correctly on all tabs
+- Tested mobile viewport (390×844) — responsive layout works
+- Verified new features: Share Screenshot button, Import CSV button, Quick Log sidebar widget, collapsible sections
+
+### Bug Fixes
+1. **CRITICAL: Doctor Handout useAnimatedNumber before stats definition** (`doctor-handout-tab.tsx`):
+   - The styling agent (r8-5) added 6 `useAnimatedNumber` hooks at line 49-54 that referenced `stats?.avgPain` etc., but `stats` was defined via `useMemo` at line 94
+   - This caused a ReferenceError on the Doctor Handout tab, showing "Application error: a client-side exception has occurred"
+   - Fixed by moving all 6 `useAnimatedNumber` hooks and the `worstStatKey` useMemo to after the `stats` definition (line 148)
+   
+2. **Onboarding tour flash on data load** (`onboarding-tour.tsx`):
+   - Tour showed briefly then disappeared when data loaded (symptomCount changed 0→14)
+   - Added `else if (visible) { setVisible(false); }` clause to auto-dismiss tour when data loads
+
+### New Features
+
+1. **Chart Image Export** (`src/lib/chart-export.ts` + overview-tab.tsx):
+   - New `exportChartAsImage()` utility using html2canvas-pro
+   - Renders element as PNG with padding, watermark branding, dark mode support
+   - "Share Screenshot" button on Overview tab next to Quick Stats
+   - Loading state with spinner while exporting
+
+2. **CSV Data Import** (`src/app/api/symptoms/import/route.ts` + my-records-tab.tsx):
+   - POST API route accepting multipart CSV file upload
+   - Custom CSV parser handling quoted fields, flexible date formats (YYYY-MM-DD, MM/DD/YYYY, DD.MM.YYYY)
+   - Column mapping: Date, Pain Level, Stool Frequency, Stool Type, Stress Level, Triggers, Notes, Medication, Blood, Urgency
+   - Trigger parsing supports pipe/semicolon/comma delimiters
+   - Validation: range-checked numerics, error reporting per row
+   - "Import CSV" button with Upload icon, toast notifications (success/warning/error)
+   - Auto-refreshes data after successful import
+
+3. **Severity Distribution Chart** (`src/components/colobrief/severity-distribution.tsx`):
+   - Histogram BarChart showing severity distribution across 4 buckets: Mild (0-10), Moderate (11-20), High (21-30), Severe (30+)
+   - Composite severity: pain×2 + stoolFreq + stress×0.5 + blood bonus + urgency×1.5
+   - Color-coded bars (emerald/amber/orange/rose) with count labels
+   - "Most Common Severity" badge, formula hint footer
+   - Integrated into Overview between Bristol donut and SymptomRadar
+
+4. **Quick Log Sidebar Widget** (`src/components/colobrief/quick-log-panel.tsx`):
+   - Compact collapsible panel in sidebar with 3 sliders (Pain 1-10, Stress 1-10, Stool Freq 0-10)
+   - Teal "Log" button creates SymptomLog via POST /api/symptoms
+   - Sonner toast on success, auto-collapses after logging
+   - Integrated into page.tsx sidebar below "Load Demo Data"
+
+5. **Log Symptoms Tab Enhancements** (`log-symptoms-tab.tsx`):
+   - Daily Completion indicator: green CheckCircle "Logged today" or amber pulse "Not yet logged today"
+   - 4 collapsible form sections with framer-motion AnimatePresence animations
+   - Collapse state persisted to localStorage
+   - "Copy Previous Day" button pre-fills form from most recent log
+
+6. **Doctor Handout Tab Styling** (`doctor-handout-tab.tsx` + `globals.css`):
+   - Animated count-up numbers on 6 quick stats (useAnimatedNumber)
+   - Colored top borders and icon circles on each stat
+   - Worst stat pulse animation for clinical attention
+   - Staggered SBAR section entry animations (framer-motion)
+   - Zebra striping on data table rows
+   - Bristol reference card: gradient background, hover scale, emoji bounce
+   - Print optimization: page-break-avoid, professional print header, shadow reduction
+   - New CSS: table-zebra, print-avoid-break, print-header, bristol-item, bristol-emoji, stat-pulse-worst
+
+## Files Created
+- `src/lib/chart-export.ts` — html2canvas-based chart export utility
+- `src/app/api/symptoms/import/route.ts` — CSV import API endpoint
+- `src/components/colobrief/severity-distribution.tsx` — Severity histogram chart
+- `src/components/colobrief/quick-log-panel.tsx` — Sidebar quick log widget
+
+## Files Modified
+- `src/components/colobrief/overview-tab.tsx` — Share Screenshot button, contentRef, severity distribution integration
+- `src/components/colobrief/my-records-tab.tsx` — Import CSV button, file input, toast handling
+- `src/components/colobrief/doctor-handout-tab.tsx` — Fixed hook order, animated stats, SBAR animations, table polish
+- `src/components/colobrief/log-symptoms-tab.tsx` — Collapsible sections, daily indicator, copy previous
+- `src/components/colobrief/onboarding-tour.tsx` — Auto-dismiss on data load
+- `src/app/page.tsx` — Quick Log sidebar integration, symptoms prop to LogSymptomsTab
+- `src/app/globals.css` — 6 new CSS utilities for print, table, Bristol, stat animations
+
+## Verification Results
+- ✅ ESLint: zero errors
+- ✅ agent-browser E2E: all 4 tabs + dark mode + mobile — zero runtime errors
+- ✅ All new features render and interact correctly
+- ✅ Doctor Handout tab crash fixed and verified
+
+## Component & Route Count
+- **React Components**: 21 in src/components/colobrief/
+- **API Routes**: 8 (user, symptoms GET/POST, symptoms/[id] PUT/DELETE, ai-extract, ai-chat, demo, export, import)
+- **CSS Utilities**: 25+ custom classes in globals.css
+
+## Unresolved Issues / Risks
+1. **[Info] html2canvas-pro** — New dependency added for chart export. Works well in Chrome/Edge; Safari support is good but complex CSS (backdrop-filter) may not render perfectly.
+2. **[Info] CSV Import** — No file size limit enforced server-side. For hackathon this is acceptable; production would need limits.
+3. **[Info] Quick Log** — Only captures 3 fields. Full logging requires the Log Symptoms tab.
+4. **[Info] No authentication** — Still hardcoded demo user.
+
+## Priority Recommendations for Next Phase
+1. **HIGH**: Add chart image export to individual chart cards (not just full dashboard)
+2. **HIGH**: Implement NextAuth.js multi-user authentication
+3. **MEDIUM**: Add meal/food photo logging with VLM analysis
+4. **MEDIUM**: Push notification reminders for daily symptom logging
+5. **MEDIUM**: PWA offline support for mobile use
+6. **LOW**: FHIR-compliant data export for EHR integration
+7. **LOW**: Internationalization (i18n) support

@@ -47,6 +47,7 @@ import LogSymptomsTab from "@/components/colobrief/log-symptoms-tab";
 import MyRecordsTab from "@/components/colobrief/my-records-tab";
 import DoctorHandoutTab from "@/components/colobrief/doctor-handout-tab";
 import OnboardingTour from "@/components/colobrief/onboarding-tour";
+import QuickLogPanel from "@/components/colobrief/quick-log-panel";
 
 const NAV_ITEMS = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, shortcut: "O" },
@@ -180,6 +181,12 @@ function AppContent() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          <SidebarSeparator />
+
+          <QuickLogPanel
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ["symptoms"] })}
+          />
         </SidebarContent>
 
         <SidebarFooter className="p-4">
@@ -273,6 +280,7 @@ function AppContent() {
                   )}
                   {activeTab === "log" && (
                     <LogSymptomsTab
+                      symptoms={symptoms}
                       onSaved={() => queryClient.invalidateQueries({ queryKey: ["symptoms"] })}
                     />
                   )}
