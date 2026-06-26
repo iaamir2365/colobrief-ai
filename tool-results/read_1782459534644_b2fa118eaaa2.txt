@@ -1,0 +1,988 @@
+     1→"use client";
+     2→
+     3→import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+     4→import { motion, AnimatePresence } from "framer-motion";
+     5→import {
+     6→  Mic,
+     7→  MicOff,
+     8→  Sparkles,
+     9→  Loader2,
+    10→  CheckCircle2,
+    11→  AlertCircle,
+    12→  ClipboardCheck,
+    13→  Activity,
+    14→  Droplets,
+    15→  Zap,
+    16→  Pill,
+    17→  FileText,
+    18→  ChevronDown,
+    19→  Copy,
+    20→  CheckCircle,
+    21→} from "lucide-react";
+    22→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    23→import { Button } from "@/components/ui/button";
+    24→import { Label } from "@/components/ui/label";
+    25→import { Input } from "@/components/ui/input";
+    26→import { Textarea } from "@/components/ui/textarea";
+    27→import { Slider } from "@/components/ui/slider";
+    28→import { Checkbox } from "@/components/ui/checkbox";
+    29→import { Switch } from "@/components/ui/switch";
+    30→import { Badge } from "@/components/ui/badge";
+    31→import {
+    32→  Select,
+    33→  SelectContent,
+    34→  SelectItem,
+    35→  SelectTrigger,
+    36→  SelectValue,
+    37→} from "@/components/ui/select";
+    38→import { ScrollArea } from "@/components/ui/scroll-area";
+    39→import { toast } from "sonner";
+    40→import { format } from "date-fns";
+    41→import type { SymptomLog } from "@/types/symptom";
+    42→import { getAuthHeaders } from "@/stores/auth-store";
+    43→
+    44→const COMMON_TRIGGERS = [
+    45→  "Dairy",
+    46→  "Stress",
+    47→  "Spicy Food",
+    48→  "NSAIDs",
+    49→  "Alcohol",
+    50→  "Caffeine",
+    51→  "Lack of Sleep",
+    52→  "Anxiety",
+    53→  "Processed Food",
+    54→  "Travel",
+    55→  "Other",
+    56→];
+    57→
+    58→const BRISTOL_TYPES = [
+    59→  { value: "1", label: "Type 1: Separate hard lumps" },
+    60→  { value: "2", label: "Type 2: Lumpy sausage shape" },
+    61→  { value: "3", label: "Type 3: Sausage with cracks" },
+    62→  { value: "4", label: "Type 4: Smooth soft sausage" },
+    63→  { value: "5", label: "Type 5: Soft blobs with clear edges" },
+    64→  { value: "6", label: "Type 6: Fluffy, mushy" },
+    65→  { value: "7", label: "Type 7: Watery, no solid pieces" },
+    66→];
+    67→
+    68→const SECTION_KEYS = ["physical", "triggers", "medication", "notes"] as const;
+    69→type SectionKey = (typeof SECTION_KEYS)[number];
+    70→
+    71→const DEFAULT_COLLAPSED: Record<SectionKey, boolean> = {
+    72→  physical: false,
+    73→  triggers: false,
+    74→  medication: false,
+    75→  notes: false,
+    76→};
+    77→
+    78→const STORAGE_KEY = "colobrief-section-collapsed";
+    79→
+    80→function loadCollapsedState(): Record<SectionKey, boolean> {
+    81→  if (typeof window === "undefined") return DEFAULT_COLLAPSED;
+    82→  try {
+    83→    const stored = localStorage.getItem(STORAGE_KEY);
+    84→    if (stored) {
+    85→      const parsed = JSON.parse(stored);
+    86→      return { ...DEFAULT_COLLAPSED, ...parsed };
+    87→    }
+    88→  } catch {
+    89→    // ignore
+    90→  }
+    91→  return DEFAULT_COLLAPSED;
+    92→}
+    93→
+    94→function saveCollapsedState(state: Record<SectionKey, boolean>) {
+    95→  if (typeof window === "undefined") return;
+    96→  try {
+    97→    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    98→  } catch {
+    99→    // ignore
+   100→  }
+   101→}
+   102→
+   103→interface LogSymptomsTabProps {
+   104→  symptoms: SymptomLog[];
+   105→  onSaved: () => void;
+   106→}
+   107→
+   108→const DEFAULT_PAIN = 3;
+   109→const DEFAULT_STOOL_FREQ = 3;
+   110→const DEFAULT_STOOL_TYPE = "4";
+   111→const DEFAULT_STRESS = 3;
+   112→
+   113→function isFormDefault({
+   114→  date,
+   115→  painLevel,
+   116→  stoolFrequency,
+   117→  stoolType,
+   118→  stressLevel,
+   119→  selectedTriggers,
+   120→  medication,
+   121→  bloodInStool,
+   122→  urgencyLevel,
+   123→  notes,
+   124→  today,
+   125→}: {
+   126→  date: string;
+   127→  painLevel: number[];
+   128→  stoolFrequency: number;
+   129→  stoolType: string;
+   130→  stressLevel: number[];
+   131→  selectedTriggers: string[];
+   132→  medication: string;
+   133→  bloodInStool: boolean;
+   134→  urgencyLevel: number;
+   135→  notes: string;
+   136→  today: string;
+   137→}) {
+   138→  return (
+   139→    date === today &&
+   140→    painLevel[0] === DEFAULT_PAIN &&
+   141→    stoolFrequency === DEFAULT_STOOL_FREQ &&
+   142→    stoolType === DEFAULT_STOOL_TYPE &&
+   143→    stressLevel[0] === DEFAULT_STRESS &&
+   144→    selectedTriggers.length === 0 &&
+   145→    medication === "" &&
+   146→    !bloodInStool &&
+   147→    urgencyLevel === 0 &&
+   148→    notes === ""
+   149→  );
+   150→}
+   151→
+   152→function CollapsibleSection({
+   153→  sectionKey,
+   154→  title,
+   155→  icon,
+   156→  iconBgClass,
+   157→  iconColorClass,
+   158→  collapsed,
+   159→  onToggle,
+   160→  children,
+   161→}: {
+   162→  sectionKey: SectionKey;
+   163→  title: string;
+   164→  icon: React.ReactNode;
+   165→  iconBgClass: string;
+   166→  iconColorClass: string;
+   167→  collapsed: boolean;
+   168→  onToggle: () => void;
+   169→  children: React.ReactNode;
+   170→}) {
+   171→  return (
+   172→    <div>
+   173→      {/* Clickable section header */}
+   174→      <button
+   175→        type="button"
+   176→        onClick={onToggle}
+   177→        className="flex items-center gap-2.5 mb-3 w-full text-left group/section"
+   178→      >
+   179→        <div className={`rounded-full ${iconBgClass} p-1.5`}>
+   180→          {icon}
+   181→        </div>
+   182→        <h4 className="section-title text-foreground flex-1">{title}</h4>
+   183→        <motion.div
+   184→          animate={{ rotate: collapsed ? 0 : 180 }}
+   185→          transition={{ duration: 0.2 }}
+   186→        >
+   187→          <ChevronDown className="h-4 w-4 text-muted-foreground group-hover/section:text-foreground transition-colors" />
+   188→        </motion.div>
+   189→      </button>
+   190→
+   191→      {/* Collapsible body */}
+   192→      <AnimatePresence initial={false}>
+   193→        {!collapsed && (
+   194→          <motion.div
+   195→            key={sectionKey}
+   196→            initial={{ height: 0, opacity: 0 }}
+   197→            animate={{ height: "auto", opacity: 1 }}
+   198→            exit={{ height: 0, opacity: 0 }}
+   199→            transition={{ duration: 0.3, ease: "easeInOut" }}
+   200→            className="overflow-hidden"
+   201→          >
+   202→            {children}
+   203→          </motion.div>
+   204→        )}
+   205→      </AnimatePresence>
+   206→    </div>
+   207→  );
+   208→}
+   209→
+   210→export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProps) {
+   211→  const today = new Date().toISOString().split("T")[0];
+   212→  const [date, setDate] = useState(today);
+   213→  const [painLevel, setPainLevel] = useState([DEFAULT_PAIN]);
+   214→  const [stoolFrequency, setStoolFrequency] = useState(DEFAULT_STOOL_FREQ);
+   215→  const [stoolType, setStoolType] = useState(DEFAULT_STOOL_TYPE);
+   216→  const [stressLevel, setStressLevel] = useState([DEFAULT_STRESS]);
+   217→  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
+   218→  const [customTrigger, setCustomTrigger] = useState("");
+   219→  const [medication, setMedication] = useState("");
+   220→  const [bloodInStool, setBloodInStool] = useState(false);
+   221→  const [urgencyLevel, setUrgencyLevel] = useState(0);
+   222→  const [notes, setNotes] = useState("");
+   223→  const [isRecording, setIsRecording] = useState(false);
+   224→  const [isSaving, setIsSaving] = useState(false);
+   225→  const [isExtracting, setIsExtracting] = useState(false);
+   226→  const [aiResult, setAiResult] = useState<null | {
+   227→    stoolFrequency: number;
+   228→    painLevel: number;
+   229→    bristolStoolType: number;
+   230→    stressLevel: number;
+   231→    triggers: string[];
+   232→  }>(null);
+   233→  const recognitionRef = useRef<any>(null);
+   234→
+   235→  // Collapsible section state
+   236→  const [collapsedState, setCollapsedState] = useState<Record<SectionKey, boolean>>(DEFAULT_COLLAPSED);
+   237→  const [mounted, setMounted] = useState(false);
+   238→
+   239→  useEffect(() => {
+   240→    setCollapsedState(loadCollapsedState());
+   241→    setMounted(true);
+   242→  }, []);
+   243→
+   244→  const toggleSection = useCallback((key: SectionKey) => {
+   245→    setCollapsedState((prev) => {
+   246→      const next = { ...prev, [key]: !prev[key] };
+   247→      saveCollapsedState(next);
+   248→      return next;
+   249→    });
+   250→  }, []);
+   251→
+   252→  // Daily completion check
+   253→  const todayLogged = useMemo(() => {
+   254→    return symptoms.some((s) => s.date === today);
+   255→  }, [symptoms, today]);
+   256→
+   257→  const todayLog = useMemo(() => {
+   258→    return symptoms.find((s) => s.date === today);
+   259→  }, [symptoms, today]);
+   260→
+   261→  // Check if form is in default state (for Copy Previous Day button visibility)
+   262→  const formIsDefault = isFormDefault({
+   263→    date,
+   264→    painLevel,
+   265→    stoolFrequency,
+   266→    stoolType,
+   267→    stressLevel,
+   268→    selectedTriggers,
+   269→    medication,
+   270→    bloodInStool,
+   271→    urgencyLevel,
+   272→    notes,
+   273→    today,
+   274→  });
+   275→
+   276→  const hasPreviousLog = symptoms.length > 0;
+   277→
+   278→  const formProgress = useMemo(() => {
+   279→    const checks = [
+   280→      !!date,
+   281→      true, // pain level always has a value
+   282→      true, // stool frequency always has a value
+   283→      !!stoolType,
+   284→      true, // stress level always has a value
+   285→      selectedTriggers.length > 0,
+   286→      !!notes.trim(),
+   287→      !!medication.trim(),
+   288→    ];
+   289→    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+   290→  }, [date, stoolType, selectedTriggers, notes, medication]);
+   291→
+   292→  const toggleTrigger = (trigger: string) => {
+   293→    setSelectedTriggers((prev) =>
+   294→      prev.includes(trigger) ? prev.filter((t) => t !== trigger) : [...prev, trigger]
+   295→    );
+   296→  };
+   297→
+   298→  const addCustomTrigger = () => {
+   299→    const trimmed = customTrigger.trim();
+   300→    if (trimmed && !selectedTriggers.includes(trimmed)) {
+   301→      setSelectedTriggers((prev) => [...prev, trimmed]);
+   302→      setCustomTrigger("");
+   303→    }
+   304→  };
+   305→
+   306→  const handleCopyPreviousDay = () => {
+   307→    const prev = symptoms[0]; // most recent log (sorted desc)
+   308→    if (!prev) return;
+   309→    setPainLevel([prev.painLevel]);
+   310→    setStoolFrequency(prev.stoolFrequency);
+   311→    setStoolType(String(prev.stoolType));
+   312→    setStressLevel([prev.stressLevel]);
+   313→    setSelectedTriggers(prev.triggers || []);
+   314→    setBloodInStool(prev.bloodInStool);
+   315→    setUrgencyLevel(prev.urgencyLevel);
+   316→    setMedication(prev.medicationTaken || "");
+   317→    // Don't copy notes or date
+   318→    toast.success("Previous day's values copied (except notes & date).");
+   319→  };
+   320→
+   321→  const startRecording = useCallback(() => {
+   322→    const SpeechRecognition =
+   323→      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+   324→    if (!SpeechRecognition) {
+   325→      toast.error("Speech recognition is not supported in this browser.");
+   326→      return;
+   327→    }
+   328→
+   329→    const recognition = new SpeechRecognition();
+   330→    recognition.continuous = true;
+   331→    recognition.interimResults = true;
+   332→    recognition.lang = "en-US";
+   333→
+   334→    let finalTranscript = notes;
+   335→    recognition.onresult = (event: any) => {
+   336→      let interimTranscript = "";
+   337→      for (let i = event.resultIndex; i < event.results.length; i++) {
+   338→        const transcript = event.results[i][0].transcript;
+   339→        if (event.results[i].isFinal) {
+   340→          finalTranscript += (finalTranscript ? " " : "") + transcript;
+   341→        } else {
+   342→          interimTranscript += transcript;
+   343→        }
+   344→      }
+   345→      setNotes(finalTranscript + (interimTranscript ? " " + interimTranscript : ""));
+   346→    };
+   347→
+   348→    recognition.onerror = () => {
+   349→      setIsRecording(false);
+   350→      toast.error("Speech recognition stopped unexpectedly.");
+   351→    };
+   352→
+   353→    recognition.onend = () => {
+   354→      setIsRecording(false);
+   355→    };
+   356→
+   357→    recognitionRef.current = recognition;
+   358→    recognition.start();
+   359→    setIsRecording(true);
+   360→    toast.info("Recording started. Speak into your microphone.");
+   361→  }, [notes]);
+   362→
+   363→  const stopRecording = useCallback(() => {
+   364→    if (recognitionRef.current) {
+   365→      recognitionRef.current.stop();
+   366→      recognitionRef.current = null;
+   367→    }
+   368→    setIsRecording(false);
+   369→    toast.success("Recording stopped.");
+   370→  }, []);
+   371→
+   372→  useEffect(() => {
+   373→    return () => {
+   374→      if (recognitionRef.current) {
+   375→        recognitionRef.current.stop();
+   376→      }
+   377→    };
+   378→  }, []);
+   379→
+   380→  const handleAIExtract = async () => {
+   381→    if (!notes.trim()) {
+   382→      toast.error("Please add some notes before using AI extraction.");
+   383→      return;
+   384→    }
+   385→    setIsExtracting(true);
+   386→    try {
+   387→      const res = await fetch("/api/symptoms/ai-extract", {
+   388→        method: "POST",
+   389→        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+   390→        body: JSON.stringify({ notes }),
+   391→      });
+   392→      const data = await res.json();
+   393→      setAiResult(data);
+   394→    } catch {
+   395→      toast.error("AI extraction failed. Please try again.");
+   396→    } finally {
+   397→      setIsExtracting(false);
+   398→    }
+   399→  };
+   400→
+   401→  const applyAIResult = () => {
+   402→    if (!aiResult) return;
+   403→    if (aiResult.painLevel) setPainLevel([aiResult.painLevel]);
+   404→    if (aiResult.stoolFrequency) setStoolFrequency(aiResult.stoolFrequency);
+   405→    if (aiResult.bristolStoolType) setStoolType(String(aiResult.bristolStoolType));
+   406→    if (aiResult.stressLevel) setStressLevel([aiResult.stressLevel]);
+   407→    if (aiResult.triggers?.length) setSelectedTriggers(aiResult.triggers);
+   408→    setAiResult(null);
+   409→    toast.success("AI-extracted values applied to the form.");
+   410→  };
+   411→
+   412→  const handleSave = async () => {
+   413→    if (!date) {
+   414→      toast.error("Please select a date.");
+   415→      return;
+   416→    }
+   417→    setIsSaving(true);
+   418→    try {
+   419→      const res = await fetch("/api/symptoms", {
+   420→        method: "POST",
+   421→        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+   422→        body: JSON.stringify({
+   423→          date,
+   424→          painLevel: painLevel[0],
+   425→          stoolFrequency,
+   426→          stoolType: Number(stoolType),
+   427→          stressLevel: stressLevel[0],
+   428→          triggers: selectedTriggers,
+   429→          medicationTaken: medication || undefined,
+   430→          bloodInStool,
+   431→          urgencyLevel,
+   432→          notes: notes || undefined,
+   433→        }),
+   434→      });
+   435→      if (!res.ok) throw new Error("Failed to save");
+   436→      toast.success("Symptom log saved successfully! 🎉");
+   437→      // Reset form
+   438→      setDate(today);
+   439→      setPainLevel([DEFAULT_PAIN]);
+   440→      setStoolFrequency(DEFAULT_STOOL_FREQ);
+   441→      setStoolType(DEFAULT_STOOL_TYPE);
+   442→      setStressLevel([DEFAULT_STRESS]);
+   443→      setSelectedTriggers([]);
+   444→      setMedication("");
+   445→      setBloodInStool(false);
+   446→      setUrgencyLevel(0);
+   447→      setNotes("");
+   448→      onSaved();
+   449→    } catch {
+   450→      toast.error("Failed to save. Please try again.");
+   451→    } finally {
+   452→      setIsSaving(false);
+   453→    }
+   454→  };
+   455→
+   456→  const getPainColor = (val: number) => {
+   457→    if (val <= 3) return "text-emerald-600";
+   458→    if (val <= 6) return "text-amber-500";
+   459→    return "text-rose-500";
+   460→  };
+   461→
+   462→  return (
+   463→    <div className="max-w-2xl mx-auto space-y-6">
+   464→      {/* Form Progress Indicator */}
+   465→      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+   466→        <div className="flex items-center gap-3 px-1">
+   467→          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+   468→            <motion.div
+   469→              className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400"
+   470→              initial={{ width: 0 }}
+   471→              animate={{ width: `${formProgress}%` }}
+   472→              transition={{ duration: 0.5, ease: "easeOut" }}
+   473→            />
+   474→          </div>
+   475→          <span className="text-xs font-medium text-muted-foreground tabular-nums w-10 text-right">{formProgress}%</span>
+   476→        </div>
+   477→      </motion.div>
+   478→
+   479→      {/* Daily Completion Indicator */}
+   480→      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }}>
+   481→        {todayLogged && todayLog ? (
+   482→          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 px-3 py-2">
+   483→            <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+   484→            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+   485→              Logged today
+   486→            </span>
+   487→            <span className="text-xs text-emerald-600/60 dark:text-emerald-400/60">
+   488→              — {format(new Date(todayLog.date + "T00:00:00"), "MMM d, yyyy")}
+   489→            </span>
+   490→          </div>
+   491→        ) : (
+   492→          <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 px-3 py-2">
+   493→            <span className="relative flex h-3 w-3 shrink-0">
+   494→              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+   495→              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+   496→            </span>
+   497→            <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+   498→              Not yet logged today
+   499→            </span>
+   500→          </div>
+   501→        )}
+   502→      </motion.div>
+   503→
+   504→      {/* Welcome Banner */}
+   505→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+   506→        <div className="rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 border border-teal-200 dark:border-teal-800/50 p-4 flex items-start gap-3">
+   507→          <div className="rounded-lg bg-teal-100 dark:bg-teal-900/50 p-2 mt-0.5 shrink-0">
+   508→            <ClipboardCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+   509→          </div>
+   510→          <div>
+   511→            <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-200">Log Today&apos;s Symptoms</h3>
+   512→            <p className="text-xs text-teal-700/70 dark:text-teal-300/70 mt-0.5">
+   513→              Track your daily UC symptoms to identify patterns and share data with your doctor. Use voice input or AI extraction for faster logging.
+   514→            </p>
+   515→            <div className="flex flex-wrap gap-2 mt-2">
+   516→              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 font-medium">
+   517→                💡 Tip: Use voice input for hands-free logging
+   518→              </span>
+   519→              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">
+   520→                ⌨️ Shortcut: Press Ctrl+L to jump here
+   521→              </span>
+   522→            </div>
+   523→          </div>
+   524→        </div>
+   525→      </motion.div>
+   526→
+   527→      {/* Section 1: Physical Symptoms */}
+   528→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
+   529→        <CollapsibleSection
+   530→          sectionKey="physical"
+   531→          title="Physical Symptoms"
+   532→          icon={<Activity className="h-4 w-4 text-teal-600" />}
+   533→          iconBgClass="bg-teal-100 dark:bg-teal-900/50"
+   534→          iconColorClass="text-teal-600"
+   535→          collapsed={mounted ? collapsedState.physical : false}
+   536→          onToggle={() => toggleSection("physical")}
+   537→        >
+   538→          {/* Date */}
+   539→          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow relative overflow-hidden mb-4">
+   540→            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-emerald-400 to-teal-500" />
+   541→            <CardContent className="p-6 pt-7">
+   542→              <div className="space-y-2">
+   543→                <Label htmlFor="date" className="text-sm font-medium">
+   544→                  Date
+   545→                </Label>
+   546→                <Input
+   547→                  id="date"
+   548→                  type="date"
+   549→                  value={date}
+   550→                  onChange={(e) => setDate(e.target.value)}
+   551→                  className="max-w-[200px]"
+   552→                />
+   553→              </div>
+   554→            </CardContent>
+   555→          </Card>
+   556→
+   557→          {/* Pain Level & Stool Frequency side by side */}
+   558→          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   559→            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+   560→              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   561→                <CardContent className="p-6">
+   562→                  <div className="space-y-4">
+   563→                    <div className="flex items-center justify-between">
+   564→                      <Label className="text-sm font-medium">Pain Level</Label>
+   565→                      <span className={`text-2xl font-bold ${getPainColor(painLevel[0])}`}>
+   566→                        {painLevel[0]}
+   567→                      </span>
+   568→                    </div>
+   569→                    <div className="slider-gradient-green-red">
+   570→                      <Slider
+   571→                        value={painLevel}
+   572→                        onValueChange={setPainLevel}
+   573→                        min={1}
+   574→                        max={10}
+   575→                        step={1}
+   576→                      />
+   577→                    </div>
+   578→                    <div className="flex justify-between text-xs text-muted-foreground">
+   579→                      <span>No pain</span>
+   580→                      <span>Moderate</span>
+   581→                      <span>Severe</span>
+   582→                    </div>
+   583→                  </div>
+   584→                </CardContent>
+   585→              </Card>
+   586→            </motion.div>
+   587→
+   588→            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+   589→              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   590→                <CardContent className="p-6">
+   591→                  <div className="space-y-4">
+   592→                    <div className="flex items-center justify-between">
+   593→                      <Label className="text-sm font-medium flex items-center gap-1.5"><Droplets className="h-3.5 w-3.5 text-sky-500" /> Stool Frequency</Label>
+   594→                      <span className="text-2xl font-bold text-teal-600">{stoolFrequency}</span>
+   595→                    </div>
+   596→                    <div className="flex items-center gap-3">
+   597→                      <Button
+   598→                        variant="outline"
+   599→                        size="icon"
+   600→                        className="h-10 w-10 rounded-full"
+   601→                        onClick={() => setStoolFrequency(Math.max(0, stoolFrequency - 1))}
+   602→                      >
+   603→                        −
+   604→                      </Button>
+   605→                      <Input
+   606→                        type="number"
+   607→                        value={stoolFrequency}
+   608→                        onChange={(e) =>
+   609→                          setStoolFrequency(Math.min(20, Math.max(0, Number(e.target.value) || 0)))
+   610→                        }
+   611→                        className="text-center text-lg font-semibold h-10"
+   612→                        min={0}
+   613→                        max={20}
+   614→                      />
+   615→                      <Button
+   616→                        variant="outline"
+   617→                        size="icon"
+   618→                        className="h-10 w-10 rounded-full"
+   619→                        onClick={() => setStoolFrequency(Math.min(20, stoolFrequency + 1))}
+   620→                      >
+   621→                        +
+   622→                      </Button>
+   623→                    </div>
+   624→                    <p className="text-xs text-muted-foreground text-center">per day (0–20)</p>
+   625→                  </div>
+   626→                </CardContent>
+   627→              </Card>
+   628→            </motion.div>
+   629→          </div>
+   630→
+   631→          {/* Bristol Stool Type & Stress Level */}
+   632→          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+   633→            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+   634→              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   635→                <CardContent className="p-6">
+   636→                  <div className="space-y-2">
+   637→                    <Label className="text-sm font-medium flex items-center gap-1.5"><Droplets className="h-3.5 w-3.5 text-sky-500" /> Bristol Stool Type</Label>
+   638→                    <Select value={stoolType} onValueChange={setStoolType}>
+   639→                      <SelectTrigger className="w-full">
+   640→                        <SelectValue />
+   641→                      </SelectTrigger>
+   642→                      <SelectContent>
+   643→                        {BRISTOL_TYPES.map((t) => (
+   644→                          <SelectItem key={t.value} value={t.value}>
+   645→                            {t.label}
+   646→                          </SelectItem>
+   647→                        ))}
+   648→                      </SelectContent>
+   649→                    </Select>
+   650→                  </div>
+   651→                </CardContent>
+   652→              </Card>
+   653→            </motion.div>
+   654→
+   655→            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+   656→              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   657→                <CardContent className="p-6">
+   658→                  <div className="space-y-4">
+   659→                    <div className="flex items-center justify-between">
+   660→                      <Label className="text-sm font-medium flex items-center gap-1.5"><Activity className="h-3.5 w-3.5 text-amber-500" /> Stress Level</Label>
+   661→                      <span className={`text-2xl font-bold ${getPainColor(stressLevel[0])}`}>
+   662→                        {stressLevel[0]}
+   663→                      </span>
+   664→                    </div>
+   665→                    <div className="slider-gradient-green-red">
+   666→                      <Slider
+   667→                        value={stressLevel}
+   668→                        onValueChange={setStressLevel}
+   669→                        min={1}
+   670→                        max={10}
+   671→                        step={1}
+   672→                      />
+   673→                    </div>
+   674→                    <div className="flex justify-between text-xs text-muted-foreground">
+   675→                      <span>Calm</span>
+   676→                      <span>Moderate</span>
+   677→                      <span>Very stressed</span>
+   678→                    </div>
+   679→                  </div>
+   680→                </CardContent>
+   681→              </Card>
+   682→            </motion.div>
+   683→          </div>
+   684→        </CollapsibleSection>
+   685→      </motion.div>
+   686→
+   687→      {/* Section 2: Identified Triggers */}
+   688→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+   689→        <CollapsibleSection
+   690→          sectionKey="triggers"
+   691→          title="Identified Triggers"
+   692→          icon={<Zap className="h-4 w-4 text-amber-500" />}
+   693→          iconBgClass="bg-amber-100 dark:bg-amber-900/50"
+   694→          iconColorClass="text-amber-500"
+   695→          collapsed={mounted ? collapsedState.triggers : false}
+   696→          onToggle={() => toggleSection("triggers")}
+   697→        >
+   698→          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   699→            <CardHeader className="pb-3">
+   700→              <CardTitle className="text-base font-semibold flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Triggers</CardTitle>
+   701→            </CardHeader>
+   702→            <CardContent>
+   703→              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+   704→                {COMMON_TRIGGERS.map((trigger) => (
+   705→                  <label
+   706→                    key={trigger}
+   707→                    className="flex items-center gap-2 cursor-pointer select-none rounded-lg px-2 py-1.5 bg-muted/30 hover:bg-muted/60 transition-colors"
+   708→                  >
+   709→                    <Checkbox
+   710→                      checked={selectedTriggers.includes(trigger)}
+   711→                      onCheckedChange={() => toggleTrigger(trigger)}
+   712→                    />
+   713→                    <span className="text-sm">{trigger}</span>
+   714→                  </label>
+   715→                ))}
+   716→              </div>
+   717→              <div className="flex items-center gap-2 mt-4">
+   718→                <Input
+   719→                  placeholder="Add custom trigger..."
+   720→                  value={customTrigger}
+   721→                  onChange={(e) => setCustomTrigger(e.target.value)}
+   722→                  onKeyDown={(e) => {
+   723→                    if (e.key === "Enter") {
+   724→                      e.preventDefault();
+   725→                      addCustomTrigger();
+   726→                    }
+   727→                  }}
+   728→                  className="flex-1"
+   729→                />
+   730→                <Button variant="outline" onClick={addCustomTrigger} className="shrink-0">
+   731→                  Add
+   732→                </Button>
+   733→              </div>
+   734→              {selectedTriggers.length > 0 && (
+   735→                <div className="flex flex-wrap gap-1.5 mt-3">
+   736→                  {selectedTriggers.map((t) => (
+   737→                    <Badge
+   738→                      key={t}
+   739→                      variant="secondary"
+   740→                      className="cursor-pointer hover:bg-destructive/10 transition-colors"
+   741→                      onClick={() => toggleTrigger(t)}
+   742→                    >
+   743→                      {t} ×
+   744→                    </Badge>
+   745→                  ))}
+   746→                </div>
+   747→              )}
+   748→            </CardContent>
+   749→          </Card>
+   750→        </CollapsibleSection>
+   751→      </motion.div>
+   752→
+   753→      {/* Section 3: Medication & Additional Metrics */}
+   754→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+   755→        <CollapsibleSection
+   756→          sectionKey="medication"
+   757→          title="Medication & Additional Metrics"
+   758→          icon={<Pill className="h-4 w-4 text-violet-500" />}
+   759→          iconBgClass="bg-violet-100 dark:bg-violet-900/50"
+   760→          iconColorClass="text-violet-500"
+   761→          collapsed={mounted ? collapsedState.medication : false}
+   762→          onToggle={() => toggleSection("medication")}
+   763→        >
+   764→          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   765→            <CardContent className="p-6 space-y-5">
+   766→              {/* Medication Taken */}
+   767→              <div className="space-y-2">
+   768→                <Label htmlFor="medication" className="text-sm font-medium flex items-center gap-1.5"><Pill className="h-3.5 w-3.5 text-violet-500" /> Medication Taken</Label>
+   769→                <Input
+   770→                  id="medication"
+   771→                  placeholder="e.g., Mesalamine 800mg, Prednisone 20mg"
+   772→                  value={medication}
+   773→                  onChange={(e) => setMedication(e.target.value)}
+   774→                />
+   775→                <p className="text-xs text-muted-foreground">Optional — list any UC medications taken today</p>
+   776→              </div>
+   777→
+   778→              {/* Blood in Stool */}
+   779→              <div className="flex items-center justify-between">
+   780→                <div>
+   781→                  <Label className="text-sm font-medium">Blood in Stool</Label>
+   782→                  <p className="text-xs text-muted-foreground">Check if you noticed any blood</p>
+   783→                </div>
+   784→                <Switch checked={bloodInStool} onCheckedChange={setBloodInStool} />
+   785→              </div>
+   786→
+   787→              {/* Urgency Level */}
+   788→              <div className="space-y-2">
+   789→                <Label className="text-sm font-medium">Urgency Level</Label>
+   790→                <div className="grid grid-cols-4 gap-2">
+   791→                  {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
+   792→                    <Button
+   793→                      key={label}
+   794→                      type="button"
+   795→                      variant={urgencyLevel === i ? "default" : "outline"}
+   796→                      size="sm"
+   797→                      className={urgencyLevel === i ? "bg-teal-600 hover:bg-teal-700" : ""}
+   798→                      onClick={() => setUrgencyLevel(i)}
+   799→                    >
+   800→                      {label}
+   801→                    </Button>
+   802→                  ))}
+   803→                </div>
+   804→              </div>
+   805→            </CardContent>
+   806→          </Card>
+   807→        </CollapsibleSection>
+   808→      </motion.div>
+   809→
+   810→      {/* Section 4: Additional Notes & AI Assist */}
+   811→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+   812→        <CollapsibleSection
+   813→          sectionKey="notes"
+   814→          title="Additional Notes & AI Assist"
+   815→          icon={<FileText className="h-4 w-4 text-teal-600" />}
+   816→          iconBgClass="bg-teal-100 dark:bg-teal-900/50"
+   817→          iconColorClass="text-teal-600"
+   818→          collapsed={mounted ? collapsedState.notes : false}
+   819→          onToggle={() => toggleSection("notes")}
+   820→        >
+   821→          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+   822→            <CardContent className="p-6">
+   823→              <div className="space-y-3">
+   824→                <div className="flex items-center justify-between">
+   825→                  <Label className="text-sm font-medium">Notes</Label>
+   826→                  <div className="flex items-center gap-2">
+   827→                    <Button
+   828→                      variant={isRecording ? "destructive" : "outline"}
+   829→                      size="sm"
+   830→                      onClick={isRecording ? stopRecording : startRecording}
+   831→                      className={isRecording
+   832→                        ? "gap-1.5 bg-rose-600 hover:bg-rose-700 text-white border-rose-600 shadow-lg shadow-rose-500/30"
+   833→                        : "gap-1.5 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+   834→                      }
+   835→                    >
+   836→                      {isRecording ? (
+   837→                        <>
+   838→                          <span className="relative flex h-2.5 w-2.5">
+   839→                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+   840→                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+   841→                          </span>
+   842→                          <MicOff className="h-3.5 w-3.5" />
+   843→                          Stop
+   844→                        </>
+   845→                      ) : (
+   846→                        <>
+   847→                          <Mic className="h-3.5 w-3.5" />
+   848→                          Voice
+   849→                        </>
+   850→                      )}
+   851→                    </Button>
+   852→                    <Button
+   853→                      variant="outline"
+   854→                      size="sm"
+   855→                      onClick={handleAIExtract}
+   856→                      disabled={isExtracting || !notes.trim()}
+   857→                      className="gap-1.5 bg-gradient-to-r from-violet-600 to-teal-600 hover:from-violet-700 hover:to-teal-700 text-white border-0 shadow-sm"
+   858→                    >
+   859→                      {isExtracting ? (
+   860→                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+   861→                      ) : (
+   862→                        <Sparkles className="h-3.5 w-3.5" />
+   863→                      )}
+   864→                      AI Extract
+   865→                    </Button>
+   866→                  </div>
+   867→                </div>
+   868→                <Textarea
+   869→                  value={notes}
+   870→                  onChange={(e) => setNotes(e.target.value)}
+   871→                  placeholder="Describe how you're feeling today... e.g., 'Mild cramping this morning after dairy. Stressful day at work. Had 5 bowel movements, mostly loose.'"
+   872→                  rows={4}
+   873→                  className="resize-none"
+   874→                />
+   875→                <p className="text-xs text-muted-foreground text-right mt-1">
+   876→                  {notes.length} characters
+   877→                </p>
+   878→                {isRecording && (
+   879→                  <p className="text-xs text-rose-500 flex items-center gap-1.5">
+   880→                    <span className="relative flex h-2 w-2">
+   881→                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+   882→                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+   883→                    </span>
+   884→                    Listening...
+   885→                  </p>
+   886→                )}
+   887→              </div>
+   888→            </CardContent>
+   889→          </Card>
+   890→
+   891→          {/* AI Verification Card */}
+   892→          <AnimatePresence>
+   893→            {aiResult && (
+   894→              <motion.div
+   895→                initial={{ opacity: 0, y: 16, scale: 0.95 }}
+   896→                animate={{ opacity: 1, y: 0, scale: 1 }}
+   897→                exit={{ opacity: 0, y: 16, scale: 0.95 }}
+   898→                className="mt-4"
+   899→              >
+   900→                <Card className="rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 shadow-sm bg-gradient-to-br from-teal-50/80 via-white to-violet-50/40 dark:from-teal-950/30 dark:via-background dark:to-violet-950/20">
+   901→                  <CardHeader className="pb-3">
+   902→                    <div className="flex items-center gap-2">
+   903→                      <Sparkles className="h-5 w-5 text-teal-600" />
+   904→                      <CardTitle className="text-base font-semibold">AI-Extracted Values</CardTitle>
+   905→                    </div>
+   906→                    <p className="text-sm text-muted-foreground">
+   907→                      Review the values extracted from your notes. Apply to update the form, or dismiss.
+   908→                    </p>
+   909→                  </CardHeader>
+   910→                  <CardContent>
+   911→                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+   912→                      <div className="text-center">
+   913→                        <p className="text-xs text-muted-foreground">Pain Level</p>
+   914→                        <p className="text-xl font-bold text-rose-500">{aiResult.painLevel}</p>
+   915→                      </div>
+   916→                      <div className="text-center">
+   917→                        <p className="text-xs text-muted-foreground">Stool Freq.</p>
+   918→                        <p className="text-xl font-bold text-teal-600">{aiResult.stoolFrequency}</p>
+   919→                      </div>
+   920→                      <div className="text-center">
+   921→                        <p className="text-xs text-muted-foreground">Stool Type</p>
+   922→                        <p className="text-xl font-bold">{aiResult.bristolStoolType}</p>
+   923→                      </div>
+   924→                      <div className="text-center">
+   925→                        <p className="text-xs text-muted-foreground">Stress</p>
+   926→                        <p className="text-xl font-bold text-amber-500">{aiResult.stressLevel}</p>
+   927→                      </div>
+   928→                    </div>
+   929→                    {aiResult.triggers.length > 0 && (
+   930→                      <div className="flex flex-wrap gap-1.5 mb-4">
+   931→                        {aiResult.triggers.map((t) => (
+   932→                          <Badge key={t} variant="secondary">
+   933→                            {t}
+   934→                          </Badge>
+   935→                        ))}
+   936→                      </div>
+   937→                    )}
+   938→                    <div className="flex gap-2">
+   939→                      <Button onClick={applyAIResult} className="gap-1.5">
+   940→                        <CheckCircle2 className="h-4 w-4" />
+   941→                        Apply Values
+   942→                      </Button>
+   943→                      <Button variant="outline" onClick={() => setAiResult(null)}>
+   944→                        Dismiss
+   945→                      </Button>
+   946→                    </div>
+   947→                  </CardContent>
+   948→                </Card>
+   949→              </motion.div>
+   950→            )}
+   951→          </AnimatePresence>
+   952→        </CollapsibleSection>
+   953→      </motion.div>
+   954→
+   955→      {/* Save Button + Copy Previous Day */}
+   956→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+   957→        <div className="flex gap-3">
+   958→          {hasPreviousLog && formIsDefault && (
+   959→            <Button
+   960→              onClick={handleCopyPreviousDay}
+   961→              variant="outline"
+   962→              size="lg"
+   963→              className="shrink-0 h-13 text-sm font-medium rounded-xl border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300 dark:hover:bg-teal-950/30 gap-2"
+   964→            >
+   965→              <Copy className="h-4 w-4" />
+   966→              Copy Previous Day
+   967→            </Button>
+   968→          )}
+   969→          <Button
+   970→            onClick={handleSave}
+   971→            disabled={isSaving}
+   972→            size="lg"
+   973→            className="flex-1 h-13 text-base font-semibold rounded-xl btn-premium hover:scale-[1.01] active:scale-[0.99]"
+   974→          >
+   975→            {isSaving ? (
+   976→              <>
+   977→                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+   978→                Saving...
+   979→              </>
+   980→            ) : (
+   981→              "Save Symptom Log"
+   982→            )}
+   983→          </Button>
+   984→        </div>
+   985→      </motion.div>
+   986→    </div>
+   987→  );
+   988→}

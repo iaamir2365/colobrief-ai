@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { format, parseISO, min, max } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
+import { getAuthHeaders } from "@/stores/auth-store";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Hard lumps",
@@ -210,7 +211,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       );
       const res = await fetch("/api/symptoms/ai-extract", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ notes: summaryData, mode: "clinical_summary" }),
       });
       const data = await res.json();

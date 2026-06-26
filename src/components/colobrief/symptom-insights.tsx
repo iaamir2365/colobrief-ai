@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SymptomLog } from "@/types/symptom";
+import { getAuthHeaders } from "@/stores/auth-store";
 
 interface SymptomInsightsProps {
   symptoms: SymptomLog[];
@@ -141,7 +142,7 @@ Rules:
 
       const response = await fetch("/api/symptoms/ai-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           messages: [{ role: "user", content: prompt }],
           symptomData: JSON.stringify(summaryData),

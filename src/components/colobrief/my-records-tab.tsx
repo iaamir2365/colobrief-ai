@@ -50,6 +50,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
+import { getAuthHeaders } from "@/stores/auth-store";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Hard lumps",
@@ -147,7 +148,7 @@ function EditSymptomDialog({
     try {
       const res = await fetch(`/api/symptoms/${log.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           date,
           painLevel: painLevel[0],
@@ -352,7 +353,7 @@ export default function MyRecordsTab({
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/symptoms?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/symptoms?id=${id}`, { method: "DELETE", headers: { ...getAuthHeaders() } });
       if (!res.ok) throw new Error("Delete failed");
       toast.success("Log deleted.");
       onDeleted();
@@ -379,6 +380,7 @@ export default function MyRecordsTab({
 
       const res = await fetch("/api/symptoms/import", {
         method: "POST",
+        headers: { ...getAuthHeaders() },
         body: formData,
       });
 
@@ -550,7 +552,21 @@ export default function MyRecordsTab({
             variant="outline"
             size="sm"
             className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
-            onClick={() => window.open("/api/symptoms/export?format=csv", "_blank")}
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/symptoms/export?format=csv", { headers: { ...getAuthHeaders() } });
+                if (!res.ok) throw new Error("Export failed");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "symptoms.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                toast.error("CSV export failed.");
+              }
+            }}
           >
             <Download className="h-3.5 w-3.5" />
             CSV
@@ -559,7 +575,21 @@ export default function MyRecordsTab({
             variant="outline"
             size="sm"
             className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
-            onClick={() => window.open("/api/symptoms/export?format=json", "_blank")}
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/symptoms/export?format=json", { headers: { ...getAuthHeaders() } });
+                if (!res.ok) throw new Error("Export failed");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "symptoms.json";
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                toast.error("JSON export failed.");
+              }
+            }}
           >
             <Download className="h-3.5 w-3.5" />
             JSON

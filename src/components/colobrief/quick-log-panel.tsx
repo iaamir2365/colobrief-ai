@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { getAuthHeaders } from "@/stores/auth-store";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +29,7 @@ export default function QuickLogPanel({ onSuccess }: QuickLogPanelProps) {
     try {
       const res = await fetch("/api/symptoms", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           painLevel: pain[0],
           stressLevel: stress[0],

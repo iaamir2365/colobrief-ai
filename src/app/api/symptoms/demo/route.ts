@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api-auth';
 
 const UC_TRIGGERS = [
   'Dairy',
@@ -67,22 +68,14 @@ function formatDate(daysAgo: number): string {
   return d.toISOString().split('T')[0];
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    // Ensure user exists
-    const user = await db.user.upsert({
-      where: { email: 'demo@colobrief.ai' },
-      update: {},
-      create: {
-        email: 'demo@colobrief.ai',
-        name: 'Demo Patient',
-        doctorName: 'Dr. Sarah Chen',
-      },
-    });
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
 
-    // Clear existing logs
+    // Clear existing logs for this user
     await db.symptomLog.deleteMany({
-      where: { userId: user.id },
+      where: { userId: userId as string },
     });
 
     // Generate 14 days of demo data
@@ -137,7 +130,7 @@ export async function POST() {
       const medication = MEDICATIONS[i % MEDICATIONS.length];
 
       entries.push({
-        userId: user.id,
+        userId: userId as string,
         date: formatDate(i),
         painLevel,
         stoolFrequency,

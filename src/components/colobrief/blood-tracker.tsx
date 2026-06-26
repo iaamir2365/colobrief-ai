@@ -277,7 +277,7 @@ export default function BloodTracker({ symptoms, isLoading }: BloodTrackerProps)
                     : "bg-emerald-200 dark:bg-emerald-900/50";
                   return (
                     <motion.div
-                      key={entry.date}
+                      key={`${entry.date}-${i}`}
                       initial={{ scaleY: 0 }}
                       animate={{ scaleY: 1 }}
                       transition={{ delay: i * 0.04, duration: 0.3 }}

@@ -1,0 +1,845 @@
+     1→"use client";
+     2→
+     3→import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+     4→import { motion } from "framer-motion";
+     5→import { Search, SearchX, Trash2, PlusCircle, FileText, Download, Droplets, Pencil, Loader2, Pill, Upload } from "lucide-react";
+     6→import { Card, CardContent } from "@/components/ui/card";
+     7→import { Button } from "@/components/ui/button";
+     8→import { Input } from "@/components/ui/input";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Skeleton } from "@/components/ui/skeleton";
+    11→import { Label } from "@/components/ui/label";
+    12→import { Slider } from "@/components/ui/slider";
+    13→import { Checkbox } from "@/components/ui/checkbox";
+    14→import { Switch } from "@/components/ui/switch";
+    15→import { Textarea } from "@/components/ui/textarea";
+    16→import {
+    17→  Select,
+    18→  SelectContent,
+    19→  SelectItem,
+    20→  SelectTrigger,
+    21→  SelectValue,
+    22→} from "@/components/ui/select";
+    23→import {
+    24→  Table,
+    25→  TableBody,
+    26→  TableCell,
+    27→  TableHead,
+    28→  TableHeader,
+    29→  TableRow,
+    30→} from "@/components/ui/table";
+    31→import {
+    32→  AlertDialog,
+    33→  AlertDialogAction,
+    34→  AlertDialogCancel,
+    35→  AlertDialogContent,
+    36→  AlertDialogDescription,
+    37→  AlertDialogFooter,
+    38→  AlertDialogHeader,
+    39→  AlertDialogTitle,
+    40→  AlertDialogTrigger,
+    41→} from "@/components/ui/alert-dialog";
+    42→import {
+    43→  Dialog,
+    44→  DialogContent,
+    45→  DialogHeader,
+    46→  DialogTitle,
+    47→  DialogFooter,
+    48→} from "@/components/ui/dialog";
+    49→import { ScrollArea } from "@/components/ui/scroll-area";
+    50→import { toast } from "sonner";
+    51→import { format, parseISO } from "date-fns";
+    52→import type { SymptomLog } from "@/types/symptom";
+    53→
+    54→const BRISTOL_LABELS: Record<number, string> = {
+    55→  1: "Hard lumps",
+    56→  2: "Lumpy sausage",
+    57→  3: "Sausage w/ cracks",
+    58→  4: "Smooth soft",
+    59→  5: "Soft blobs",
+    60→  6: "Mushy",
+    61→  7: "Watery",
+    62→};
+    63→
+    64→const BRISTOL_EMOJIS: Record<number, string> = {
+    65→  1: "🪨", 2: "🪨", 3: "✅", 4: "✅", 5: "⚠️", 6: "⚠️", 7: "🚨"
+    66→};
+    67→
+    68→const COMMON_TRIGGERS = [
+    69→  "Dairy",
+    70→  "Stress",
+    71→  "Spicy Food",
+    72→  "NSAIDs",
+    73→  "Alcohol",
+    74→  "Caffeine",
+    75→  "Lack of Sleep",
+    76→  "Anxiety",
+    77→  "Processed Food",
+    78→  "Travel",
+    79→  "Other",
+    80→];
+    81→
+    82→const BRISTOL_TYPES = [
+    83→  { value: "1", label: "Type 1: Separate hard lumps" },
+    84→  { value: "2", label: "Type 2: Lumpy sausage shape" },
+    85→  { value: "3", label: "Type 3: Sausage with cracks" },
+    86→  { value: "4", label: "Type 4: Smooth soft sausage" },
+    87→  { value: "5", label: "Type 5: Soft blobs with clear edges" },
+    88→  { value: "6", label: "Type 6: Fluffy, mushy" },
+    89→  { value: "7", label: "Type 7: Watery, no solid pieces" },
+    90→];
+    91→
+    92→const PAGE_SIZE = 10;
+    93→
+    94→interface MyRecordsTabProps {
+    95→  symptoms: SymptomLog[];
+    96→  isLoading: boolean;
+    97→  onDeleted: () => void;
+    98→  onGoToLog: () => void;
+    99→}
+   100→
+   101→function EditSymptomDialog({
+   102→  log,
+   103→  open,
+   104→  onOpenChange,
+   105→  onSaved,
+   106→}: {
+   107→  log: SymptomLog;
+   108→  open: boolean;
+   109→  onOpenChange: (open: boolean) => void;
+   110→  onSaved: () => void;
+   111→}) {
+   112→  const [date, setDate] = useState(log.date);
+   113→  const [painLevel, setPainLevel] = useState([log.painLevel]);
+   114→  const [stoolFrequency, setStoolFrequency] = useState(log.stoolFrequency);
+   115→  const [stoolType, setStoolType] = useState(String(log.stoolType));
+   116→  const [stressLevel, setStressLevel] = useState([log.stressLevel]);
+   117→  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([...log.triggers]);
+   118→  const [medication, setMedication] = useState(log.medicationTaken || "");
+   119→  const [bloodInStool, setBloodInStool] = useState(log.bloodInStool);
+   120→  const [urgencyLevel, setUrgencyLevel] = useState(log.urgencyLevel);
+   121→  const [notes, setNotes] = useState(log.notes || "");
+   122→  const [isSaving, setIsSaving] = useState(false);
+   123→
+   124→  useEffect(() => {
+   125→    if (open) {
+   126→      setDate(log.date);
+   127→      setPainLevel([log.painLevel]);
+   128→      setStoolFrequency(log.stoolFrequency);
+   129→      setStoolType(String(log.stoolType));
+   130→      setStressLevel([log.stressLevel]);
+   131→      setSelectedTriggers([...log.triggers]);
+   132→      setMedication(log.medicationTaken || "");
+   133→      setBloodInStool(log.bloodInStool);
+   134→      setUrgencyLevel(log.urgencyLevel);
+   135→      setNotes(log.notes || "");
+   136→    }
+   137→  }, [open, log]);
+   138→
+   139→  const toggleTrigger = useCallback((trigger: string) => {
+   140→    setSelectedTriggers((prev) =>
+   141→      prev.includes(trigger) ? prev.filter((t) => t !== trigger) : [...prev, trigger]
+   142→    );
+   143→  }, []);
+   144→
+   145→  const handleSave = async () => {
+   146→    setIsSaving(true);
+   147→    try {
+   148→      const res = await fetch(`/api/symptoms/${log.id}`, {
+   149→        method: "PUT",
+   150→        headers: { "Content-Type": "application/json" },
+   151→        body: JSON.stringify({
+   152→          date,
+   153→          painLevel: painLevel[0],
+   154→          stoolFrequency,
+   155→          stoolType: Number(stoolType),
+   156→          stressLevel: stressLevel[0],
+   157→          triggers: selectedTriggers,
+   158→          medicationTaken: medication || undefined,
+   159→          bloodInStool,
+   160→          urgencyLevel,
+   161→          notes: notes || undefined,
+   162→        }),
+   163→      });
+   164→      if (!res.ok) throw new Error("Update failed");
+   165→      toast.success("Log updated successfully!");
+   166→      onOpenChange(false);
+   167→      onSaved();
+   168→    } catch {
+   169→      toast.error("Failed to update log.");
+   170→    } finally {
+   171→      setIsSaving(false);
+   172→    }
+   173→  };
+   174→
+   175→  const getPainColor = (val: number) => {
+   176→    if (val <= 3) return "text-emerald-600";
+   177→    if (val <= 6) return "text-amber-500";
+   178→    return "text-rose-500";
+   179→  };
+   180→
+   181→  return (
+   182→    <Dialog open={open} onOpenChange={onOpenChange}>
+   183→      <DialogContent className="max-w-2xl max-h-[90vh]">
+   184→        <DialogHeader>
+   185→          <DialogTitle>Edit Symptom Log — {format(parseISO(log.date), "MMM d, yyyy")}</DialogTitle>
+   186→        </DialogHeader>
+   187→        <ScrollArea className="max-h-[70vh] pr-4">
+   188→          <div className="space-y-5 pb-4">
+   189→            {/* Date */}
+   190→            <div className="space-y-2">
+   191→              <Label className="text-sm font-medium">Date</Label>
+   192→              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="max-w-[200px]" />
+   193→            </div>
+   194→
+   195→            {/* Pain & Stool Frequency */}
+   196→            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   197→              <div className="space-y-3">
+   198→                <div className="flex items-center justify-between">
+   199→                  <Label className="text-sm font-medium">Pain Level</Label>
+   200→                  <span className={`text-xl font-bold ${getPainColor(painLevel[0])}`}>{painLevel[0]}</span>
+   201→                </div>
+   202→                <Slider value={painLevel} onValueChange={setPainLevel} min={1} max={10} step={1} />
+   203→                <div className="flex justify-between text-xs text-muted-foreground">
+   204→                  <span>No pain</span><span>Severe</span>
+   205→                </div>
+   206→              </div>
+   207→              <div className="space-y-3">
+   208→                <div className="flex items-center justify-between">
+   209→                  <Label className="text-sm font-medium">Stool Frequency</Label>
+   210→                  <span className="text-xl font-bold text-teal-600">{stoolFrequency}</span>
+   211→                </div>
+   212→                <div className="flex items-center gap-3">
+   213→                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => setStoolFrequency(Math.max(0, stoolFrequency - 1))}>−</Button>
+   214→                  <Input type="number" value={stoolFrequency} onChange={(e) => setStoolFrequency(Math.min(20, Math.max(0, Number(e.target.value) || 0)))} className="text-center text-lg font-semibold h-9" min={0} max={20} />
+   215→                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" onClick={() => setStoolFrequency(Math.min(20, stoolFrequency + 1))}>+</Button>
+   216→                </div>
+   217→              </div>
+   218→            </div>
+   219→
+   220→            {/* Bristol & Stress */}
+   221→            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   222→              <div className="space-y-2">
+   223→                <Label className="text-sm font-medium">Bristol Stool Type</Label>
+   224→                <Select value={stoolType} onValueChange={setStoolType}>
+   225→                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+   226→                  <SelectContent>
+   227→                    {BRISTOL_TYPES.map((t) => (
+   228→                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+   229→                    ))}
+   230→                  </SelectContent>
+   231→                </Select>
+   232→              </div>
+   233→              <div className="space-y-3">
+   234→                <div className="flex items-center justify-between">
+   235→                  <Label className="text-sm font-medium">Stress Level</Label>
+   236→                  <span className={`text-xl font-bold ${getPainColor(stressLevel[0])}`}>{stressLevel[0]}</span>
+   237→                </div>
+   238→                <Slider value={stressLevel} onValueChange={setStressLevel} min={1} max={10} step={1} />
+   239→                <div className="flex justify-between text-xs text-muted-foreground">
+   240→                  <span>Calm</span><span>Very stressed</span>
+   241→                </div>
+   242→              </div>
+   243→            </div>
+   244→
+   245→            {/* Triggers */}
+   246→            <div className="space-y-3">
+   247→              <Label className="text-sm font-medium">Triggers</Label>
+   248→              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+   249→                {COMMON_TRIGGERS.map((trigger) => (
+   250→                  <label key={trigger} className="flex items-center gap-2 cursor-pointer select-none">
+   251→                    <Checkbox
+   252→                      checked={selectedTriggers.includes(trigger)}
+   253→                      onCheckedChange={() => toggleTrigger(trigger)}
+   254→                    />
+   255→                    <span className="text-sm">{trigger}</span>
+   256→                  </label>
+   257→                ))}
+   258→              </div>
+   259→              {selectedTriggers.length > 0 && (
+   260→                <div className="flex flex-wrap gap-1.5">
+   261→                  {selectedTriggers.map((t) => (
+   262→                    <Badge key={t} variant="secondary" className="cursor-pointer hover:bg-destructive/10 transition-colors" onClick={() => toggleTrigger(t)}>
+   263→                      {t} ×
+   264→                    </Badge>
+   265→                  ))}
+   266→                </div>
+   267→              )}
+   268→            </div>
+   269→
+   270→            {/* Medication & Blood & Urgency */}
+   271→            <div className="space-y-4">
+   272→              <div className="space-y-2">
+   273→                <Label className="text-sm font-medium">Medication Taken</Label>
+   274→                <Input
+   275→                  placeholder="e.g., Mesalamine 800mg"
+   276→                  value={medication}
+   277→                  onChange={(e) => setMedication(e.target.value)}
+   278→                />
+   279→              </div>
+   280→              <div className="flex items-center justify-between">
+   281→                <div>
+   282→                  <Label className="text-sm font-medium">Blood in Stool</Label>
+   283→                  <p className="text-xs text-muted-foreground">Check if noticed</p>
+   284→                </div>
+   285→                <Switch checked={bloodInStool} onCheckedChange={setBloodInStool} />
+   286→              </div>
+   287→              <div className="space-y-2">
+   288→                <Label className="text-sm font-medium">Urgency Level</Label>
+   289→                <div className="grid grid-cols-4 gap-2">
+   290→                  {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
+   291→                    <Button
+   292→                      key={label}
+   293→                      type="button"
+   294→                      variant={urgencyLevel === i ? "default" : "outline"}
+   295→                      size="sm"
+   296→                      className={urgencyLevel === i ? "bg-teal-600 hover:bg-teal-700" : ""}
+   297→                      onClick={() => setUrgencyLevel(i)}
+   298→                    >
+   299→                      {label}
+   300→                    </Button>
+   301→                  ))}
+   302→                </div>
+   303→              </div>
+   304→            </div>
+   305→
+   306→            {/* Notes */}
+   307→            <div className="space-y-2">
+   308→              <Label className="text-sm font-medium">Notes</Label>
+   309→              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add notes..." rows={3} className="resize-none" />
+   310→            </div>
+   311→          </div>
+   312→        </ScrollArea>
+   313→        <DialogFooter>
+   314→          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+   315→          <Button onClick={handleSave} disabled={isSaving} className="bg-teal-600 hover:bg-teal-700">
+   316→            {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
+   317→          </Button>
+   318→        </DialogFooter>
+   319→      </DialogContent>
+   320→    </Dialog>
+   321→  );
+   322→}
+   323→
+   324→export default function MyRecordsTab({
+   325→  symptoms,
+   326→  isLoading,
+   327→  onDeleted,
+   328→  onGoToLog,
+   329→}: MyRecordsTabProps) {
+   330→  const [search, setSearch] = useState("");
+   331→  const [page, setPage] = useState(0);
+   332→  const [deletingId, setDeletingId] = useState<string | null>(null);
+   333→  const [expandedId, setExpandedId] = useState<string | null>(null);
+   334→  const [editingLog, setEditingLog] = useState<SymptomLog | null>(null);
+   335→  const [isImporting, setIsImporting] = useState(false);
+   336→  const fileInputRef = useRef<HTMLInputElement>(null);
+   337→
+   338→  const filtered = useMemo(() => {
+   339→    if (!search.trim()) return symptoms;
+   340→    const q = search.toLowerCase();
+   341→    return symptoms.filter(
+   342→      (s) =>
+   343→        s.date.includes(q) ||
+   344→        s.notes?.toLowerCase().includes(q) ||
+   345→        s.triggers.some((t) => t.toLowerCase().includes(q))
+   346→    );
+   347→  }, [symptoms, search]);
+   348→
+   349→  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+   350→  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+   351→
+   352→  const handleDelete = async (id: string) => {
+   353→    setDeletingId(id);
+   354→    try {
+   355→      const res = await fetch(`/api/symptoms?id=${id}`, { method: "DELETE" });
+   356→      if (!res.ok) throw new Error("Delete failed");
+   357→      toast.success("Log deleted.");
+   358→      onDeleted();
+   359→    } catch {
+   360→      toast.error("Failed to delete.");
+   361→    } finally {
+   362→      setDeletingId(null);
+   363→    }
+   364→  };
+   365→
+   366→  const handleImportCSV = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+   367→    const file = e.target.files?.[0];
+   368→    if (!file) return;
+   369→
+   370→    if (!file.name.endsWith(".csv")) {
+   371→      toast.error("Please select a .csv file");
+   372→      return;
+   373→    }
+   374→
+   375→    setIsImporting(true);
+   376→    try {
+   377→      const formData = new FormData();
+   378→      formData.append("file", file);
+   379→
+   380→      const res = await fetch("/api/symptoms/import", {
+   381→        method: "POST",
+   382→        body: formData,
+   383→      });
+   384→
+   385→      const data = await res.json();
+   386→
+   387→      if (!res.ok || !data.success) {
+   388→        const errorMessages = data.errors?.join("\n") || "Import failed";
+   389→        toast.error(`Import failed: ${errorMessages}`);
+   390→        return;
+   391→      }
+   392→
+   393→      if (data.errors?.length > 0) {
+   394→        toast.warning(`Imported ${data.imported} records with ${data.errors.length} warnings`, {
+   395→          description: data.errors.slice(0, 3).join("\n") + (data.errors.length > 3 ? `\n...and ${data.errors.length - 3} more` : ""),
+   396→          duration: 6000,
+   397→        });
+   398→      } else {
+   399→        toast.success(`Imported ${data.imported} records successfully`);
+   400→      }
+   401→
+   402→      onDeleted(); // Refresh the data
+   403→    } catch {
+   404→      toast.error("Failed to import CSV file");
+   405→    } finally {
+   406→      setIsImporting(false);
+   407→      if (fileInputRef.current) {
+   408→        fileInputRef.current.value = "";
+   409→      }
+   410→    }
+   411→  }, [onDeleted]);
+   412→
+   413→  const avgPain = filtered.length ? filtered.reduce((s, l) => s + l.painLevel, 0) / filtered.length : 0;
+   414→  const avgFreq = filtered.length ? filtered.reduce((s, l) => s + l.stoolFrequency, 0) / filtered.length : 0;
+   415→  const avgStress = filtered.length ? filtered.reduce((s, l) => s + l.stressLevel, 0) / filtered.length : 0;
+   416→
+   417→  const getPainVariant = (pain: number): "default" | "secondary" | "destructive" | "outline" => {
+   418→    if (pain <= 3) return "default";
+   419→    if (pain <= 6) return "secondary";
+   420→    return "destructive";
+   421→  };
+   422→
+   423→  const getPainClass = (pain: number): string => {
+   424→    if (pain <= 3) return "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+   425→    if (pain <= 6) return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100";
+   426→    return "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100";
+   427→  };
+   428→
+   429→  if (isLoading) {
+   430→    return (
+   431→      <div className="space-y-4">
+   432→        <Skeleton className="h-10 w-full max-w-sm rounded-lg" />
+   433→        <Skeleton className="h-6 w-48" />
+   434→        <Skeleton className="h-96 rounded-xl" />
+   435→      </div>
+   436→    );
+   437→  }
+   438→
+   439→  if (!symptoms.length) {
+   440→    return (
+   441→      <motion.div
+   442→        initial={{ opacity: 0, y: 20 }}
+   443→        animate={{ opacity: 1, y: 0 }}
+   444→        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-20 text-center"
+   445→      >
+   446→        <div className="animate-gradient-bg rounded-2xl p-8 mb-6 relative">
+   447→          <FileText className="h-14 w-14 text-teal-600 mx-auto" />
+   448→        </div>
+   449→        <h3 className="text-xl font-semibold mb-2">No records yet</h3>
+   450→        <p className="text-muted-foreground max-w-md mb-4">
+   451→          Your symptom history will appear here once you start logging. Each entry shows 
+   452→          pain levels, stool data, triggers, and personal notes.
+   453→        </p>
+   454→        <div className="rounded-lg border bg-card/50 p-4 text-left max-w-sm w-full mb-6 space-y-2">
+   455→          <p className="text-sm font-medium mb-1">What you can do here:</p>
+   456→          <ul className="text-xs text-muted-foreground space-y-1.5">
+   457→            <li className="flex items-start gap-2"><Search className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Search and filter all your logged entries</li>
+   458→            <li className="flex items-start gap-2"><Pencil className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Quickly edit any past entry</li>
+   459→            <li className="flex items-start gap-2"><Download className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Export data as CSV or JSON</li>
+   460→            <li className="flex items-start gap-2"><Trash2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-rose-400" />Delete entries you no longer need</li>
+   461→          </ul>
+   462→        </div>
+   463→        <Button onClick={onGoToLog} className="gap-2 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25">
+   464→          <PlusCircle className="h-4 w-4" />
+   465→          Log Your First Symptom
+   466→        </Button>
+   467→      </motion.div>
+   468→    );
+   469→  }
+   470→
+   471→  return (
+   472→    <div className="space-y-4">
+   473→      {/* Quick Stats Summary Strip */}
+   474→      <motion.div
+   475→        initial={{ opacity: 0, y: 12 }}
+   476→        animate={{ opacity: 1, y: 0 }}
+   477→        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+   478→      >
+   479→        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 p-3 card-premium hover-lift">
+   480→          <p className="text-[10px] uppercase tracking-wider text-teal-600 dark:text-teal-400 font-medium">Total Entries</p>
+   481→          <p className="text-2xl font-bold text-teal-800 dark:text-teal-200 stat-number mt-0.5">{symptoms.length}</p>
+   482→        </div>
+   483→        <div className="rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/60 dark:border-rose-800/40 p-3 card-premium hover-lift">
+   484→          <p className="text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-400 font-medium">Avg Pain</p>
+   485→          <p className="text-2xl font-bold text-rose-800 dark:text-rose-200 stat-number mt-0.5">
+   486→            {symptoms.length ? (symptoms.reduce((s, l) => s + l.painLevel, 0) / symptoms.length).toFixed(1) : "—"}
+   487→          </p>
+   488→        </div>
+   489→        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 p-3 card-premium hover-lift">
+   490→          <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium">Blood Days</p>
+   491→          <p className="text-2xl font-bold text-amber-800 dark:text-amber-200 stat-number mt-0.5">
+   492→            {symptoms.filter(s => s.bloodInStool).length}
+   493→            <span className="text-xs font-normal text-amber-600/60 dark:text-amber-400/60 ml-1">
+   494→              ({Math.round(symptoms.filter(s => s.bloodInStool).length / symptoms.length * 100)}%)
+   495→            </span>
+   496→          </p>
+   497→        </div>
+   498→        <div className="rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/20 border border-sky-200/60 dark:border-sky-800/40 p-3 card-premium hover-lift">
+   499→          <p className="text-[10px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-medium">Top Trigger</p>
+   500→          <p className="text-lg font-bold text-sky-800 dark:text-sky-200 mt-0.5 truncate">
+   501→            {(() => {
+   502→              const counts: Record<string, number> = {};
+   503→              symptoms.forEach(s => s.triggers.forEach(t => counts[t] = (counts[t] || 0) + 1));
+   504→              const sorted = Object.entries(counts).sort(([,a],[,b]) => b - a);
+   505→              return sorted.length ? sorted[0][0] : "None";
+   506→            })()}
+   507→          </p>
+   508→        </div>
+   509→      </motion.div>
+   510→
+   511→      {/* Search & Export & Summary */}
+   512→      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+   513→        <div className="relative flex-1 max-w-sm">
+   514→          <div className="rounded-xl card-premium flex items-center px-1">
+   515→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+   516→          <Input
+   517→            placeholder="Search by date, notes, or triggers..."
+   518→            value={search}
+   519→            onChange={(e) => {
+   520→              setSearch(e.target.value);
+   521→              setPage(0);
+   522→            }}
+   523→            className="pl-9 border-0 shadow-none focus-visible:ring-0"
+   524→          />
+   525→          </div>
+   526→        </div>
+   527→        <div className="flex items-center gap-2">
+   528→          <input
+   529→            ref={fileInputRef}
+   530→            type="file"
+   531→            accept=".csv"
+   532→            className="hidden"
+   533→            onChange={handleImportCSV}
+   534→          />
+   535→          <Button
+   536→            variant="outline"
+   537→            size="sm"
+   538→            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+   539→            onClick={() => fileInputRef.current?.click()}
+   540→            disabled={isImporting}
+   541→          >
+   542→            {isImporting ? (
+   543→              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+   544→            ) : (
+   545→              <Upload className="h-3.5 w-3.5" />
+   546→            )}
+   547→            {isImporting ? "Importing…" : "Import CSV"}
+   548→          </Button>
+   549→          <Button
+   550→            variant="outline"
+   551→            size="sm"
+   552→            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+   553→            onClick={() => window.open("/api/symptoms/export?format=csv", "_blank")}
+   554→          >
+   555→            <Download className="h-3.5 w-3.5" />
+   556→            CSV
+   557→          </Button>
+   558→          <Button
+   559→            variant="outline"
+   560→            size="sm"
+   561→            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+   562→            onClick={() => window.open("/api/symptoms/export?format=json", "_blank")}
+   563→          >
+   564→            <Download className="h-3.5 w-3.5" />
+   565→            JSON
+   566→          </Button>
+   567→          <p className="text-sm text-muted-foreground ml-1">
+   568→            <span className="font-medium text-foreground">{paged.length}</span>
+   569→            {" / "}
+   570→            <span className="font-medium text-foreground">{filtered.length}</span>
+   571→          </p>
+   572→        </div>
+   573→      </div>
+   574→
+   575→      {/* Table */}
+   576→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+   577→        <Card className="rounded-xl border-0 shadow-sm overflow-hidden">
+   578→          <div className="overflow-x-auto">
+   579→            <Table>
+   580→              <TableHeader>
+   581→                <TableRow className="bg-muted/50">
+   582→                  <TableHead className="pl-4">Date</TableHead>
+   583→                  <TableHead>Pain</TableHead>
+   584→                  <TableHead>Frequency</TableHead>
+   585→                  <TableHead>Stool Type</TableHead>
+   586→                  <TableHead>Stress</TableHead>
+   587→                  <TableHead>Triggers</TableHead>
+   588→                  <TableHead>Blood</TableHead>
+   589→                  <TableHead>Urgency</TableHead>
+   590→                  <TableHead>Med</TableHead>
+   591→                  <TableHead className="pr-4 text-right">Actions</TableHead>
+   592→                </TableRow>
+   593→              </TableHeader>
+   594→              <TableBody>
+   595→                {paged.length === 0 && search.trim() ? (
+   596→                  <TableRow>
+   597→                    <TableCell colSpan={10} className="h-48 text-center">
+   598→                      <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+   599→                        <div className="rounded-full bg-muted p-3">
+   600→                          <SearchX className="h-6 w-6" />
+   601→                        </div>
+   602→                        <div>
+   603→                          <p className="text-sm font-medium text-foreground">No matching records</p>
+   604→                          <p className="text-xs mt-0.5">Try adjusting your search terms for "{search}"</p>
+   605→                        </div>
+   606→                        <Button
+   607→                          variant="ghost"
+   608→                          size="sm"
+   609→                          className="text-xs text-teal-600 hover:text-teal-700"
+   610→                          onClick={() => { setSearch(""); setPage(0); }}
+   611→                        >
+   612→                          Clear search
+   613→                        </Button>
+   614→                      </div>
+   615→                    </TableCell>
+   616→                  </TableRow>
+   617→                ) : (
+   618→                  paged.map((log, i) => (
+   619→                  <React.Fragment key={log.id}>
+   620→                  <TableRow
+   621→                    className="cursor-pointer hover:bg-muted/50 transition-colors table-row-premium"
+   622→                    onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+   623→                  >
+   624→                    <TableCell className="pl-4 font-medium">
+   625→                      {format(parseISO(log.date), "MMM d, yyyy")}
+   626→                    </TableCell>
+   627→                    <TableCell>
+   628→                      <Badge
+   629→                        variant="outline"
+   630→                        className={`font-medium ${getPainClass(log.painLevel)}`}
+   631→                      >
+   632→                        {log.painLevel}/10
+   633→                      </Badge>
+   634→                    </TableCell>
+   635→                    <TableCell>{log.stoolFrequency}×</TableCell>
+   636→                    <TableCell>
+   637→                      <span className="text-sm">
+   638→                        <span className="mr-1">{BRISTOL_EMOJIS[log.stoolType] || "📋"}</span>
+   639→                        Type {log.stoolType}
+   640→                        <span className="text-muted-foreground text-xs ml-1">
+   641→                          ({BRISTOL_LABELS[log.stoolType] || "Unknown"})
+   642→                        </span>
+   643→                      </span>
+   644→                    </TableCell>
+   645→                    <TableCell>{log.stressLevel}/10</TableCell>
+   646→                    <TableCell>
+   647→                      <div className="flex flex-wrap gap-1">
+   648→                        {log.triggers.slice(0, 3).map((t) => (
+   649→                          <Badge key={t} variant="secondary" className="text-xs">
+   650→                            {t}
+   651→                          </Badge>
+   652→                        ))}
+   653→                        {log.triggers.length > 3 && (
+   654→                          <Badge variant="outline" className="text-xs">
+   655→                            +{log.triggers.length - 3} more
+   656→                          </Badge>
+   657→                        )}
+   658→                      </div>
+   659→                    </TableCell>
+   660→                    <TableCell>
+   661→                      {log.bloodInStool ? (
+   662→                        <Badge variant="destructive" className="gap-1 text-[10px]"><Droplets className="h-3 w-3" />Yes</Badge>
+   663→                      ) : (
+   664→                        <span className="text-muted-foreground">—</span>
+   665→                      )}
+   666→                    </TableCell>
+   667→                    <TableCell>
+   668→                      <Badge
+   669→                        variant={
+   670→                          log.urgencyLevel === 0 ? "outline" :
+   671→                          log.urgencyLevel === 1 ? "default" :
+   672→                          log.urgencyLevel === 2 ? "secondary" : "destructive"
+   673→                        }
+   674→                        className="text-xs"
+   675→                      >
+   676→                        {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}
+   677→                      </Badge>
+   678→                    </TableCell>
+   679→                    <TableCell>
+   680→                      {log.medicationTaken ? (
+   681→                        <span className="flex items-center gap-1 text-xs text-teal-700 dark:text-teal-400 max-w-[100px] truncate">
+   682→                          <Pill className="h-3 w-3 shrink-0" />
+   683→                          {log.medicationTaken}
+   684→                        </span>
+   685→                      ) : (
+   686→                        <span className="text-muted-foreground">—</span>
+   687→                      )}
+   688→                    </TableCell>
+   689→                    <TableCell className="pr-4 text-right">
+   690→                      <div className="flex items-center justify-end gap-1">
+   691→                        <Button
+   692→                          onClick={(e) => { e.stopPropagation(); setEditingLog(log); }}
+   693→                          variant="ghost"
+   694→                          size="icon"
+   695→                          className="h-9 w-9 text-muted-foreground hover:text-teal-600"
+   696→                        >
+   697→                          <Pencil className="h-4 w-4" />
+   698→                        </Button>
+   699→                        <AlertDialog>
+   700→                          <AlertDialogTrigger asChild>
+   701→                            <Button
+   702→                              onClick={(e) => e.stopPropagation()}
+   703→                              variant="ghost"
+   704→                              size="icon"
+   705→                              className="h-9 w-9 text-muted-foreground hover:text-destructive"
+   706→                            >
+   707→                              <Trash2 className="h-4 w-4" />
+   708→                            </Button>
+   709→                          </AlertDialogTrigger>
+   710→                        <AlertDialogContent>
+   711→                          <AlertDialogHeader>
+   712→                            <AlertDialogTitle>Delete this log?</AlertDialogTitle>
+   713→                            <AlertDialogDescription>
+   714→                              This will permanently remove the symptom log from{" "}
+   715→                              {format(parseISO(log.date), "MMM d, yyyy")}. This action cannot be undone.
+   716→                            </AlertDialogDescription>
+   717→                          </AlertDialogHeader>
+   718→                          <AlertDialogFooter>
+   719→                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+   720→                            <AlertDialogAction
+   721→                              onClick={() => handleDelete(log.id)}
+   722→                              className="bg-destructive text-white hover:bg-destructive/90"
+   723→                              disabled={deletingId === log.id}
+   724→                            >
+   725→                              {deletingId === log.id ? "Deleting..." : "Delete"}
+   726→                            </AlertDialogAction>
+   727→                          </AlertDialogFooter>
+   728→                        </AlertDialogContent>
+   729→                      </AlertDialog>
+   730→                      </div>
+   731→                    </TableCell>
+   732→                  </TableRow>
+   733→                  {expandedId === log.id && (
+   734→                    <TableRow className="hover:bg-transparent transition-colors">
+   735→                      <TableCell colSpan={10} className="bg-muted/20 px-6 py-3">
+   736→                        <div className="text-sm">
+   737→                          <span className="font-medium text-muted-foreground">Notes: </span>
+   738→                          {log.notes || "No notes recorded for this entry."}
+   739→                          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+   740→                            <span>Stress: {log.stressLevel}/10</span>
+   741→                            <span>Bristol Type: {log.stoolType} — {BRISTOL_LABELS[log.stoolType] || "Unknown"}</span>
+   742→                            <span>Medication: {log.medicationTaken || "None"}</span>
+   743→                            <span>Blood: {log.bloodInStool ? "Yes" : "No"}</span>
+   744→                            <span>Urgency: {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}</span>
+   745→                          </div>
+   746→                        </div>
+   747→                      </TableCell>
+   748→                    </TableRow>
+   749→                  )}
+   750→                  </React.Fragment>
+   751→                ))
+   752→                )}
+   753→              </TableBody>
+   754→            </Table>
+   755→          </div>
+   756→        </Card>
+   757→      </motion.div>
+   758→
+   759→      {/* Summary Averages */}
+   760→      {filtered.length > 0 && (
+   761→        <div className="flex items-center gap-4 mt-3 px-1">
+   762→          <div className="flex items-center gap-6 rounded-xl bg-muted/50 border border-border/50 px-5 py-3 flex-1">
+   763→            <div className="flex items-center gap-2">
+   764→              <div className="h-2 w-2 rounded-full bg-rose-400" />
+   765→              <span className="text-xs text-muted-foreground">Avg Pain</span>
+   766→              <span className="text-lg font-bold text-foreground tabular-nums">{avgPain.toFixed(1)}</span>
+   767→              <span className="text-xs text-muted-foreground">/10</span>
+   768→            </div>
+   769→            <div className="h-5 w-px bg-border" />
+   770→            <div className="flex items-center gap-2">
+   771→              <div className="h-2 w-2 rounded-full bg-teal-400" />
+   772→              <span className="text-xs text-muted-foreground">Avg Freq</span>
+   773→              <span className="text-lg font-bold text-foreground tabular-nums">{avgFreq.toFixed(1)}</span>
+   774→              <span className="text-xs text-muted-foreground">/day</span>
+   775→            </div>
+   776→            <div className="h-5 w-px bg-border" />
+   777→            <div className="flex items-center gap-2">
+   778→              <div className="h-2 w-2 rounded-full bg-amber-400" />
+   779→              <span className="text-xs text-muted-foreground">Avg Stress</span>
+   780→              <span className="text-lg font-bold text-foreground tabular-nums">{avgStress.toFixed(1)}</span>
+   781→              <span className="text-xs text-muted-foreground">/10</span>
+   782→            </div>
+   783→          </div>
+   784→        </div>
+   785→      )}
+   786→
+   787→      {/* Pagination */}
+   788→      {totalPages > 1 && (
+   789→        <div className="flex items-center justify-center gap-1 rounded-xl bg-muted/30 border border-border/40 px-3 py-2.5 shadow-sm card-premium">
+   790→          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(0)} disabled={page === 0}>&laquo;</Button>
+   791→          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>&lsaquo;</Button>
+   792→          {totalPages <= 7
+   793→            ? Array.from({ length: totalPages }, (_, i) => (
+   794→                <Button
+   795→                  key={i}
+   796→                  variant={i === page ? "default" : "outline"}
+   797→                  size="sm"
+   798→                  className={i === page ? "w-8 h-8 p-0 bg-primary text-primary-foreground shadow-sm" : "w-8 h-8 p-0 hover:bg-muted/60"}
+   799→                  onClick={() => setPage(i)}
+   800→                >
+   801→                  {i + 1}
+   802→                </Button>
+   803→              ))
+   804→            : (() => {
+   805→                const pages: number[] = [];
+   806→                const start = Math.max(1, page - 2);
+   807→                const end = Math.min(totalPages - 2, page + 2);
+   808→                pages.push(0);
+   809→                if (start > 1) pages.push(-1);
+   810→                for (let i = start; i <= end; i++) pages.push(i);
+   811→                if (end < totalPages - 2) pages.push(-2);
+   812→                pages.push(totalPages - 1);
+   813→                return pages.map((p, idx) =>
+   814→                  p < 0 ? (
+   815→                    <span key={`ellipsis-${idx}`} className="px-1 text-muted-foreground">&hellip;</span>
+   816→                  ) : (
+   817→                    <Button
+   818→                      key={p}
+   819→                      variant={p === page ? "default" : "outline"}
+   820→                      size="sm"
+   821→                      className={p === page ? "w-8 h-8 p-0 bg-primary text-primary-foreground shadow-sm" : "w-8 h-8 p-0 hover:bg-muted/60"}
+   822→                      onClick={() => setPage(p)}
+   823→                    >
+   824→                      {p + 1}
+   825→                    </Button>
+   826→                  )
+   827→                );
+   828→              })()}
+   829→          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}>&rsaquo;</Button>
+   830→          <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>&raquo;</Button>
+   831→        </div>
+   832→      )}
+   833→
+   834→      {/* Edit Dialog */}
+   835→      {editingLog && (
+   836→        <EditSymptomDialog
+   837→          log={editingLog}
+   838→          open={!!editingLog}
+   839→          onOpenChange={(open) => { if (!open) setEditingLog(null); }}
+   840→          onSaved={onDeleted}
+   841→        />
+   842→      )}
+   843→    </div>
+   844→  );
+   845→}

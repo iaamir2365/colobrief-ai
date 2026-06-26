@@ -1,25 +1,18 @@
 import { db } from "@/lib/db";
 import { format } from "date-fns";
+import { requireAuth } from "@/lib/api-auth";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
+
     const { searchParams } = new URL(request.url);
     const exportFormat = searchParams.get("format") || "csv";
 
-    // Get or create demo user
-    let user = await db.user.findFirst();
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          name: "Demo Patient",
-          email: "demo@colobrief.ai",
-          doctorName: "Dr. Sarah Chen",
-        },
-      });
-    }
-
     const logs = await db.symptomLog.findMany({
-      where: { userId: user.id },
+      where: { userId: userId as string },
       orderBy: { date: "desc" },
     });
 

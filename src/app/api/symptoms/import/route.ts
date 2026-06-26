@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/api-auth";
+import { NextResponse } from "next/server";
 
 // Expected CSV columns (case-insensitive matching)
 const EXPECTED_COLUMNS = [
@@ -238,6 +240,9 @@ function parseCSVRow(row: Record<string, string>, rowIndex: number): { data: Rec
 
 export async function POST(request: Request) {
   try {
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -285,17 +290,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get or create demo user
-    let user = await db.user.findFirst();
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          name: "Demo Patient",
-          email: "demo@colobrief.ai",
-          doctorName: "Dr. Sarah Chen",
-        },
-      });
-    }
+    // Get authenticated user ID (already validated above)
+    const authUserId = userId as string;
 
     // Parse all rows
     const allErrors: ImportError[] = [];
@@ -320,7 +316,7 @@ export async function POST(request: Request) {
     if (recordsToInsert.length > 0) {
       await db.symptomLog.createMany({
         data: recordsToInsert.map((record) => ({
-          userId: user!.id,
+          userId: authUserId,
           date: record.date as string,
           painLevel: record.painLevel as number,
           stoolFrequency: record.stoolFrequency as number,

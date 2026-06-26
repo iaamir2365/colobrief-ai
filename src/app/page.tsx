@@ -16,6 +16,7 @@ import {
   Moon,
   AlertCircle,
   CalendarDays,
+  LogOut,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import type { SymptomLog } from "@/types/symptom";
+import { useAuthStore, getAuthHeaders } from "@/stores/auth-store";
 
 import OverviewTab from "@/components/colobrief/overview-tab";
 import LogSymptomsTab from "@/components/colobrief/log-symptoms-tab";
@@ -48,6 +50,7 @@ import MyRecordsTab from "@/components/colobrief/my-records-tab";
 import DoctorHandoutTab from "@/components/colobrief/doctor-handout-tab";
 import OnboardingTour from "@/components/colobrief/onboarding-tour";
 import QuickLogPanel from "@/components/colobrief/quick-log-panel";
+import AuthForm from "@/components/auth-form";
 
 const NAV_ITEMS = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, shortcut: "O" },
@@ -69,14 +72,42 @@ function AppContent() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const { theme, setTheme } = useTheme();
+  const { user, token, isLoading: authLoading, isInitialized, initialize, logout } = useAuthStore();
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  // Authenticated fetch wrapper
+  const authFetch = useCallback((url: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers);
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    return fetch(url, { ...options, headers });
+  }, [token]);
 
   const { data: symptoms = [], isLoading, isError, error } = useQuery<SymptomLog[]>({
     queryKey: ["symptoms"],
-    queryFn: () => fetch("/api/symptoms").then((r) => r.json()),
+    queryFn: () => authFetch("/api/symptoms").then((r) => {
+      if (r.status === 401) {
+        logout();
+        throw new Error("Session expired");
+      }
+      return r.json();
+    }),
+    enabled: !!token && isInitialized,
   });
 
   const demoMutation = useMutation({
-    mutationFn: () => fetch("/api/symptoms/demo", { method: "POST" }).then((r) => r.json()),
+    mutationFn: () => authFetch("/api/symptoms/demo", { method: "POST" }).then((r) => {
+      if (r.status === 401) {
+        logout();
+        throw new Error("Session expired");
+      }
+      return r.json();
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["symptoms"] });
       toast.success("Demo data loaded! 🎉 Explore the dashboard with sample UC symptom data.");
@@ -116,6 +147,39 @@ function AppContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Get user initials for avatar
+  const userInitials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
+  // Loading / auth gate
+  if (authLoading || !isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center"
+          >
+            <Heart className="h-5 w-5 text-white" />
+          </motion.div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated — show login/signup form
+  if (!token || !user) {
+    return <AuthForm />;
+  }
+
+  // Email not verified — show verification form
+  if (!user.emailVerified) {
+    return <AuthForm />;
+  }
 
   return (
     <SidebarProvider>
@@ -192,14 +256,27 @@ function AppContent() {
         <SidebarFooter className="p-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-teal-100 text-teal-700 text-xs font-medium">DP</AvatarFallback>
+              <AvatarFallback className="bg-teal-100 text-teal-700 text-xs font-medium">{userInitials}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">Demo Patient</span>
-              <span className="truncate text-xs text-muted-foreground">demo@colobrief.ai</span>
+              <span className="truncate font-medium">{user.name}</span>
+              <span className="truncate text-xs text-muted-foreground">{user.email}</span>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-rose-500"
+              onClick={() => {
+                logout();
+                queryClient.clear();
+                toast.success("Logged out successfully");
+              }}
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
-          <span className="truncate text-xs text-muted-foreground">v1.4.0</span>
+          <span className="truncate text-xs text-muted-foreground">v1.5.0</span>
         </SidebarFooter>
 
         <SidebarRail />
@@ -260,7 +337,7 @@ function AppContent() {
           {isError && (
             <div className="mx-6 mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              Failed to load symptom data. Please try refreshing the page.
+              {error instanceof Error ? error.message : "Failed to load symptom data. Please try refreshing the page."}
             </div>
           )}
 

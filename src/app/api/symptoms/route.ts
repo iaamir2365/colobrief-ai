@@ -1,22 +1,14 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Get or create demo user
-    let user = await db.user.findFirst();
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          name: "Demo Patient",
-          email: "demo@colobrief.ai",
-          doctorName: "Dr. Sarah Chen",
-        },
-      });
-    }
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
 
     const logs = await db.symptomLog.findMany({
-      where: { userId: user.id },
+      where: { userId: userId as string },
       orderBy: { date: "desc" },
     });
 
@@ -48,25 +40,24 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
+
     const body = await request.json();
     const { date, painLevel, stoolFrequency, stoolType, stressLevel, triggers, notes } = body;
 
-    // Get or create demo user
-    let user = await db.user.findFirst();
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          name: "Demo Patient",
-          email: "demo@colobrief.ai",
-          doctorName: "Dr. Sarah Chen",
-        },
-      });
-    }
+    const logDate = date || new Date().toISOString().split("T")[0];
+    const uid = userId as string;
+
+    // Upsert: delete existing log for same user + date, then create new one
+    await db.symptomLog.deleteMany({
+      where: { userId: uid, date: logDate },
+    });
 
     const log = await db.symptomLog.create({
       data: {
-        userId: user.id,
-        date: date || new Date().toISOString().split("T")[0],
+        userId: uid,
+        date: logDate,
         painLevel: Number(painLevel) || 0,
         stoolFrequency: Number(stoolFrequency) || 0,
         stoolType: Number(stoolType) || 1,
@@ -105,11 +96,20 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    }
+
+    // Verify the log belongs to this user
+    const log = await db.symptomLog.findUnique({ where: { id } });
+    if (!log || log.userId !== (userId as string)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     await db.symptomLog.delete({ where: { id } });

@@ -39,6 +39,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
+import { getAuthHeaders } from "@/stores/auth-store";
 
 const COMMON_TRIGGERS = [
   "Dairy",
@@ -223,10 +224,12 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
   const [isSaving, setIsSaving] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [aiResult, setAiResult] = useState<null | {
-    stoolFrequency: number;
-    painLevel: number;
-    bristolStoolType: number;
-    stressLevel: number;
+    painLevel: number | null;
+    stoolFrequency: number | null;
+    stoolType: number | null;
+    stressLevel: number | null;
+    bloodInStool: boolean | null;
+    urgencyLevel: string | null;
     triggers: string[];
   }>(null);
   const recognitionRef = useRef<any>(null);
@@ -376,6 +379,53 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
     };
   }, []);
 
+  const URGENCY_MAP: Record<string, number> = {
+    none: 0,
+    mild: 1,
+    moderate: 2,
+    severe: 3,
+  };
+
+  const applyAIResult = useCallback((data: NonNullable<typeof aiResult>) => {
+    let filledCount = 0;
+    if (data.painLevel != null && data.painLevel > 0) {
+      setPainLevel([Math.min(10, Math.max(1, Math.round(data.painLevel)))]);
+      filledCount++;
+    }
+    if (data.stoolFrequency != null && data.stoolFrequency > 0) {
+      setStoolFrequency(Math.min(20, Math.max(0, Math.round(data.stoolFrequency))));
+      filledCount++;
+    }
+    if (data.stoolType != null && data.stoolType >= 1 && data.stoolType <= 7) {
+      setStoolType(String(Math.round(data.stoolType)));
+      filledCount++;
+    }
+    if (data.stressLevel != null && data.stressLevel > 0) {
+      setStressLevel([Math.min(10, Math.max(1, Math.round(data.stressLevel)))]);
+      filledCount++;
+    }
+    if (data.bloodInStool === true) {
+      setBloodInStool(true);
+      filledCount++;
+    }
+    if (data.urgencyLevel && URGENCY_MAP[data.urgencyLevel.toLowerCase()] !== undefined) {
+      setUrgencyLevel(URGENCY_MAP[data.urgencyLevel.toLowerCase()]);
+      filledCount++;
+    }
+    if (data.triggers?.length) {
+      const validTriggers = data.triggers.filter((t) => COMMON_TRIGGERS.includes(t));
+      if (validTriggers.length) {
+        setSelectedTriggers(validTriggers);
+        filledCount++;
+      }
+    }
+    if (filledCount > 0) {
+      toast.success(`AI filled ${filledCount} field${filledCount > 1 ? 's' : ''} from your notes. Review and save!`);
+    } else {
+      toast.info("AI couldn't extract specific values. Try adding more detail to your notes.");
+    }
+  }, []);
+
   const handleAIExtract = async () => {
     if (!notes.trim()) {
       toast.error("Please add some notes before using AI extraction.");
@@ -385,11 +435,13 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
     try {
       const res = await fetch("/api/symptoms/ai-extract", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({ notes }),
       });
       const data = await res.json();
+      // Auto-apply the AI results directly to the form
       setAiResult(data);
+      applyAIResult(data);
     } catch {
       toast.error("AI extraction failed. Please try again.");
     } finally {
@@ -397,16 +449,18 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
     }
   };
 
-  const applyAIResult = () => {
-    if (!aiResult) return;
-    if (aiResult.painLevel) setPainLevel([aiResult.painLevel]);
-    if (aiResult.stoolFrequency) setStoolFrequency(aiResult.stoolFrequency);
-    if (aiResult.bristolStoolType) setStoolType(String(aiResult.bristolStoolType));
-    if (aiResult.stressLevel) setStressLevel([aiResult.stressLevel]);
-    if (aiResult.triggers?.length) setSelectedTriggers(aiResult.triggers);
-    setAiResult(null);
-    toast.success("AI-extracted values applied to the form.");
-  };
+  const wasRecordingRef = useRef(false);
+
+  // Auto-extract when voice recording stops and notes have content
+  useEffect(() => {
+    if (wasRecordingRef.current && !isRecording && notes.trim().length > 20) {
+      const timer = setTimeout(() => {
+        handleAIExtract();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+    wasRecordingRef.current = isRecording;
+  }, [isRecording, notes]);
 
   const handleSave = async () => {
     if (!date) {
@@ -417,7 +471,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
     try {
       const res = await fetch("/api/symptoms", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify({
           date,
           painLevel: painLevel[0],
@@ -860,7 +914,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       ) : (
                         <Sparkles className="h-3.5 w-3.5" />
                       )}
-                      AI Extract
+                      AI Extract & Fill
                     </Button>
                   </div>
                 </div>
@@ -887,62 +941,61 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
             </CardContent>
           </Card>
 
-          {/* AI Verification Card */}
+          {/* AI Result Card — Auto-applied, shows what was extracted */}
           <AnimatePresence>
             {aiResult && (
               <motion.div
                 initial={{ opacity: 0, y: 16, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.95 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
                 className="mt-4"
               >
-                <Card className="rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 shadow-sm bg-gradient-to-br from-teal-50/80 via-white to-violet-50/40 dark:from-teal-950/30 dark:via-background dark:to-violet-950/20">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-teal-600" />
-                      <CardTitle className="text-base font-semibold">AI-Extracted Values</CardTitle>
+                <Card className="rounded-xl border border-teal-200 dark:border-teal-800/50 shadow-sm bg-gradient-to-br from-teal-50/80 via-white to-violet-50/40 dark:from-teal-950/30 dark:via-background dark:to-violet-950/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                        <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">AI Auto-Filled</span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setAiResult(null)}>
+                        Dismiss
+                      </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Review the values extracted from your notes. Apply to update the form, or dismiss.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-3">
                       <div className="text-center">
-                        <p className="text-xs text-muted-foreground">Pain Level</p>
-                        <p className="text-xl font-bold text-rose-500">{aiResult.painLevel}</p>
+                        <p className="text-[10px] text-muted-foreground">Pain</p>
+                        <p className={`text-base font-bold ${aiResult.painLevel ? 'text-rose-500' : 'text-muted-foreground'}`}>{aiResult.painLevel ?? '—'}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-muted-foreground">Stool Freq.</p>
-                        <p className="text-xl font-bold text-teal-600">{aiResult.stoolFrequency}</p>
+                        <p className="text-[10px] text-muted-foreground">Freq.</p>
+                        <p className={`text-base font-bold ${aiResult.stoolFrequency ? 'text-teal-600' : 'text-muted-foreground'}`}>{aiResult.stoolFrequency ?? '—'}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-muted-foreground">Stool Type</p>
-                        <p className="text-xl font-bold">{aiResult.bristolStoolType}</p>
+                        <p className="text-[10px] text-muted-foreground">Stool</p>
+                        <p className={`text-base font-bold ${aiResult.stoolType ? '' : 'text-muted-foreground'}`}>{aiResult.stoolType ?? '—'}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-muted-foreground">Stress</p>
-                        <p className="text-xl font-bold text-amber-500">{aiResult.stressLevel}</p>
+                        <p className="text-[10px] text-muted-foreground">Stress</p>
+                        <p className={`text-base font-bold ${aiResult.stressLevel ? 'text-amber-500' : 'text-muted-foreground'}`}>{aiResult.stressLevel ?? '—'}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-muted-foreground">Blood</p>
+                        <p className={`text-base font-bold ${aiResult.bloodInStool ? 'text-rose-600' : 'text-muted-foreground'}`}>{aiResult.bloodInStool ? 'Yes' : aiResult.bloodInStool === false ? 'No' : '—'}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-muted-foreground">Urgency</p>
+                        <p className={`text-base font-bold ${aiResult.urgencyLevel ? '' : 'text-muted-foreground'}`}>{aiResult.urgencyLevel ?? '—'}</p>
                       </div>
                     </div>
-                    {aiResult.triggers.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-4">
+                    {aiResult.triggers?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
                         {aiResult.triggers.map((t) => (
-                          <Badge key={t} variant="secondary">
+                          <Badge key={t} variant="secondary" className="text-[11px]">
                             {t}
                           </Badge>
                         ))}
                       </div>
                     )}
-                    <div className="flex gap-2">
-                      <Button onClick={applyAIResult} className="gap-1.5">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Apply Values
-                      </Button>
-                      <Button variant="outline" onClick={() => setAiResult(null)}>
-                        Dismiss
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

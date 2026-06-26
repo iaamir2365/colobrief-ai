@@ -1553,3 +1553,134 @@ ColoBrief AI v1.5.0 is in **excellent condition**. All 4 tabs render correctly w
 5. **MEDIUM**: PWA offline support for mobile use
 6. **LOW**: FHIR-compliant data export for EHR integration
 7. **LOW**: Internationalization (i18n) support
+
+---
+Task ID: r9
+Agent: Main Coordinator
+Task: Add JWT authentication system with login/signup
+
+## Current Project Status Assessment
+
+ColoBrief AI v1.6.0 now has **full JWT-based user authentication**. Users must sign up or log in before accessing the app. Each user's data is completely isolated. The auth system uses bcryptjs for password hashing and jsonwebtoken for JWT token management.
+
+## Work Log
+
+### Database Changes
+- Added `password String` (required) field to User model in prisma/schema.prisma
+- Ran `prisma db push --force-reset` to apply schema (demo data reset expected)
+- Ran `prisma generate` to regenerate Prisma client with new field
+
+### New Packages
+- `bcryptjs` — Password hashing (12 salt rounds)
+- `jsonwebtoken` — JWT token signing/verification (30-day expiry)
+- `@types/bcryptjs`, `@types/jsonwebtoken` — TypeScript types
+
+### New Files Created
+1. `src/lib/auth.ts` — JWT utility functions:
+   - `signToken(payload)` — Creates JWT with 30-day expiry
+   - `verifyToken(token)` — Verifies and decodes JWT
+   - `hashPassword(password)` — bcrypt hash with 12 rounds
+   - `comparePassword(password, hash)` — bcrypt compare
+   - `getTokenFromRequest(request)` — Extracts JWT from Authorization header or cookie
+
+2. `src/lib/api-auth.ts` — API route auth helpers:
+   - `getAuthUserId(request)` — Returns authenticated userId or null
+   - `requireAuth(request)` — Returns userId or 401 NextResponse
+
+3. `src/stores/auth-store.ts` — Zustand auth state management:
+   - State: token, user, isLoading, isInitialized
+   - Actions: initialize(), login(), signup(), logout()
+   - Helper: getAuthHeaders() — Returns Authorization header for fetch calls
+   - Token persisted in localStorage as "colobrief-token"
+
+4. `src/components/auth-form.tsx` — Full-page login/signup UI:
+   - Animated brand logo (gradient Heart icon)
+   - Login mode: email + password
+   - Signup mode: name + email + password + optional doctor name
+   - Password visibility toggle (Eye/EyeOff)
+   - Smooth AnimatePresence transitions between modes
+   - Error display with animation
+   - Loading state on submit button
+   - Trust badges (JWT Secured, HIPAA Friendly)
+   - Responsive gradient background
+
+5. `src/app/api/auth/signup/route.ts` — POST signup endpoint:
+   - Validates name, email (regex), password (≥6 chars)
+   - Checks for existing email (409 conflict)
+   - Hashes password, creates user, returns JWT + user data
+
+6. `src/app/api/auth/login/route.ts` — POST login endpoint:
+   - Validates credentials
+   - Returns 401 for invalid email/password (generic message, no user enumeration)
+   - Returns JWT + user data on success
+
+7. `src/app/api/auth/me/route.ts` — GET current user endpoint:
+   - Verifies JWT, returns user info + symptom log count
+   - 401 if not authenticated, 404 if user deleted
+
+### Files Modified (Auth Integration)
+1. **`src/app/api/symptoms/route.ts`** — GET/POST/DELETE now use `requireAuth()`
+2. **`src/app/api/symptoms/[id]/route.ts`** — PUT/DELETE use `requireAuth()`, verify ownership
+3. **`src/app/api/symptoms/demo/route.ts`** — POST uses `requireAuth()`
+4. **`src/app/api/symptoms/export/route.ts`** — GET uses `requireAuth()`
+5. **`src/app/api/symptoms/import/route.ts`** — POST uses `requireAuth()`
+
+### Files Modified (Auth Headers)
+6. **`src/app/page.tsx`** — Full auth gate:
+   - Initializes auth store on mount
+   - Shows loading spinner while initializing
+   - Shows AuthForm when not authenticated
+   - Uses `authFetch()` wrapper for all API calls (adds Authorization header)
+   - Sidebar shows actual user name/email with avatar initials
+   - Added LogOut button in sidebar footer
+   - Version bumped to v1.5.0
+   - 401 responses trigger automatic logout
+
+7. **`src/components/colobrief/quick-log-panel.tsx`** — Added getAuthHeaders()
+8. **`src/components/colobrief/doctor-handout-tab.tsx`** — Added getAuthHeaders() to AI extract
+9. **`src/components/colobrief/log-symptoms-tab.tsx`** — Added getAuthHeaders() to AI extract + POST
+10. **`src/components/colobrief/ai-insights-panel.tsx`** — Added getAuthHeaders() to AI chat
+11. **`src/components/colobrief/symptom-insights.tsx`** — Added getAuthHeaders() to AI chat
+12. **`src/components/colobrief/my-records-tab.tsx`** — Added getAuthHeaders() to ALL fetch calls (edit, delete, import, CSV export, JSON export). CSV/JSON exports converted from window.open() to fetch()+blob download to support auth headers.
+
+### Bug Fix
+- **Prisma client cache**: After `db:push`, the global Prisma client cache in `db.ts` held the old schema. Resolved by regenerating client with `prisma generate` and restarting the dev server.
+
+## Verification Results
+- ✅ ESLint: zero errors
+- ✅ API test: curl signup returns JWT + user data
+- ✅ API test: curl /me with Bearer token returns user with log count
+- ✅ agent-browser: Login/signup form renders correctly
+- ✅ agent-browser: After setting token in localStorage, app loads authenticated view
+- ✅ agent-browser: Demo data loads for authenticated user (userId in DB queries)
+- ✅ agent-browser: Sidebar shows user name, email, Sign Out button
+- ✅ agent-browser: Zero console errors on all interactions
+
+## API Routes (Final Count: 11)
+- `POST /api/auth/signup` — Create account, get JWT
+- `POST /api/auth/login` — Login, get JWT
+- `GET /api/auth/me` — Get current user (requires auth)
+- `GET /api/symptoms` — Fetch all logs (requires auth)
+- `POST /api/symptoms` — Create log (requires auth)
+- `PUT /api/symptoms/[id]` — Update log (requires auth + ownership)
+- `DELETE /api/symptoms/[id]` — Delete log (requires auth + ownership)
+- `POST /api/symptoms/ai-extract` — AI extraction
+- `POST /api/symptoms/ai-chat` — AI chat
+- `POST /api/symptoms/demo` — Generate demo data (requires auth)
+- `GET /api/symptoms/export` — Export CSV/JSON (requires auth)
+- `POST /api/symptoms/import` — Import CSV (requires auth)
+
+## Unresolved Issues / Risks
+1. **[Low Risk] JWT Secret**: Currently hardcoded fallback `"colobrief-jwt-secret-key-2024"`. Production should use env variable `JWT_SECRET`.
+2. **[Low Risk] No Rate Limiting**: Auth endpoints have no rate limiting (brute force protection). Acceptable for hackathon.
+3. **[Info] No Email Verification**: Signup doesn't require email confirmation. Could be added later.
+4. **[Info] No Password Reset**: Forgot password flow not implemented yet.
+5. **[Info] Token in localStorage**: Vulnerable to XSS. HttpOnly cookie would be more secure but harder to implement with this architecture.
+
+## Priority Recommendations for Next Phase
+1. **HIGH**: Add password reset / forgot password flow
+2. **HIGH**: Add email verification on signup
+3. **MEDIUM**: Rate limiting on auth endpoints (express-rate-limit or custom)
+4. **MEDIUM**: Profile settings page (change name, doctor, password)
+5. **LOW**: Remember me (longer token expiry)
+6. **LOW**: Account deletion

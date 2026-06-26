@@ -1,11 +1,15 @@
-import { db } from '@/lib/db';
-import { NextRequest, NextResponse } from 'next/server';
+import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-auth";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
+
     const { id } = await params;
     const body = await request.json();
     const {
@@ -22,8 +26,8 @@ export async function PUT(
     } = body;
 
     const existing = await db.symptomLog.findUnique({ where: { id } });
-    if (!existing) {
-      return NextResponse.json({ error: 'Symptom log not found' }, { status: 404 });
+    if (!existing || existing.userId !== (userId as string)) {
+      return NextResponse.json({ error: "Symptom log not found" }, { status: 404 });
     }
 
     const updated = await db.symptomLog.update({
@@ -58,9 +62,9 @@ export async function PUT(
       createdAt: updated.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error('Error updating symptom log:', error);
+    console.error("Error updating symptom log:", error);
     return NextResponse.json(
-      { error: 'Failed to update symptom log' },
+      { error: "Failed to update symptom log" },
       { status: 500 }
     );
   }
@@ -71,25 +75,22 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await requireAuth(request);
+    if (userId instanceof NextResponse) return userId;
+
     const { id } = await params;
 
-    const log = await db.symptomLog.findUnique({
-      where: { id },
-    });
-
-    if (!log) {
-      return NextResponse.json({ error: 'Symptom log not found' }, { status: 404 });
+    const log = await db.symptomLog.findUnique({ where: { id } });
+    if (!log || log.userId !== (userId as string)) {
+      return NextResponse.json({ error: "Symptom log not found" }, { status: 404 });
     }
 
-    await db.symptomLog.delete({
-      where: { id },
-    });
-
+    await db.symptomLog.delete({ where: { id } });
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
-    console.error('Error deleting symptom log:', error);
+    console.error("Error deleting symptom log:", error);
     return NextResponse.json(
-      { error: 'Failed to delete symptom log' },
+      { error: "Failed to delete symptom log" },
       { status: 500 }
     );
   }

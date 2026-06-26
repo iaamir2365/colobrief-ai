@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { SymptomLog } from "@/types/symptom";
+import { getAuthHeaders } from "@/stores/auth-store";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -120,7 +121,7 @@ export default function AIInsightsPanel({ symptoms }: AIInsightsPanelProps) {
 
         const res = await fetch("/api/symptoms/ai-chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({
             messages: recentMessages,
             symptomData,
