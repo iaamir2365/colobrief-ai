@@ -44,6 +44,31 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
   } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Extract unique medications with counts (component-level hook)
+  const medicationDetails = useMemo(() => {
+    const medMap: Record<string, { name: string; daysTaken: number; avgPain: number }> = {};
+    symptoms.forEach((s) => {
+      if (!s.medicationTaken || s.medicationTaken.trim() === "") return;
+      const name = s.medicationTaken.replace(/\d+\.?\d*\s*(mg|ml|g|mcg|tablet|capsule|puff|dose|tabs?|caps?)s?/gi, "").trim();
+      if (!name) return;
+      if (!medMap[name]) {
+        medMap[name] = { name, daysTaken: 0, avgPain: 0 };
+      }
+      medMap[name].daysTaken++;
+      medMap[name].avgPain += s.painLevel;
+    });
+    Object.values(medMap).forEach((m) => {
+      m.avgPain = m.daysTaken > 0 ? m.avgPain / m.daysTaken : 0;
+    });
+    return Object.values(medMap).sort((a, b) => b.daysTaken - a.daysTaken);
+  }, [symptoms]);
+
+  // Most recent 3 notes (component-level hook)
+  const recentNotes = useMemo(() => {
+    const withNotes = symptoms.filter((s) => s.notes && s.notes.trim() !== "");
+    return withNotes.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+  }, [symptoms]);
+
   const stats = useMemo(() => {
     if (!symptoms.length) return null;
 
@@ -116,6 +141,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       bloodDays,
       bloodPct,
       avgUrgency,
+      medicationDetails,
+      recentNotes,
     };
   }, [symptoms]);
 
@@ -338,6 +365,58 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                         <p className="font-semibold">{stats.avgUrgency.toFixed(1)}<span className="text-xs font-normal text-muted-foreground">/3</span></p>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Detailed Medication Breakdown */}
+              {stats && stats.medicationDetails.length > 0 && (
+                <div className="mb-5">
+                  <h2 className="text-sm font-semibold text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2">
+                    <Pill className="h-4 w-4" />
+                    Current Medications
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {stats.medicationDetails.map((med) => (
+                      <div key={med.name} className="rounded-lg border border-border/60 bg-muted/20 p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center shrink-0">
+                            <Pill className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{med.name}</p>
+                            <p className="text-xs text-muted-foreground">{med.daysTaken} day{med.daysTaken !== 1 ? "s" : ""} taken</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Avg Pain</p>
+                          <p className="text-sm font-semibold">{med.avgPain.toFixed(1)}/10</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Patient Notes */}
+              {stats && stats.recentNotes.length > 0 && (
+                <div className="mb-5">
+                  <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Recent Patient Notes
+                  </h2>
+                  <div className="space-y-2">
+                    {stats.recentNotes.map((s) => (
+                      <div key={s.id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-muted-foreground">{format(parseISO(s.date), "EEE, MMM d")}</span>
+                          <Badge variant={s.bloodInStool ? "destructive" : "secondary"} className="text-[10px]">
+                            {s.bloodInStool ? "Blood" : "No Blood"} · Pain {s.painLevel}/10
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-foreground italic leading-relaxed">"{s.notes}"</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

@@ -1,0 +1,530 @@
+     1→"use client";
+     2→
+     3→import { useState, useMemo } from "react";
+     4→import { motion } from "framer-motion";
+     5→import { Printer, Sparkles, Loader2, FileText, ClipboardList, Stethoscope, BookOpen, Activity, Lightbulb, Pill } from "lucide-react";
+     6→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     7→import { Button } from "@/components/ui/button";
+     8→import { Badge } from "@/components/ui/badge";
+     9→import { Separator } from "@/components/ui/separator";
+    10→import { Skeleton } from "@/components/ui/skeleton";
+    11→import {
+    12→  Table,
+    13→  TableBody,
+    14→  TableCell,
+    15→  TableHead,
+    16→  TableHeader,
+    17→  TableRow,
+    18→} from "@/components/ui/table";
+    19→import { toast } from "sonner";
+    20→import { format, parseISO, min, max } from "date-fns";
+    21→import type { SymptomLog } from "@/types/symptom";
+    22→
+    23→const BRISTOL_LABELS: Record<number, string> = {
+    24→  1: "Hard lumps",
+    25→  2: "Lumpy sausage",
+    26→  3: "Sausage w/ cracks",
+    27→  4: "Smooth soft",
+    28→  5: "Soft blobs",
+    29→  6: "Mushy",
+    30→  7: "Watery",
+    31→};
+    32→
+    33→interface DoctorHandoutTabProps {
+    34→  symptoms: SymptomLog[];
+    35→  isLoading: boolean;
+    36→}
+    37→
+    38→export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutTabProps) {
+    39→  const [aiSummary, setAiSummary] = useState<{
+    40→    situation: string;
+    41→    background: string;
+    42→    assessment: string;
+    43→    recommendation: string;
+    44→  } | null>(null);
+    45→  const [isGenerating, setIsGenerating] = useState(false);
+    46→
+    47→  const stats = useMemo(() => {
+    48→    if (!symptoms.length) return null;
+    49→
+    50→    const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+    51→
+    52→    const sorted = [...symptoms].sort((a, b) => a.date.localeCompare(b.date));
+    53→    const dates = sorted.map((s) => parseISO(s.date));
+    54→    const dateRange = {
+    55→      from: format(min(dates), "MMM d, yyyy"),
+    56→      to: format(max(dates), "MMM d, yyyy"),
+    57→    };
+    58→
+    59→    // Split into two halves for trend
+    60→    const mid = Math.floor(sorted.length / 2);
+    61→    const firstHalf = sorted.slice(0, mid);
+    62→    const secondHalf = sorted.slice(mid);
+    63→
+    64→    const firstAvgPain = avg(firstHalf.map((s) => s.painLevel));
+    65→    const secondAvgPain = avg(secondHalf.map((s) => s.painLevel));
+    66→    const painDiff = secondAvgPain - firstAvgPain;
+    67→
+    68→    let trend: string;
+    69→    if (Math.abs(painDiff) < 0.5) {
+    70→      trend = "Stable";
+    71→    } else if (painDiff < 0) {
+    72→      trend = "Improving";
+    73→    } else {
+    74→      trend = "Worsening";
+    75→    }
+    76→
+    77→    // Trigger counts
+    78→    const triggerCounts: Record<string, number> = {};
+    79→    symptoms.forEach((s) => s.triggers.forEach((t) => (triggerCounts[t] = (triggerCounts[t] || 0) + 1)));
+    80→    const topTriggers = Object.entries(triggerCounts)
+    81→      .sort(([, a], [, b]) => b - a)
+    82→      .slice(0, 5)
+    83→      .map(([t, c]) => `${t} (${c}×)`);
+    84→
+    85→    // Stool type distribution
+    86→    const stoolTypeCounts: Record<number, number> = {};
+    87→    symptoms.forEach((s) => {
+    88→      const t = Math.round(s.stoolType);
+    89→      stoolTypeCounts[t] = (stoolTypeCounts[t] || 0) + 1;
+    90→    });
+    91→    const mostCommonStoolType = Object.entries(stoolTypeCounts).sort(([, a], [, b]) => b - a)[0];
+    92→
+    93→    // Medication adherence
+    94→    const medAdherence = symptoms.length
+    95→      ? Math.round((symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length / symptoms.length) * 100)
+    96→      : 0;
+    97→    // Blood frequency
+    98→    const bloodDays = symptoms.filter((s) => s.bloodInStool).length;
+    99→    const bloodPct = symptoms.length ? Math.round((bloodDays / symptoms.length) * 100) : 0;
+   100→    // Average urgency
+   101→    const avgUrgency = avg(symptoms.map((s) => s.urgencyLevel));
+   102→
+   103→    return {
+   104→      dateRange,
+   105→      avgPain: avg(symptoms.map((s) => s.painLevel)),
+   106→      avgStool: avg(symptoms.map((s) => s.stoolFrequency)),
+   107→      avgStress: avg(symptoms.map((s) => s.stressLevel)),
+   108→      totalLogs: symptoms.length,
+   109→      trend,
+   110→      topTriggers,
+   111→      mostCommonStoolType: mostCommonStoolType
+   112→        ? `Type ${mostCommonStoolType[0]} — ${BRISTOL_LABELS[Number(mostCommonStoolType[0])] || ""} (${mostCommonStoolType[1]}×)`
+   113→        : "N/A",
+   114→      recentLogs: sorted.slice(-14),
+   115→      medAdherence,
+   116→      bloodDays,
+   117→      bloodPct,
+   118→      avgUrgency,
+   119→    };
+   120→  }, [symptoms]);
+   121→
+   122→  const situation = useMemo(() => {
+   123→    if (!stats) return "";
+   124→    if (stats.avgPain <= 3)
+   125→      return `Patient reports mild abdominal symptoms with an average pain level of ${stats.avgPain.toFixed(1)}/10 over ${stats.totalLogs} logged days.`;
+   126→    if (stats.avgPain <= 6)
+   127→      return `Patient reports moderate UC symptoms with an average pain level of ${stats.avgPain.toFixed(1)}/10 and average stool frequency of ${stats.avgStool.toFixed(1)}/day over ${stats.totalLogs} logged days.`;
+   128→    return `Patient reports significant UC symptoms with an average pain level of ${stats.avgPain.toFixed(1)}/10 and average stool frequency of ${stats.avgStool.toFixed(1)}/day over ${stats.totalLogs} logged days. Clinical attention recommended.`;
+   129→  }, [stats]);
+   130→
+   131→  const background = useMemo(() => {
+   132→    if (!stats) return "";
+   133→    return `Patient has been self-tracking Ulcerative Colitis symptoms from ${stats.dateRange.from} to ${stats.dateRange.to} (${stats.totalLogs} entries). Most common stool type: ${stats.mostCommonStoolType}. Average stress level: ${stats.avgStress.toFixed(1)}/10.`;
+   134→  }, [stats]);
+   135→
+   136→  const computedAssessment = useMemo(() => {
+   137→    if (!stats) return "";
+   138→    return `Overall trend: ${stats.trend}. Average pain ${stats.avgPain.toFixed(1)}/10, stool frequency ${stats.avgStool.toFixed(1)}/day, stress ${stats.avgStress.toFixed(1)}/10. Common triggers: ${stats.topTriggers.join(", ") || "None identified"}. Most common stool type: ${stats.mostCommonStoolType}. Medication adherence: ${stats.medAdherence}%. Blood in stool reported on ${stats.bloodDays} days (${stats.bloodPct}%). Average urgency level: ${stats.avgUrgency.toFixed(1)}/3.`;
+   139→  }, [stats]);
+   140→  const assessment = aiSummary?.assessment || computedAssessment;
+   141→
+   142→  const recommendation = aiSummary?.recommendation || "Discuss symptom trends with patient, review trigger management strategies, evaluate current medication efficacy, and consider dietary modifications based on identified triggers.";
+   143→
+   144→  const handleGenerateAI = async () => {
+   145→    if (!symptoms.length) {
+   146→      toast.error("No data to generate a summary from.");
+   147→      return;
+   148→    }
+   149→    setIsGenerating(true);
+   150→    try {
+   151→      const summaryData = JSON.stringify(
+   152→        symptoms.map((s) => ({
+   153→          date: s.date,
+   154→          pain: s.painLevel,
+   155→          frequency: s.stoolFrequency,
+   156→          stoolType: s.stoolType,
+   157→          stress: s.stressLevel,
+   158→          triggers: s.triggers,
+   159→          notes: s.notes,
+   160→        }))
+   161→      );
+   162→      const res = await fetch("/api/symptoms/ai-extract", {
+   163→        method: "POST",
+   164→        headers: { "Content-Type": "application/json" },
+   165→        body: JSON.stringify({ notes: summaryData, mode: "clinical_summary" }),
+   166→      });
+   167→      const data = await res.json();
+   168→      setAiSummary(data);
+   169→      toast.success("AI clinical summary generated!");
+   170→    } catch {
+   171→      toast.error("Failed to generate AI summary.");
+   172→    } finally {
+   173→      setIsGenerating(false);
+   174→    }
+   175→  };
+   176→
+   177→  const handlePrint = () => {
+   178→    window.print();
+   179→  };
+   180→
+   181→  if (isLoading) {
+   182→    return (
+   183→      <div className="space-y-4">
+   184→        <Skeleton className="h-8 w-64" />
+   185→        <Skeleton className="h-6 w-96" />
+   186→        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   187→          {[...Array(4)].map((_, i) => (
+   188→            <Skeleton key={i} className="h-40 rounded-xl" />
+   189→          ))}
+   190→        </div>
+   191→        <Skeleton className="h-64 rounded-xl" />
+   192→      </div>
+   193→    );
+   194→  }
+   195→
+   196→  if (!symptoms.length) {
+   197→    return (
+   198→      <motion.div
+   199→        initial={{ opacity: 0, y: 20 }}
+   200→        animate={{ opacity: 1, y: 0 }}
+   201→        className="flex flex-col items-center justify-center py-20 text-center max-w-lg mx-auto"
+   202→      >
+   203→        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+   204→          <ClipboardList className="h-14 w-14 text-teal-600 mx-auto" />
+   205→        </div>
+   206→        <h3 className="text-xl font-semibold mb-2">No data for a handout</h3>
+   207→        <p className="text-muted-foreground max-w-md mb-4">
+   208→          Log at least a few days of symptoms to generate an SBAR Clinical Brief 
+   209→          that you can share with your gastroenterologist.
+   210→        </p>
+   211→        <div className="rounded-lg border bg-card/50 p-4 text-left max-w-sm w-full">
+   212→          <p className="text-sm font-medium mb-2">📋 What you'll get:</p>
+   213→          <ul className="text-xs text-muted-foreground space-y-1">
+   214→            <li>• SBAR-formatted clinical summary</li>
+   215→            <li>• Automated trend analysis</li>
+   216→            <li>• Trigger identification report</li>
+   217→            <li>• Print-ready PDF for your doctor</li>
+   218→          </ul>
+   219→        </div>
+   220→      </motion.div>
+   221→    );
+   222→  }
+   223→
+   224→  return (
+   225→    <div className="space-y-4">
+   226→      {/* Action buttons - hidden in print */}
+   227→      <div className="flex flex-wrap gap-2 print:hidden">
+   228→        <Button onClick={handlePrint} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700">
+   229→          <Printer className="h-4 w-4" />
+   230→          Export PDF
+   231→        </Button>
+   232→        <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2 shadow-md shadow-teal-500/20">
+   233→          {isGenerating ? (
+   234→            <Loader2 className="h-4 w-4 animate-spin" />
+   235→          ) : (
+   236→            <Sparkles className="h-4 w-4" />
+   237→          )}
+   238→          {isGenerating ? "Generating..." : "Generate AI Summary"}
+   239→        </Button>
+   240→      </div>
+   241→
+   242→      {/* Bristol Stool Scale Reference Card */}
+   243→      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+   244→        <Card className="rounded-xl border-0 shadow-sm print:hidden">
+   245→          <CardHeader className="pb-2">
+   246→            <CardTitle className="text-base font-semibold">Bristol Stool Scale Reference</CardTitle>
+   247→          </CardHeader>
+   248→          <CardContent>
+   249→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+   250→              {[
+   251→                { label: "Constipation", color: "bg-stone-100 border-stone-200", desc: "Hard, lumpy — Types 1-2", icon: "🪨" },
+   252→                { label: "Normal", color: "bg-emerald-50 border-emerald-200", desc: "Smooth, soft — Types 3-4", icon: "✅" },
+   253→                { label: "Mild Diarrhea", color: "bg-amber-50 border-amber-200", desc: "Soft, mushy — Types 5-6", icon: "⚠️" },
+   254→                { label: "Severe Diarrhea", color: "bg-rose-50 border-rose-200", desc: "Watery — Type 7", icon: "🚨" },
+   255→              ].map((item) => (
+   256→                <div key={item.label} className={`rounded-lg border p-3 ${item.color}`}>
+   257→                  <div className="flex items-center gap-2 mb-1">
+   258→                    <span className="text-lg">{item.icon}</span>
+   259→                    <span className="text-sm font-medium">{item.label}</span>
+   260→                  </div>
+   261→                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+   262→                </div>
+   263→              ))}
+   264→            </div>
+   265→          </CardContent>
+   266→        </Card>
+   267→      </motion.div>
+   268→
+   269→      {/* Print area */}
+   270→      <div className="print-area space-y-6">
+   271→        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+   272→          <Card className="rounded-xl border-0 shadow-sm print:shadow-none print:border print:rounded-none card-glow relative overflow-hidden">
+   273→            <CardContent className="p-6 print:p-4">
+   274→              {/* Watermark branding */}
+   275→              <div className="print-watermark" aria-hidden="true">ColoBrief AI</div>
+   276→
+   277→              {/* Header */}
+   278→              <div className="mb-6">
+   279→                <h1 className="text-xl font-bold text-foreground print:text-lg">
+   280→                  SBAR Clinical Brief for Gastroenterology Consultations
+   281→                </h1>
+   282→                <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-muted-foreground">
+   283→                  <span>
+   284→                    <strong>Patient:</strong> Demo Patient
+   285→                  </span>
+   286→                  <span>
+   287→                    <strong>Period:</strong> {stats?.dateRange.from} — {stats?.dateRange.to}
+   288→                  </span>
+   289→                  <span>
+   290→                    <strong>Attending:</strong> Dr. Sarah Chen, MD
+   291→                  </span>
+   292→                  <span>
+   293→                    <strong>Generated:</strong> {format(new Date(), "MMM d, yyyy")}
+   294→                  </span>
+   295→                </div>
+   296→              </div>
+   297→
+   298→              <Separator className="mb-6 print:mb-4" />
+   299→
+   300→              {/* Medication Adherence Summary */}
+   301→              {stats && (
+   302→                <div className="mb-5 rounded-xl border border-teal-200/60 dark:border-teal-800/40 bg-gradient-to-r from-teal-50/50 via-white to-emerald-50/30 dark:from-teal-950/20 dark:via-card dark:to-emerald-950/10 p-4 print:p-3 print:bg-white print:border">
+   303→                  <h2 className="text-sm font-semibold text-teal-700 dark:text-teal-400 mb-3 flex items-center gap-2">
+   304→                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 shrink-0">
+   305→                      <Pill className="h-3.5 w-3.5" />
+   306→                    </span>
+   307→                    Medication Adherence Summary
+   308→                  </h2>
+   309→                  <div className="flex flex-wrap items-center gap-6">
+   310→                    <div className="flex items-center gap-3">
+   311→                      <div className="relative h-12 w-12">
+   312→                        <svg className="-rotate-90 h-12 w-12" viewBox="0 0 48 48">
+   313→                          <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-muted/20" />
+   314→                          <circle cx="24" cy="24" r="20" fill="none" stroke="#0d9488" strokeWidth="4" strokeLinecap="round"
+   315→                            strokeDasharray={`${2 * Math.PI * 20}`}
+   316→                            strokeDashoffset={`${2 * Math.PI * 20 * (1 - stats.medAdherence / 100)}`}
+   317→                            className="transition-all duration-1000" />
+   318→                        </svg>
+   319→                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-teal-700 dark:text-teal-400">
+   320→                          {stats.medAdherence}%
+   321→                        </span>
+   322→                      </div>
+   323→                      <div>
+   324→                        <p className="text-sm font-medium">{stats.medAdherence >= 80 ? "Good" : stats.medAdherence >= 50 ? "Partial" : "Low"} Adherence</p>
+   325→                        <p className="text-xs text-muted-foreground">
+   326→                          {symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length} of {symptoms.length} days
+   327→                        </p>
+   328→                      </div>
+   329→                    </div>
+   330→                    <div className="h-8 w-px bg-border print:hidden" />
+   331→                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+   332→                      <div>
+   333→                        <span className="text-muted-foreground text-xs">Blood Days</span>
+   334→                        <p className="font-semibold text-rose-600">{stats.bloodDays} <span className="text-xs font-normal text-muted-foreground">({stats.bloodPct}%)</span></p>
+   335→                      </div>
+   336→                      <div>
+   337→                        <span className="text-muted-foreground text-xs">Avg Urgency</span>
+   338→                        <p className="font-semibold">{stats.avgUrgency.toFixed(1)}<span className="text-xs font-normal text-muted-foreground">/3</span></p>
+   339→                      </div>
+   340→                    </div>
+   341→                  </div>
+   342→                </div>
+   343→              )}
+   344→
+   345→              <Separator className="mb-6 print:mb-4" />
+   346→
+   347→              {/* S - Situation */}
+   348→              <div className="mb-5 border-l-4 border-teal-400 bg-teal-50/30 dark:bg-teal-950/10 rounded-r-lg p-4">
+   349→                <h2 className="text-base font-semibold text-teal-700 dark:text-teal-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+   350→                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
+   351→                  S — Situation
+   352→                </h2>
+   353→                <p className="text-sm leading-relaxed print:text-xs">
+   354→                  {aiSummary?.situation || situation}
+   355→                </p>
+   356→              </div>
+   357→
+   358→              {/* B - Background */}
+   359→              <div className="mb-5 border-l-4 border-sky-400 bg-sky-50/30 dark:bg-sky-950/10 rounded-r-lg p-4">
+   360→                <h2 className="text-base font-semibold text-sky-700 dark:text-sky-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+   361→                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
+   362→                  B — Background
+   363→                </h2>
+   364→                <p className="text-sm leading-relaxed print:text-xs">
+   365→                  {aiSummary?.background || background}
+   366→                </p>
+   367→              </div>
+   368→
+   369→              {/* A - Assessment */}
+   370→              <div className="mb-5 border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10 rounded-r-lg p-4">
+   371→                <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+   372→                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
+   373→                  A — Assessment
+   374→                </h2>
+   375→                {aiSummary && (
+   376→                  <Badge variant="secondary" className="mb-2 print:hidden">
+   377→                    <Sparkles className="h-3 w-3 mr-1" />
+   378→                    AI-Generated
+   379→                  </Badge>
+   380→                )}
+   381→                <p className="text-sm leading-relaxed print:text-xs">{assessment}</p>
+   382→
+   383→                {/* Quick stats */}
+   384→                {stats && (
+   385→                  <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mt-4 print:grid-cols-7 print:gap-2 print:mt-2">
+   386→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   387→                      <p className="text-xs text-muted-foreground">Avg Pain</p>
+   388→                      <p className="text-xl font-extrabold">{stats.avgPain.toFixed(1)}</p>
+   389→                    </div>
+   390→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   391→                      <p className="text-xs text-muted-foreground">Avg Frequency</p>
+   392→                      <p className="text-xl font-extrabold">{stats.avgStool.toFixed(1)}/day</p>
+   393→                    </div>
+   394→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   395→                      <p className="text-xs text-muted-foreground">Avg Stress</p>
+   396→                      <p className="text-xl font-extrabold">{stats.avgStress.toFixed(1)}</p>
+   397→                    </div>
+   398→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   399→                      <p className="text-xs text-muted-foreground">Trend</p>
+   400→                      <p
+   401→                        className={`text-xl font-extrabold ${
+   402→                          stats.trend === "Improving"
+   403→                            ? "text-emerald-600"
+   404→                            : stats.trend === "Worsening"
+   405→                            ? "text-rose-600"
+   406→                            : "text-amber-600"
+   407→                        }`}
+   408→                      >
+   409→                        {stats.trend}
+   410→                      </p>
+   411→                    </div>
+   412→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   413→                      <p className="text-xs text-muted-foreground">Med Adherence</p>
+   414→                      <p className="text-xl font-extrabold text-teal-600">{stats.medAdherence}%</p>
+   415→                    </div>
+   416→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   417→                      <p className="text-xs text-muted-foreground">Blood Days</p>
+   418→                      <p className="text-xl font-extrabold text-rose-600">{stats.bloodDays} ({stats.bloodPct}%)</p>
+   419→                    </div>
+   420→                    <div className="rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-elevated">
+   421→                      <p className="text-xs text-muted-foreground">Avg Urgency</p>
+   422→                      <p className="text-xl font-extrabold">{stats.avgUrgency.toFixed(1)}/3</p>
+   423→                    </div>
+   424→                  </div>
+   425→                )}
+   426→              </div>
+   427→
+   428→              {/* R - Recommendation */}
+   429→              <div className="mb-6 border-l-4 border-violet-400 bg-violet-50/30 dark:bg-violet-950/10 rounded-r-lg p-4">
+   430→                <h2 className="text-base font-semibold text-violet-700 dark:text-violet-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
+   431→                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
+   432→                  R — Recommendation
+   433→                </h2>
+   434→                <p className="text-sm leading-relaxed print:text-xs">
+   435→                  {aiSummary?.recommendation || recommendation}
+   436→                </p>
+   437→              </div>
+   438→
+   439→              <Separator className="mb-6 print:mb-4" />
+   440→
+   441→              {/* Data Table */}
+   442→              <div>
+   443→                <h2 className="text-base font-semibold mb-3 print:text-sm print:mt-4 print:mb-1">
+   444→                  Recent Symptom Log
+   445→                </h2>
+   446→                <p className="text-xs text-muted-foreground mb-2 sm:hidden">
+   447→                  &larr; Scroll horizontally to see all columns &rarr;
+   448→                </p>
+   449→                <div className="overflow-x-auto rounded-lg border print:rounded-none">
+   450→                  <Table className="table-row-hover">
+   451→                    <TableHeader>
+   452→                      <TableRow className="bg-muted/50">
+   453→                        <TableHead>Date</TableHead>
+   454→                        <TableHead>Pain</TableHead>
+   455→                        <TableHead>Frequency</TableHead>
+   456→                        <TableHead>Stool Type</TableHead>
+   457→                        <TableHead>Stress</TableHead>
+   458→                        <TableHead>Triggers</TableHead>
+   459→                        <TableHead>Blood</TableHead>
+   460→                        <TableHead>Urgency</TableHead>
+   461→                        <TableHead className="hidden lg:table-cell">Notes</TableHead>
+   462→                      </TableRow>
+   463→                    </TableHeader>
+   464→                    <TableBody>
+   465→                      {stats?.recentLogs.map((log) => (
+   466→                        <TableRow key={log.id}>
+   467→                          <TableCell className="font-medium">
+   468→                            {format(parseISO(log.date), "MMM d")}
+   469→                          </TableCell>
+   470→                          <TableCell>
+   471→                            <span className={`font-medium ${
+   472→                              log.painLevel <= 3 ? "text-emerald-600" : log.painLevel <= 6 ? "text-amber-600" : "text-rose-600"
+   473→                            }`}>
+   474→                              {log.painLevel}/10
+   475→                            </span>
+   476→                          </TableCell>
+   477→                          <TableCell>{log.stoolFrequency}×</TableCell>
+   478→                          <TableCell>Type {log.stoolType}</TableCell>
+   479→                          <TableCell>{log.stressLevel}/10</TableCell>
+   480→                          <TableCell>
+   481→                            <div className="flex flex-wrap gap-1">
+   482→                              {[...new Set(log.triggers)].slice(0, 2).map((t) => (
+   483→                                <Badge key={`${log.id}-${t}`} variant="secondary" className="text-xs">
+   484→                                  {t}
+   485→                                </Badge>
+   486→                              ))}
+   487→                              {log.triggers.length > 2 && (
+   488→                                <span className="text-xs text-muted-foreground">
+   489→                                  +{log.triggers.length - 2}
+   490→                                </span>
+   491→                              )}
+   492→                            </div>
+   493→                          </TableCell>
+   494→                          <TableCell>
+   495→                            {log.bloodInStool ? (
+   496→                              <span className="text-rose-600 font-medium text-xs">Yes</span>
+   497→                            ) : (
+   498→                              <span className="text-muted-foreground">—</span>
+   499→                            )}
+   500→                          </TableCell>
+   501→                          <TableCell>
+   502→                            <span className="text-xs">
+   503→                              {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}
+   504→                            </span>
+   505→                          </TableCell>
+   506→                          <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-xs text-muted-foreground">
+   507→                            {log.notes || "—"}
+   508→                          </TableCell>
+   509→                        </TableRow>
+   510→                      ))}
+   511→                    </TableBody>
+   512→                  </Table>
+   513→                </div>
+   514→              </div>
+   515→
+   516→              {/* Footer for print */}
+   517→              <div className="mt-8 pt-4 border-t text-xs text-muted-foreground print:mt-6 print:pt-3">
+   518→                <p>
+   519→                  Generated by ColoBrief AI — An empathetic, AI-assisted symptom tracking portal for
+   520→                  Ulcerative Colitis patients. This document is intended as a supplementary tool for
+   521→                  clinical consultations and does not replace professional medical advice.
+   522→                </p>
+   523→              </div>
+   524→            </CardContent>
+   525→          </Card>
+   526→        </motion.div>
+   527→      </div>
+   528→    </div>
+   529→  );
+   530→}

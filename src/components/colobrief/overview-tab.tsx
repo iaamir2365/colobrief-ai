@@ -48,6 +48,9 @@ import {
   Bar,
   ScatterChart,
   Scatter,
+  ResponsiveContainer,
+  ReferenceLine,
+  ZAxis,
 } from "recharts";
 import { format, subDays, parseISO, isAfter } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
@@ -60,6 +63,8 @@ import StreakCounter from "@/components/colobrief/streak-counter";
 import WeeklyProgressSummary from "@/components/colobrief/weekly-progress-summary";
 import SymptomTimeline from "@/components/colobrief/symptom-timeline";
 import EmergencyAlertBanner from "@/components/colobrief/emergency-alert-banner";
+import FlareRiskPredictor from "@/components/colobrief/flare-risk-predictor";
+import BloodTracker from "@/components/colobrief/blood-tracker";
 
 const BRISTOL_LABELS: Record<number, string> = {
   1: "Type 1: Hard lumps",
@@ -103,7 +108,13 @@ const barChartConfig: ChartConfig = {
 };
 
 const scatterConfig: ChartConfig = {
-  scatter: { label: "Pain vs Stress", color: "#0d9488" },
+  scatter: { label: "Pain vs Stress", color: "#14b8a6" },
+};
+
+const enhancedScatterConfig: ChartConfig = {
+  stressLevel: { label: "Stress Level", color: "#14b8a6" },
+  painLevel: { label: "Pain Level", color: "#0d9488" },
+  trend: { label: "Trend Line", color: "#0d9488" },
 };
 
 function getStoolEmoji(type: number): string {
@@ -412,6 +423,59 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
     };
   }, [symptoms]);
 
+  // Stress vs Pain scatter analysis with linear regression
+  const scatterAnalysis = useMemo(() => {
+    if (symptoms.length < 2)
+      return null;
+
+    const points = symptoms.map((s) => ({
+      x: s.stressLevel,
+      y: s.painLevel,
+      date: format(parseISO(s.date), "MMM d"),
+    }));
+
+    const n = symptoms.length;
+    const sumX = symptoms.reduce((acc, s) => acc + s.stressLevel, 0);
+    const sumY = symptoms.reduce((acc, s) => acc + s.painLevel, 0);
+    const sumXY = symptoms.reduce(
+      (acc, s) => acc + s.stressLevel * s.painLevel,
+      0
+    );
+    const sumX2 = symptoms.reduce(
+      (acc, s) => acc + s.stressLevel ** 2,
+      0
+    );
+    const sumY2 = symptoms.reduce(
+      (acc, s) => acc + s.painLevel ** 2,
+      0
+    );
+
+    const denomX = n * sumX2 - sumX * sumX;
+    const denomY = n * sumY2 - sumY * sumY;
+    const denom = Math.sqrt(Math.abs(denomX * denomY));
+
+    const correlation =
+      denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+
+    let trendLine: { x: number; y: number }[] = [];
+    if (denomX !== 0) {
+      const slope = (n * sumXY - sumX * sumY) / denomX;
+      const intercept = (sumY - slope * sumX) / n;
+      trendLine = [
+        { x: 0, y: Math.max(0, Math.min(10, intercept)) },
+        {
+          x: 10,
+          y: Math.max(0, Math.min(10, slope * 10 + intercept)),
+        },
+      ];
+    }
+
+    const avgStress = sumX / n;
+    const avgPain = sumY / n;
+
+    return { points, trendLine, correlation, avgStress, avgPain };
+  }, [symptoms]);
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -421,6 +485,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           ))}
         </div>
         <Skeleton className="h-80 rounded-xl" />
+        <Skeleton className="h-72 rounded-xl" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Skeleton className="h-64 rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
@@ -718,16 +783,20 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
               <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="roseGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.25} />
                     <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="stressGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-stressLevel)" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="var(--color-stressLevel)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="scatterTealGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -752,14 +821,11 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   fill="url(#roseGradient)"
                 />
                 <Area
+                  yAxisId="right"
                   type="monotone"
                   dataKey="stressLevel"
-                  stroke="var(--color-stressLevel)"
+                  stroke="none"
                   fill="url(#stressGradient)"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  yAxisId="right"
-                  dot={false}
                 />
                 {/* Lines on top */}
                 <Line
@@ -802,6 +868,176 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Stress vs Pain Scatter Plot */}
+      {scatterAnalysis && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.17 }}
+        >
+          <Card className="rounded-xl border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-teal-600" />
+                  Stress vs Pain Correlation
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={
+                      Math.abs(scatterAnalysis.correlation) > 0.6
+                        ? "destructive"
+                        : "secondary"
+                    }
+                    className="text-xs"
+                  >
+                    r = {scatterAnalysis.correlation.toFixed(2)}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {Math.abs(scatterAnalysis.correlation) > 0.7
+                      ? "Strong"
+                      : Math.abs(scatterAnalysis.correlation) > 0.4
+                        ? "Moderate"
+                        : "Weak"}{" "}
+                    correlation
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={300}>
+                <ScatterChart
+                  margin={{
+                    top: 10,
+                    right: 30,
+                    bottom: 20,
+                    left: 10,
+                  }}
+                >
+                  <defs>
+                    <radialGradient
+                      id="scatterPointGradient"
+                      cx="50%"
+                      cy="50%"
+                      r="50%"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#5eead4"
+                        stopOpacity={0.9}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="#14b8a6"
+                        stopOpacity={0.7}
+                      />
+                    </radialGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
+                  <XAxis
+                    dataKey="x"
+                    name="Stress Level"
+                    type="number"
+                    domain={[0, 10]}
+                    tick={{ fontSize: 12 }}
+                    className="fill-muted-foreground"
+                    label={{
+                      value: "Stress Level →",
+                      position: "bottom",
+                      offset: 0,
+                      fontSize: 12,
+                      fill: "var(--color-muted-foreground)",
+                    }}
+                  />
+                  <YAxis
+                    dataKey="y"
+                    name="Pain Level"
+                    type="number"
+                    domain={[0, 10]}
+                    tick={{ fontSize: 12 }}
+                    className="fill-muted-foreground"
+                    label={{
+                      value: "↑ Pain Level",
+                      angle: -90,
+                      position: "insideLeft",
+                      fontSize: 12,
+                      fill: "var(--color-muted-foreground)",
+                    }}
+                  />
+                  <ZAxis dataKey={"z"} range={[40, 80]} />
+                  <ChartTooltip
+                    content={<ChartTooltipContent />}
+                    cursor={{ strokeDasharray: "3 3", stroke: "#14b8a6" }}
+                  />
+                  <ReferenceLine
+                    x={scatterAnalysis.avgStress}
+                    stroke="#0d9488"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.4}
+                  />
+                  <ReferenceLine
+                    y={scatterAnalysis.avgPain}
+                    stroke="#0d9488"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.4}
+                  />
+                  {scatterAnalysis.trendLine.length > 0 && (
+                    <Line
+                      data={scatterAnalysis.trendLine}
+                      dataKey="y"
+                      stroke="#0d9488"
+                      strokeWidth={2}
+                      strokeDasharray="8 4"
+                      dot={false}
+                      type="linear"
+                      legendType="none"
+                    />
+                  )}
+                  <Scatter
+                    data={scatterAnalysis.points}
+                    fill="url(#scatterPointGradient)"
+                    stroke="#0d9488"
+                    strokeWidth={1}
+                  >
+                    {symptoms.map((s, i) => {
+                      const intensity = s.painLevel / 10;
+                      return (
+                        <Cell
+                          key={i}
+                          fill={`rgba(20, 184, 166, ${0.4 + intensity * 0.5})`}
+                          stroke="#0d9488"
+                          strokeWidth={1}
+                          r={4 + intensity * 3}
+                        />
+                      );
+                    })}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+              <div className="flex items-center justify-center gap-6 mt-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
+                  Symptom Log Entry
+                </div>
+                {scatterAnalysis.trendLine.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="h-0 w-5 border-t-2 border-dashed border-teal-700" />
+                    Trend Line
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="h-2.5 w-5 border-t border-dashed border-teal-600/50" />
+                  Mean Crosshair
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Period Comparison */}
       {periodComparison && (
@@ -969,37 +1205,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </Card>
         </motion.div>
 
-        {/* Pain-Stress Correlation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="rounded-xl border-0 shadow-sm h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Pain vs Stress Correlation</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {symptoms.length >= 2 ? (
-                <ChartContainer config={scatterConfig} className="h-[200px] w-full">
-                  <ScatterChart>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="stressLevel" name="Stress" type="number" domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" label={{ value: "Stress →", position: "bottom", fontSize: 11, fill: "var(--color-muted-foreground)" }} />
-                    <YAxis dataKey="painLevel" name="Pain" type="number" domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" label={{ value: "Pain ↑", angle: -90, position: "insideLeft", fontSize: 11, fill: "var(--color-muted-foreground)" }} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Scatter data={symptoms.map(s => ({ x: s.stressLevel, y: s.painLevel, date: format(parseISO(s.date), "MMM d") }))} fill="var(--color-scatter)">
-                      {symptoms.map((s, i) => (
-                        <Cell key={i} fill={s.painLevel > 6 ? "#f43f5e" : s.painLevel > 3 ? "#f59e0b" : "#10b981"} />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
-                </ChartContainer>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">Need at least 2 data points.</p>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Flare Risk Predictor */}
+        <FlareRiskPredictor symptoms={symptoms} isLoading={isLoading} />
 
         {/* Stool Type Distribution */}
         <motion.div
@@ -1072,6 +1279,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </Card>
         </motion.div>
       </div>
+
+      {/* Blood Tracker */}
+      <BloodTracker symptoms={symptoms} isLoading={isLoading} />
 
       {/* Medication Tracker */}
       <MedicationTracker symptoms={symptoms} isLoading={isLoading} />

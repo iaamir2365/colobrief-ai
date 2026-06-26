@@ -1174,3 +1174,23 @@ This session completed:
    - P2: Data visualization export (chart images for sharing)
    - P2: Multi-language support (i18n)
    - P3: Real-time sync via WebSocket for caregiver/doctor portal
+
+---
+Task ID: 4-a
+Agent: fullstack-developer
+Task: Add scatter plot and enhanced area chart to overview
+
+Work Log:
+- Read full overview-tab.tsx (1089 lines) to understand existing chart structure
+- Added ResponsiveContainer, ReferenceLine, ZAxis imports from recharts
+- Added enhancedScatterConfig ChartConfig for new scatter chart
+- Created scatterAnalysis useMemo with linear regression, Pearson correlation, mean crosshair values
+- Enhanced existing line chart area gradients: teal-500 (#14b8a6) at 35% opacity, rose at 25%, amber at 20%
+- Fixed stress Area component (removed duplicate stroke/dasharray, now fill-only gradient)
+- Added new Stress vs Pain Scatter Plot Card with: teal/emerald colored dots (opacity+size varies by pain), dashed trend line, mean crosshair reference lines, correlation badge, strength label, responsive layout via ResponsiveContainer
+- Added loading skeleton (h-72) for new scatter plot
+- Confirmed zero lint errors
+
+Stage Summary:
+- Two new data visualizations added to Overview tab
+- Zero lint errors confirmed
