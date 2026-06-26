@@ -394,14 +394,23 @@ export default function MyRecordsTab({
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center py-20 text-center"
       >
-        <div className="animate-gradient-bg rounded-2xl p-8 mb-6">
+        <div className="animate-gradient-bg rounded-2xl p-8 mb-6 relative">
           <FileText className="h-14 w-14 text-teal-600 mx-auto" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No records yet</h3>
-        <p className="text-muted-foreground max-w-md mb-6">
+        <p className="text-muted-foreground max-w-md mb-4">
           Your symptom history will appear here once you start logging. Each entry shows 
           pain levels, stool data, triggers, and personal notes.
         </p>
+        <div className="rounded-lg border bg-card/50 p-4 text-left max-w-sm w-full mb-6 space-y-2">
+          <p className="text-sm font-medium mb-1">What you can do here:</p>
+          <ul className="text-xs text-muted-foreground space-y-1.5">
+            <li className="flex items-start gap-2"><Search className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Search and filter all your logged entries</li>
+            <li className="flex items-start gap-2"><Pencil className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Quickly edit any past entry</li>
+            <li className="flex items-start gap-2"><Download className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Export data as CSV or JSON</li>
+            <li className="flex items-start gap-2"><Trash2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-rose-400" />Delete entries you no longer need</li>
+          </ul>
+        </div>
         <Button onClick={onGoToLog} className="gap-2 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25">
           <PlusCircle className="h-4 w-4" />
           Log Your First Symptom
@@ -412,6 +421,44 @@ export default function MyRecordsTab({
 
   return (
     <div className="space-y-4">
+      {/* Quick Stats Summary Strip */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+      >
+        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-teal-600 dark:text-teal-400 font-medium">Total Entries</p>
+          <p className="text-2xl font-bold text-teal-800 dark:text-teal-200 stat-number mt-0.5">{symptoms.length}</p>
+        </div>
+        <div className="rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/60 dark:border-rose-800/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-400 font-medium">Avg Pain</p>
+          <p className="text-2xl font-bold text-rose-800 dark:text-rose-200 stat-number mt-0.5">
+            {symptoms.length ? (symptoms.reduce((s, l) => s + l.painLevel, 0) / symptoms.length).toFixed(1) : "—"}
+          </p>
+        </div>
+        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium">Blood Days</p>
+          <p className="text-2xl font-bold text-amber-800 dark:text-amber-200 stat-number mt-0.5">
+            {symptoms.filter(s => s.bloodInStool).length}
+            <span className="text-xs font-normal text-amber-600/60 dark:text-amber-400/60 ml-1">
+              ({Math.round(symptoms.filter(s => s.bloodInStool).length / symptoms.length * 100)}%)
+            </span>
+          </p>
+        </div>
+        <div className="rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/20 border border-sky-200/60 dark:border-sky-800/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-medium">Top Trigger</p>
+          <p className="text-lg font-bold text-sky-800 dark:text-sky-200 mt-0.5 truncate">
+            {(() => {
+              const counts: Record<string, number> = {};
+              symptoms.forEach(s => s.triggers.forEach(t => counts[t] = (counts[t] || 0) + 1));
+              const sorted = Object.entries(counts).sort(([,a],[,b]) => b - a);
+              return sorted.length ? sorted[0][0] : "None";
+            })()}
+          </p>
+        </div>
+      </motion.div>
+
       {/* Search & Export & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">

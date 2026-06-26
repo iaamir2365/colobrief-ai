@@ -15,7 +15,9 @@ import {
   Sun,
   Moon,
   AlertCircle,
+  CalendarDays,
 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -189,7 +191,7 @@ function AppContent() {
               <span className="truncate text-xs text-muted-foreground">demo@colobrief.ai</span>
             </div>
           </div>
-          <span className="truncate text-xs text-muted-foreground">v1.2.0</span>
+          <span className="truncate text-xs text-muted-foreground">v1.3.0</span>
         </SidebarFooter>
 
         <SidebarRail />
@@ -206,17 +208,43 @@ function AppContent() {
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 print:hidden">
             <SidebarTrigger className="-ml-2" />
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{TAB_TITLES[activeTab]}</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-auto h-9 w-9"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            <h1 className="text-lg font-semibold tracking-tight">{TAB_TITLES[activeTab]}</h1>
+            {symptoms.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                {symptoms.length} day{symptoms.length !== 1 ? "s" : ""} tracked
+              </motion.div>
+            )}
+            <div className="ml-auto flex items-center gap-2">
+              {activeTab === "overview" && symptoms.length > 0 && (
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="hidden sm:flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-xs text-muted-foreground"
+                >
+                  <CalendarDays className="h-3 w-3" />
+                  Last: {format(parseISO(symptoms[0].date), "MMM d")}
+                </motion.div>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full hover:bg-muted"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </div>
           </header>
           <div className="h-px bg-gradient-to-r from-transparent via-teal-400/40 to-transparent" />
 
@@ -273,7 +301,14 @@ function AppContent() {
             className="mt-auto border-t px-6 py-3 print:hidden bg-muted/30"
           >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
-              <span>ColoBrief AI — Bridging daily flares and clinical consultations</span>
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 rounded-md bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center">
+                  <Heart className="h-3 w-3 text-white" fill="white" />
+                </div>
+                <span className="font-medium">ColoBrief AI</span>
+                <span className="text-muted-foreground/50">|</span>
+                <span className="text-xs">Bridging daily flares and clinical consultations</span>
+              </div>
               <div className="hidden sm:flex items-center gap-3 text-xs">
                 <span><kbd className="bg-background border border-border rounded-md shadow-sm text-[10px] font-mono px-1.5 py-0.5">⌘O</kbd> Overview</span>
                 <span><kbd className="bg-background border border-border rounded-md shadow-sm text-[10px] font-mono px-1.5 py-0.5">⌘L</kbd> Log</span>

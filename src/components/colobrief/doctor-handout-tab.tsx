@@ -479,8 +479,8 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                           <TableCell>{log.stressLevel}/10</TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {log.triggers.slice(0, 2).map((t) => (
-                                <Badge key={t} variant="secondary" className="text-xs">
+                              {[...new Set(log.triggers)].slice(0, 2).map((t) => (
+                                <Badge key={`${log.id}-${t}`} variant="secondary" className="text-xs">
                                   {t}
                                 </Badge>
                               ))}

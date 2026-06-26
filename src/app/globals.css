@@ -569,3 +569,209 @@ main {
     transform: scale(1) translateY(0);
   }
 }
+
+/* ==========================================================================
+   ADVANCED STYLING — ColoBrief AI Dashboard v1.3
+   ========================================================================== */
+
+/* 13. Noise texture overlay — adds organic depth to cards */
+.noise-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.015;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+/* 14. Interactive Card Press Effect */
+.card-press {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.card-press:active {
+  transform: scale(0.985);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+/* 15. Gradient Text Utility */
+.text-gradient-teal {
+  background: linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark .text-gradient-teal {
+  background: linear-gradient(135deg, #5eead4, #2dd4bf, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 16. Animated Border Gradient — for highlighted cards */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.animated-border {
+  --angle: 0deg;
+  border: 2px solid transparent;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-image:
+    linear-gradient(var(--card), var(--card)),
+    conic-gradient(from var(--angle), #0d9488, #14b8a6, #2dd4bf, #0d9488);
+  animation: rotate-border 4s linear infinite;
+}
+@keyframes rotate-border {
+  to { --angle: 360deg; }
+}
+.dark .animated-border {
+  background-image:
+    linear-gradient(var(--card), var(--card)),
+    conic-gradient(from var(--angle), #2dd4bf, #14b8a6, #5eead4, #2dd4bf);
+}
+
+/* 17. Stat Number Styling — for metric displays */
+.stat-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.02em;
+}
+
+/* 18. Micro-hover lift — for interactive list items */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* 19. Status Indicator Dot — animated pulse for live indicators */
+.status-dot {
+  position: relative;
+}
+.status-dot::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: status-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes status-ping {
+  0% { transform: scale(1); opacity: 0.4; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* 20. Tooltip Arrow Enhancement */
+.tooltip-enhanced {
+  position: relative;
+}
+.tooltip-enhanced::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  background: var(--foreground);
+  color: var(--background);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 40;
+}
+.tooltip-enhanced:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 21. Sidebar Active Indicator — enhanced active nav item */
+.sidebar-active-indicator {
+  position: relative;
+}
+.sidebar-active-indicator::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+}
+
+/* 22. Gradient Mask Fade — for scroll containers */
+.scroll-fade-bottom {
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+.scroll-fade-top {
+  mask-image: linear-gradient(to top, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, black 85%, transparent 100%);
+}
+
+/* 23. Responsive Container — consistent max-width with padding */
+.container-dashboard {
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .container-dashboard { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .container-dashboard { padding-left: 2rem; padding-right: 2rem; }
+}
+
+/* 24. Empty State Illustration Container */
+.empty-state-illustration {
+  position: relative;
+}
+.empty-state-illustration::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 8%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* 25. Number Counter Animation */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-count-up {
+  animation: count-up 0.6s ease-out both;
+}
+
+/* 26. Smooth Scroll Behavior */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* 27. Selection Color */
+::selection {
+  background: color-mix(in srgb, var(--primary) 25%, transparent);
+  color: var(--foreground);
+}
+
+/* 28. Checkbox/Radio Custom Accent */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  accent-color: var(--primary);
+}

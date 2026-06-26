@@ -116,9 +116,11 @@ export async function POST() {
           ? rand(2, 3)
           : rand(3, 7);
 
-      const triggers = isFlareDay
+      let triggers = isFlareDay
         ? ['Stress', UC_TRIGGERS[rand(0, 7)]]
         : pickTriggers();
+      // Deduplicate triggers
+      triggers = [...new Set(triggers)];
 
       // Blood in stool: ~30% chance, higher on flare days
       const bloodInStool = isFlareDay
