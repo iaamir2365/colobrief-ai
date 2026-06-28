@@ -170,17 +170,17 @@ function CollapsibleSection({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="w-full min-w-0 max-w-[24rem] sm:max-w-full mx-auto overflow-hidden">
       {/* Clickable section header */}
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-2.5 mb-3 w-full text-left group/section"
+        className="flex items-center gap-2.5 mb-3 w-full min-w-0 text-left group/section"
       >
         <div className={`rounded-full ${iconBgClass} p-1.5`}>
           {icon}
         </div>
-        <h4 className="section-title text-foreground flex-1">{title}</h4>
+        <h4 className="section-title text-foreground flex-1 min-w-0 truncate">{title}</h4>
         <motion.div
           animate={{ rotate: collapsed ? 0 : 180 }}
           transition={{ duration: 0.2 }}
@@ -198,9 +198,9 @@ function CollapsibleSection({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden"
+            className="w-full min-w-0 max-w-full overflow-hidden"
           >
-            {children}
+            <div className="w-full min-w-0 max-w-[24rem] sm:max-w-full mx-auto">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -515,10 +515,10 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 w-full max-w-full min-w-0">
+    <div className="w-full max-w-[24rem] sm:max-w-2xl mx-auto space-y-6 px-4 sm:px-0 min-w-0 overflow-hidden">
       {/* Form Progress Indicator */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-3 px-1">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 max-w-full mx-auto overflow-hidden">
+        <div className="flex items-center gap-3 px-1 w-full min-w-0 max-w-full">
           <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400"
@@ -532,19 +532,19 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
       </motion.div>
 
       {/* Daily Completion Indicator */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }} className="w-full min-w-0 max-w-full mx-auto overflow-hidden">
         {todayLogged && todayLog ? (
-          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 w-full min-w-0 max-w-full overflow-hidden dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 px-3 py-2">
             <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
               Logged today
             </span>
-            <span className="text-xs text-emerald-600/60 dark:text-emerald-400/60">
+            <span className="text-xs text-emerald-600/60 dark:text-emerald-400/60 min-w-0 truncate">
               — {format(new Date(todayLog.date + "T00:00:00"), "MMM d, yyyy")}
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 w-full min-w-0 max-w-full overflow-hidden dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 px-3 py-2">
             <span className="relative flex h-3 w-3 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
@@ -557,12 +557,12 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
       </motion.div>
 
       {/* Welcome Banner */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 border border-teal-200 dark:border-teal-800/50 p-4 flex items-start gap-3">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 max-w-full mx-auto overflow-hidden">
+        <div className="rounded-xl bg-gradient-to-r from-teal-50 w-full min-w-0 max-w-full overflow-hidden to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 border border-teal-200 dark:border-teal-800/50 p-4 flex items-start gap-3">
           <div className="rounded-lg bg-teal-100 dark:bg-teal-900/50 p-2 mt-0.5 shrink-0">
             <ClipboardCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-200">Log Today&apos;s Symptoms</h3>
             <p className="text-xs text-teal-700/70 dark:text-teal-300/70 mt-0.5">
               Track your daily UC symptoms to identify patterns and share data with your doctor. Use voice input or AI extraction for faster logging.
@@ -591,7 +591,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           onToggle={() => toggleSection("physical")}
         >
           {/* Date */}
-          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow relative overflow-hidden mb-4">
+          <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow relative overflow-hidden mb-4">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-emerald-400 to-teal-500" />
             <CardContent className="p-6 pt-7">
               <div className="space-y-2">
@@ -610,9 +610,9 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           </Card>
 
           {/* Pain Level & Stool Frequency side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0 max-w-full justify-items-center [&>*]:w-full [&>*]:min-w-0 [&>*]:max-w-full">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+              <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -641,7 +641,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+              <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -684,9 +684,9 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           </div>
 
           {/* Bristol Stool Type & Stress Level */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0 max-w-full justify-items-center [&>*]:w-full [&>*]:min-w-0 [&>*]:max-w-full mt-4">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+              <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
                 <CardContent className="p-6">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1.5"><Droplets className="h-3.5 w-3.5 text-sky-500" /> Bristol Stool Type</Label>
@@ -708,7 +708,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+              <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -750,12 +750,12 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           collapsed={mounted ? collapsedState.triggers : false}
           onToggle={() => toggleSection("triggers")}
         >
-          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+          <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Triggers</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
+              <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3 w-full min-w-0 max-w-full justify-items-stretch">
                 {COMMON_TRIGGERS.map((trigger) => (
                   <label
                     key={trigger}
@@ -765,11 +765,11 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       checked={selectedTriggers.includes(trigger)}
                       onCheckedChange={() => toggleTrigger(trigger)}
                     />
-                    <span className="text-sm">{trigger}</span>
+                    <span className="text-sm min-w-0 truncate">{trigger}</span>
                   </label>
                 ))}
               </div>
-              <div className="flex items-center gap-2 mt-4">
+              <div className="flex flex-col min-[380px]:flex-row items-stretch min-[380px]:items-center gap-2 mt-4 w-full min-w-0">
                 <Input
                   placeholder="Add custom trigger..."
                   value={customTrigger}
@@ -780,9 +780,9 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       addCustomTrigger();
                     }
                   }}
-                  className="flex-1"
+                  className="w-full min-w-0 min-[380px]:flex-1"
                 />
-                <Button variant="outline" onClick={addCustomTrigger} className="shrink-0">
+                <Button variant="outline" onClick={addCustomTrigger} className="w-full min-[380px]:w-auto shrink-0">
                   Add
                 </Button>
               </div>
@@ -816,7 +816,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           collapsed={mounted ? collapsedState.medication : false}
           onToggle={() => toggleSection("medication")}
         >
-          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+          <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6 space-y-5">
               {/* Medication Taken */}
               <div className="space-y-2">
@@ -842,7 +842,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
               {/* Urgency Level */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Urgency Level</Label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 min-[380px]:grid-cols-4 gap-2 w-full min-w-0">
                   {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
                     <Button
                       key={label}
@@ -873,12 +873,12 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           collapsed={mounted ? collapsedState.notes : false}
           onToggle={() => toggleSection("notes")}
         >
-          <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
+          <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6">
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <Label className="text-sm font-medium">Notes</Label>
-                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <div className="flex flex-col min-[380px]:flex-row sm:flex-wrap items-stretch min-[380px]:items-center gap-2 w-full sm:w-auto min-w-0">
                     <Button
                       variant={isRecording ? "destructive" : "outline"}
                       size="sm"
@@ -925,7 +925,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Describe how you're feeling today... e.g., 'Mild cramping this morning after dairy. Stressful day at work. Had 5 bowel movements, mostly loose.'"
                   rows={4}
-                  className="resize-none"
+                  className="resize-none w-full min-w-0"
                 />
                 <p className="text-xs text-muted-foreground text-right mt-1">
                   {notes.length} characters
@@ -959,9 +959,9 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                 initial={{ opacity: 0, y: 16, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                className="mt-4"
+                className="mt-4 w-full min-w-0 max-w-full mx-auto overflow-hidden"
               >
-                <Card className="rounded-xl border border-teal-200 dark:border-teal-800/50 shadow-sm bg-gradient-to-br from-teal-50/80 via-white to-violet-50/40 dark:from-teal-950/30 dark:via-background dark:to-violet-950/20">
+                <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border border-teal-200 dark:border-teal-800/50 shadow-sm bg-gradient-to-br from-teal-50/80 via-white to-violet-50/40 dark:from-teal-950/30 dark:via-background dark:to-violet-950/20">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -972,7 +972,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                         Dismiss
                       </Button>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-3">
+                    <div className="grid grid-cols-2 min-[380px]:grid-cols-3 sm:grid-cols-6 gap-3 mb-3 w-full min-w-0">
                       <div className="text-center">
                         <p className="text-[10px] text-muted-foreground">Pain</p>
                         <p className={`text-base font-bold ${aiResult.painLevel ? 'text-rose-500' : 'text-muted-foreground'}`}>{aiResult.painLevel ?? '—'}</p>
@@ -1017,13 +1017,13 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
 
       {/* Save Button + Copy Previous Day */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-        <div className="flex gap-3">
+        <div className="flex flex-col min-[420px]:flex-row gap-3 w-full min-w-0 max-w-full mx-auto">
           {hasPreviousLog && formIsDefault && (
             <Button
               onClick={handleCopyPreviousDay}
               variant="outline"
               size="lg"
-              className="shrink-0 h-13 text-sm font-medium rounded-xl border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300 dark:hover:bg-teal-950/30 gap-2"
+              className="shrink-0 h-12 text-sm font-medium rounded-xl border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300 dark:hover:bg-teal-950/30 gap-2"
             >
               <Copy className="h-4 w-4" />
               Copy Previous Day
@@ -1033,7 +1033,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
             onClick={handleSave}
             disabled={isSaving}
             size="lg"
-            className="flex-1 h-13 text-base font-semibold rounded-xl btn-premium hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full min-w-0 min-[420px]:flex-1 h-12 text-base font-semibold rounded-xl btn-premium hover:scale-[1.01] active:scale-[0.99]"
           >
             {isSaving ? (
               <>

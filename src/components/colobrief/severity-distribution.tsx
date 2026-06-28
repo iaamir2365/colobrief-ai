@@ -90,7 +90,7 @@ export default function SeverityDistribution({
           <Skeleton className="h-5 w-52" />
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
-          <Skeleton className="h-[200px] rounded-lg" />
+          <Skeleton className="h-50 rounded-lg" />
           <div className="flex justify-center">
             <Skeleton className="h-5 w-28 rounded-full" />
           </div>
@@ -113,7 +113,7 @@ export default function SeverityDistribution({
             <div className="rounded-full bg-muted/50 p-3 mb-3">
               <BarChart3 className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground max-w-[280px]">
+            <p className="max-w-70 text-sm text-muted-foreground">
               No symptom data yet. Start logging to see your severity distribution.
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function SeverityDistribution({
     >
       <Card className="rounded-xl border-0 shadow-sm card-premium">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-start justify-between gap-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-teal-500" />
               Symptom Severity Distribution
@@ -154,27 +154,29 @@ export default function SeverityDistribution({
         </CardHeader>
 
         <CardContent className="pt-0 space-y-3">
-          <div className="w-full overflow-x-auto scrollbar-thin">
-            <ChartContainer config={chartConfig} className="min-w-[500px] sm:min-w-0 h-[200px] w-full">
-            <BarChart data={chartData} barCategoryGap="20%">
+          <div className="w-full min-w-0">
+            <ChartContainer config={chartConfig} className="h-47.5 w-full max-w-full min-w-0 sm:h-50">
+            <BarChart data={chartData} barCategoryGap="20%" margin={{ top: 8, right: 4, left: -12, bottom: 0 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
               <XAxis
                 dataKey="range"
                 tickLine={false}
                 axisLine={false}
-                fontSize={12}
+                fontSize={11}
+                interval={0}
+                minTickGap={12}
               />
               <YAxis
                 allowDecimals={false}
                 tickLine={false}
                 axisLine={false}
-                fontSize={12}
-                width={30}
+                fontSize={11}
+                width={26}
               />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value, _name, item) => (
+                    formatter={(value) => (
                       <span className="font-semibold">
                         {value as number} day{(value as number) !== 1 ? "s" : ""}
                       </span>
@@ -196,7 +198,7 @@ export default function SeverityDistribution({
           </div>
 
           {/* Count labels on top of bars — rendered as a visual summary */}
-          <div className="flex justify-around px-2 -mt-2">
+          <div className="grid grid-cols-2 gap-3 px-2 sm:grid-cols-4">
             {data.buckets.map((b, i) => (
               <motion.div
                 key={b.key}

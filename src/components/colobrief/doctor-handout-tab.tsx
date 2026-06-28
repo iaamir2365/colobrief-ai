@@ -259,10 +259,10 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 w-full max-w-[24rem] sm:max-w-full mx-auto px-4 sm:px-0 min-w-0 overflow-hidden">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-6 w-96" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0 max-w-full justify-items-center [&>*]:w-full [&>*]:max-w-full">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-40 rounded-xl" />
           ))}
@@ -277,7 +277,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-24 text-center max-w-lg mx-auto"
+        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-16 sm:py-24 text-center w-full max-w-[24rem] sm:max-w-lg mx-auto px-4 min-w-0 overflow-hidden"
       >
         <div className="animate-gradient-bg rounded-2xl p-10 mb-6">
           <ClipboardList className="h-20 w-20 text-teal-600 mx-auto" />
@@ -287,7 +287,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
           Log at least a few days of symptoms to generate an SBAR Clinical Brief 
           that you can share with your gastroenterologist.
         </p>
-        <div className="rounded-xl border bg-card/80 card-premium p-5 text-left max-w-sm w-full mb-6">
+        <div className="rounded-xl border bg-card/80 card-premium p-5 text-left max-w-[22rem] w-full mb-6 min-w-0 overflow-hidden">
           <p className="text-sm font-semibold mb-3">📋 What you'll get:</p>
           <ul className="text-xs text-muted-foreground space-y-2">
             <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-teal-500 shrink-0" />SBAR-formatted clinical summary</li>
@@ -296,7 +296,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
             <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-teal-500 shrink-0" />Print-ready PDF for your doctor</li>
           </ul>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground break-words">
           Use <strong>"Load Demo Data"</strong> in the sidebar or <strong>"Log Symptoms"</strong> to get started
         </p>
       </motion.div>
@@ -304,10 +304,10 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
   }
 
   return (
-    <div className="space-y-4 w-full max-w-full min-w-0">
+    <div className="space-y-4 w-full max-w-[24rem] sm:max-w-full mx-auto px-4 sm:px-0 min-w-0 overflow-hidden">
       {/* Action buttons - hidden in print */}
-      <div className="flex flex-wrap gap-2 print:hidden">
-        <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 hover:shadow-md hover:shadow-teal-500/10 transition-all">
+      <div className="flex flex-col min-[420px]:flex-row flex-wrap gap-2 print:hidden w-full min-w-0 max-w-[24rem] sm:max-w-full mx-auto">
+        <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="gap-2 w-full min-[420px]:w-auto justify-center hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 hover:shadow-md hover:shadow-teal-500/10 transition-all">
           {isExporting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -317,7 +317,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
             {isExporting ? "Generating PDF..." : "Download PDF"}
           </span>
         </Button>
-        <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2 shadow-md shadow-teal-500/20 btn-premium">
+        <Button onClick={handleGenerateAI} disabled={isGenerating} className="gap-2 w-full min-[420px]:w-auto justify-center shadow-md shadow-teal-500/20 btn-premium">
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -328,25 +328,25 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       </div>
 
       {/* Bristol Stool Scale Reference Card */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="rounded-xl border-0 shadow-sm print:hidden bg-gradient-to-br from-slate-50/80 via-white to-teal-50/40 dark:from-slate-950/80 dark:via-card dark:to-teal-950/20">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 max-w-full mx-auto overflow-hidden">
+        <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm print:hidden bg-gradient-to-br from-slate-50/80 via-white to-teal-50/40 dark:from-slate-950/80 dark:via-card dark:to-teal-950/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Bristol Stool Scale Reference</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full min-w-0 max-w-full justify-items-center [&>*]:w-full [&>*]:min-w-0 [&>*]:max-w-full">
               {[
                 { label: "Constipation", color: "bg-stone-100 border-stone-200 dark:bg-stone-900/40 dark:border-stone-700/50", desc: "Hard, lumpy — Types 1-2", icon: "🪨" },
                 { label: "Normal", color: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/40", desc: "Smooth, soft — Types 3-4", icon: "✅" },
                 { label: "Mild Diarrhea", color: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/40", desc: "Soft, mushy — Types 5-6", icon: "⚠️" },
                 { label: "Severe Diarrhea", color: "bg-rose-50 border-rose-200 dark:bg-rose-950/30 dark:border-rose-800/40", desc: "Watery — Type 7", icon: "🚨" },
               ].map((item) => (
-                <div key={item.label} className={`rounded-lg border p-3 bristol-item ${item.color}`}>
-                  <div className="flex items-center gap-2 mb-1">
+                <div key={item.label} className={`rounded-lg border p-3 bristol-item w-full min-w-0 max-w-full overflow-hidden ${item.color}`}>
+                  <div className="flex items-center gap-2 mb-1 min-w-0">
                     <span className="bristol-emoji">{item.icon}</span>
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="text-sm font-medium min-w-0 truncate">{item.label}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                  <p className="text-xs text-muted-foreground break-words">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -355,25 +355,25 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
       </motion.div>
 
       {/* Print area */}
-      <div className="print-area space-y-6">
+      <div className="print-area space-y-6 w-full min-w-0 max-w-full mx-auto overflow-hidden">
         {/* Professional print-only header */}
         <div className="print-header">
           <h2>ColoBrief AI — Clinical Handout</h2>
           <p>{format(new Date(), "EEEE, MMMM d, yyyy 'at' h:mm a")}</p>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="rounded-xl border-0 shadow-sm print:shadow-none print:border print:rounded-none card-glow relative overflow-hidden">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 max-w-full mx-auto overflow-hidden">
+          <Card className="w-full min-w-0 max-w-full mx-auto overflow-hidden rounded-xl border-0 shadow-sm print:shadow-none print:border print:rounded-none card-glow relative overflow-hidden">
             <CardContent className="p-6 print:p-4">
               {/* Watermark branding */}
               <div className="print-watermark" aria-hidden="true">ColoBrief AI</div>
 
               {/* Header */}
               <div className="mb-6">
-                <h1 className="text-xl font-bold text-foreground print:text-lg">
+                <h1 className="text-xl font-bold text-foreground print:text-lg break-words">
                   SBAR Clinical Brief for Gastroenterology Consultations
                 </h1>
-                <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 min-w-0 max-w-full text-sm text-muted-foreground">
                   <span>
                     <strong>Patient:</strong> {patientName}
                   </span>
@@ -400,7 +400,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                     </span>
                     Medication Adherence Summary
                   </h2>
-                  <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-4 sm:gap-6 w-full min-w-0 max-w-full">
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-12">
                         <svg className="-rotate-90 h-12 w-12" viewBox="0 0 48 48">
@@ -415,14 +415,14 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{stats.medAdherence >= 80 ? "Good" : stats.medAdherence >= 50 ? "Partial" : "Low"} Adherence</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium min-w-0 truncate">{stats.medAdherence >= 80 ? "Good" : stats.medAdherence >= 50 ? "Partial" : "Low"} Adherence</p>
+                        <p className="text-xs text-muted-foreground break-words">
                           {symptoms.filter((s) => s.medicationTaken && s.medicationTaken.trim() !== "").length} of {symptoms.length} days
                         </p>
                       </div>
                     </div>
-                    <div className="h-8 w-px bg-border print:hidden" />
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div className="hidden sm:block h-8 w-px bg-border print:hidden" />
+                    <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-2 text-sm w-full sm:w-auto min-w-0">
                       <div>
                         <span className="text-muted-foreground text-xs">Blood Days</span>
                         <p className="font-semibold text-rose-600">{stats.bloodDays} <span className="text-xs font-normal text-muted-foreground">({stats.bloodPct}%)</span></p>
@@ -451,12 +451,12 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                             <Pill className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{med.name}</p>
-                            <p className="text-xs text-muted-foreground">{med.daysTaken} day{med.daysTaken !== 1 ? "s" : ""} taken</p>
+                            <p className="text-sm font-medium min-w-0 truncate">{med.name}</p>
+                            <p className="text-xs text-muted-foreground break-words">{med.daysTaken} day{med.daysTaken !== 1 ? "s" : ""} taken</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-muted-foreground">Avg Pain</p>
+                          <p className="text-xs text-muted-foreground break-words">Avg Pain</p>
                           <p className="text-sm font-semibold">{med.avgPain.toFixed(1)}/10</p>
                         </div>
                       </div>
@@ -495,14 +495,14 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0 }}
-                className="mb-5 print-avoid-break"
+                className="mb-5 print-avoid-break w-full min-w-0 max-w-full overflow-hidden"
               >
-                <div className="border-l-4 border-teal-400 bg-teal-50/30 dark:bg-teal-950/10 rounded-r-lg p-4 card-premium">
+                <div className="w-full min-w-0 max-w-full overflow-hidden border-l-4 border-teal-400 bg-teal-50/30 dark:bg-teal-950/10 rounded-r-lg p-4 card-premium">
                   <h2 className="text-base font-semibold text-teal-700 dark:text-teal-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 text-xs font-bold shrink-0"><Stethoscope className="h-3.5 w-3.5" /></span>
                     S — Situation
                   </h2>
-                  <p className="text-sm leading-relaxed print:text-xs">
+                  <p className="text-sm leading-relaxed print:text-xs break-words">
                     {aiSummary?.situation || situation}
                   </p>
                 </div>
@@ -513,14 +513,14 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
-                className="mb-5 print-avoid-break"
+                className="mb-5 print-avoid-break w-full min-w-0 max-w-full overflow-hidden"
               >
-                <div className="border-l-4 border-sky-400 bg-sky-50/30 dark:bg-sky-950/10 rounded-r-lg p-4 card-premium">
+                <div className="w-full min-w-0 max-w-full overflow-hidden border-l-4 border-sky-400 bg-sky-50/30 dark:bg-sky-950/10 rounded-r-lg p-4 card-premium">
                   <h2 className="text-base font-semibold text-sky-700 dark:text-sky-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-xs font-bold shrink-0"><BookOpen className="h-3.5 w-3.5" /></span>
                     B — Background
                   </h2>
-                  <p className="text-sm leading-relaxed print:text-xs">
+                  <p className="text-sm leading-relaxed print:text-xs break-words">
                     {aiSummary?.background || background}
                   </p>
                 </div>
@@ -531,9 +531,9 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="mb-5 print-avoid-break"
+                className="mb-5 print-avoid-break w-full min-w-0 max-w-full overflow-hidden"
               >
-                <div className="border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10 rounded-r-lg p-4 card-premium">
+                <div className="w-full min-w-0 max-w-full overflow-hidden border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-950/10 rounded-r-lg p-4 card-premium">
                   <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0"><Activity className="h-3.5 w-3.5" /></span>
                     A — Assessment
@@ -544,11 +544,11 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                       AI-Generated
                     </Badge>
                   )}
-                  <p className="text-sm leading-relaxed print:text-xs">{assessment}</p>
+                  <p className="text-sm leading-relaxed print:text-xs break-words">{assessment}</p>
 
                   {/* Quick stats — enhanced with animated numbers, colored borders, icons, and worst-pulse */}
                   {stats && (
-                    <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mt-4 print:grid-cols-7 print:gap-2 print:mt-2">
+                    <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mt-4 w-full min-w-0 max-w-full justify-items-center [&>*]:w-full [&>*]:min-w-0 [&>*]:max-w-full print:grid-cols-7 print:gap-2 print:mt-2">
                       {[
                         { key: "avgPain", label: "Avg Pain", value: animAvgPain.toFixed(1), accent: "metric-accent-rose", icon: <Flame className="h-3 w-3" />, iconBg: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400" },
                         { key: "avgStool", label: "Avg Frequency", value: `${animAvgStool.toFixed(1)}/day`, accent: "metric-accent-teal", icon: <Waves className="h-3 w-3" />, iconBg: "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" },
@@ -560,13 +560,13 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                       ].map((stat) => (
                         <div
                           key={stat.key}
-                          className={`rounded-lg bg-muted/60 p-3 text-center print:p-2 print:bg-gray-100 card-premium hover-lift ${stat.accent} ${worstStatKey === stat.key ? "stat-pulse-worst" : ""} print-avoid-break`}
+                          className={`rounded-lg bg-muted/60 p-3 text-center w-full min-w-0 max-w-full overflow-hidden print:p-2 print:bg-gray-100 card-premium hover-lift ${stat.accent} ${worstStatKey === stat.key ? "stat-pulse-worst" : ""} print-avoid-break`}
                         >
                           <div className="flex items-center justify-center gap-1.5 mb-1">
                             <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full ${stat.iconBg} shrink-0`}>
                               {stat.icon}
                             </span>
-                            <span className="text-xs text-muted-foreground">{stat.label}</span>
+                            <span className="text-xs text-muted-foreground break-words">{stat.label}</span>
                           </div>
                           <p className={`text-xl font-extrabold ${stat.valueClass ?? ""}`}>{stat.value}</p>
                         </div>
@@ -581,14 +581,14 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="mb-6 print-avoid-break"
+                className="mb-6 print-avoid-break w-full min-w-0 max-w-full overflow-hidden"
               >
-                <div className="border-l-4 border-violet-400 bg-violet-50/30 dark:bg-violet-950/10 rounded-r-lg p-4 card-premium">
+                <div className="w-full min-w-0 max-w-full overflow-hidden border-l-4 border-violet-400 bg-violet-50/30 dark:bg-violet-950/10 rounded-r-lg p-4 card-premium">
                   <h2 className="text-base font-semibold text-violet-700 dark:text-violet-400 mb-1.5 print:text-sm print:mt-4 print:mb-1 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-xs font-bold shrink-0"><Lightbulb className="h-3.5 w-3.5" /></span>
                     R — Recommendation
                   </h2>
-                  <p className="text-sm leading-relaxed print:text-xs">
+                  <p className="text-sm leading-relaxed print:text-xs break-words">
                     {aiSummary?.recommendation || recommendation}
                   </p>
                 </div>
@@ -597,15 +597,15 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
               <Separator className="mb-6 print:mb-4" />
 
               {/* Data Table */}
-              <div className="border-l-4 border-teal-400 pl-4 print:border-l-0 print:pl-0">
+              <div className="border-l-4 border-teal-400 pl-3 sm:pl-4 min-w-0 max-w-full overflow-hidden print:border-l-0 print:pl-0">
                 <h2 className="text-base font-semibold mb-3 print:text-sm print:mt-4 print:mb-1">
                   Recent Symptom Log
                 </h2>
                 <p className="text-xs text-muted-foreground mb-2 sm:hidden">
                   &larr; Scroll horizontally to see all columns &rarr;
                 </p>
-                <div className="overflow-x-auto rounded-lg border print:rounded-none">
-                  <Table className="table-row-hover table-row-premium table-zebra">
+                <div className="w-full max-w-full overflow-x-auto rounded-lg border print:rounded-none">
+                  <Table className="min-w-[760px] table-row-hover table-row-premium table-zebra">
                     <TableHeader>
                       <TableRow className="bg-muted/50">
                         <TableHead>Date</TableHead>
@@ -643,7 +643,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
                                 </Badge>
                               ))}
                               {log.triggers.length > 2 && (
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs text-muted-foreground break-words">
                                   +{log.triggers.length - 2}
                                 </span>
                               )}

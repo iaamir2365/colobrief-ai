@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface AuthUser {
   id: string;
@@ -24,6 +25,12 @@ interface AuthState {
   refreshUser: () => Promise<void>;
 }
 
+interface AuthResponse {
+  token: string;
+  user: AuthUser;
+  error?: string;
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   user: null,
@@ -38,11 +45,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     try {
-      const res = await fetch("/api/auth/me", {
+      const { data: userData, response } = await fetchJson<AuthUser>("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const userData = await res.json();
+      if (response.ok) {
         set({ token, user: userData, isLoading: false, isInitialized: true });
       } else {
         localStorage.removeItem("colobrief-token");
@@ -55,14 +61,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   login: async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
+    const { data, response } = await fetchJson<AuthResponse>("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
+    if (!response.ok) {
       throw new Error(data.error || "Login failed");
     }
 
@@ -71,14 +76,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signup: async (name: string, email: string, password: string, doctorName?: string) => {
-    const res = await fetch("/api/auth/signup", {
+    const { data, response } = await fetchJson<AuthResponse>("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, doctorName }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
+    if (!response.ok) {
       throw new Error(data.error || "Signup failed");
     }
 
@@ -95,11 +99,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { token } = get();
     if (!token) return;
     try {
-      const res = await fetch("/api/auth/me", {
+      const { data: userData, response } = await fetchJson<AuthUser>("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const userData = await res.json();
+      if (response.ok) {
         set({ user: userData });
       }
     } catch {

@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/stores/auth-store";
+import { fetchJson } from "@/lib/fetch-json";
 
 type AuthMode = "login" | "signup" | "verify-email";
 
@@ -68,9 +69,15 @@ export default function AuthForm({ requireVerification = false }: AuthFormProps)
     setIsDemoLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/auth/demo-login", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Demo login failed");
+      const { data, response } = await fetchJson<{
+        token: string;
+        user: { id: string; name: string; email: string; emailVerified?: boolean };
+        error?: string;
+      }>(
+        "/api/auth/demo-login",
+        { method: "POST" }
+      );
+      if (!response.ok) throw new Error(data.error || "Demo login failed");
       localStorage.setItem("colobrief-token", data.token);
       useAuthStore.setState({ token: data.token, user: data.user, isLoading: false, isInitialized: true });
     } catch (err) {
@@ -167,12 +174,14 @@ export default function AuthForm({ requireVerification = false }: AuthFormProps)
     setIsSendingCode(true);
     setVerificationError("");
     try {
-      const res = await fetch("/api/auth/send-verification", {
-        method: "POST",
-        headers: { ...getAuthHeadersLocal(), "Content-Type": "application/json" },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send code");
+      const { data, response } = await fetchJson<{ error?: string; message?: string }>(
+        "/api/auth/send-verification",
+        {
+          method: "POST",
+          headers: { ...getAuthHeadersLocal(), "Content-Type": "application/json" },
+        }
+      );
+      if (!response.ok) throw new Error(data.error || "Failed to send code");
       setResendCooldown(60);
     } catch (err) {
       setVerificationError(err instanceof Error ? err.message : "Failed to send code");
@@ -189,13 +198,15 @@ export default function AuthForm({ requireVerification = false }: AuthFormProps)
     setIsVerifying(true);
     setVerificationError("");
     try {
-      const res = await fetch("/api/auth/verify-email", {
-        method: "POST",
-        headers: { ...getAuthHeadersLocal(), "Content-Type": "application/json" },
-        body: JSON.stringify({ code: verificationCode }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Verification failed");
+      const { data, response } = await fetchJson<{ error?: string }>(
+        "/api/auth/verify-email",
+        {
+          method: "POST",
+          headers: { ...getAuthHeadersLocal(), "Content-Type": "application/json" },
+          body: JSON.stringify({ code: verificationCode }),
+        }
+      );
+      if (!response.ok) throw new Error(data.error || "Verification failed");
       setVerificationSuccess(true);
       await refreshUser();
     } catch (err) {

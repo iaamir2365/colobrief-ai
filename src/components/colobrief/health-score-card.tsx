@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Activity, Brain, UtensilsCrossed, Droplets, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, subDays, parseISO, isAfter, isBefore } from "date-fns";
+import { subDays, parseISO, isAfter, isBefore } from "date-fns";
 import type { SymptomLog } from "@/types/symptom";
 
 interface HealthScoreCardProps {
@@ -34,7 +34,7 @@ function calculateScore(logs: SymptomLog[]): number {
   const avgPain = avg(logs.map((s) => s.painLevel));
   const avgStoolFreq = avg(logs.map((s) => s.stoolFrequency));
   const avgStress = avg(logs.map((s) => s.stressLevel));
-  const avgStoolType = avg(logs.map((s) => s.stoolType));
+  const avgStoolType = avg(logs.map((s) => s.stoolType ?? 4));
   const bloodPct = (logs.filter((s) => s.bloodInStool).length / logs.length) * 100;
 
   let score =
@@ -62,9 +62,9 @@ function CircularGaugeLarge({ value, color }: { value: number; color: string }) 
   const mobileCenter = mobileSize / 2;
 
   return (
-    <div className="relative mx-auto flex justify-center items-center w-full max-w-[130px] md:max-w-none cursor-pointer group transition-transform duration-200 hover:scale-[1.04]">
+    <div className="relative mx-auto flex w-full max-w-32.5 cursor-pointer items-center justify-center transition-transform duration-200 hover:scale-[1.04] md:max-w-none">
       {/* Mobile SVG */}
-      <svg width={mobileSize} height={mobileSize} className="-rotate-90 md:hidden">
+      <svg viewBox={`0 0 ${mobileSize} ${mobileSize}`} className="h-[clamp(112px,36vw,130px)] w-[clamp(112px,36vw,130px)] -rotate-90 md:hidden">
         {/* Background track */}
         <circle
           cx={mobileCenter}
@@ -103,7 +103,7 @@ function CircularGaugeLarge({ value, color }: { value: number; color: string }) 
       </svg>
       
       {/* Desktop SVG */}
-      <svg width={size} height={size} className="-rotate-90 hidden md:block">
+      <svg viewBox={`0 0 ${size} ${size}`} className="-rotate-90 hidden h-37.5 w-37.5 md:block">
         {/* Background track */}
         <circle
           cx={center}
@@ -229,7 +229,7 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
     return (
       <Card className="rounded-xl border-0 shadow-sm h-full">
         <CardContent className="p-5 flex flex-col items-center justify-center">
-          <Skeleton className="h-[140px] w-[140px] rounded-full" />
+          <Skeleton className="h-35 w-35 rounded-full" />
           <Skeleton className="h-5 w-24 mt-4" />
           <div className="flex gap-6 mt-4">
             {[...Array(4)].map((_, i) => (
@@ -255,14 +255,14 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
             background: `radial-gradient(circle at 50% 30%, ${color}, transparent 70%)`,
           }}
         />
-        <CardContent className="flex flex-col items-center justify-center text-center p-4 w-full md:p-5 md:relative">
+        <CardContent className="flex w-full min-w-0 flex-col items-center justify-center p-4 text-center md:relative md:p-5">
           {/* Header */}
-          <div className="flex items-center justify-between w-full mb-3">
-            <h3 className="section-title">
+          <div className="mb-3 flex w-full min-w-0 flex-wrap items-start justify-between gap-2 text-left">
+            <h3 className="section-title min-w-0">
               UC Health Score
             </h3>
             {prevScore !== null && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:ml-auto">
                 <span>vs prev 7d</span>
                 <TrendArrow current={score} previous={prevScore} />
                 <span
@@ -297,16 +297,16 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
           </motion.p>
 
           {/* Mini metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 w-full">
+          <div className="mt-5 grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-4 sm:gap-3">
             {miniMetrics.map((m) => (
               <div
                 key={m.label}
-                className="flex flex-col items-center gap-1 rounded-lg bg-muted/40 p-2"
+                className="flex min-w-0 flex-col items-center gap-1 rounded-lg bg-muted/40 p-2"
                 style={{ borderLeftColor: m.borderColor, borderLeftWidth: '2px', borderLeftStyle: 'solid' }}
               >
                 <m.icon className={`h-4 w-4 ${m.color}`} />
                 <span className="text-sm font-bold tabular-nums">{m.value}</span>
-                <span className="text-[10px] text-muted-foreground">{m.label}</span>
+                <span className="text-center text-[10px] leading-tight text-muted-foreground">{m.label}</span>
               </div>
             ))}
           </div>

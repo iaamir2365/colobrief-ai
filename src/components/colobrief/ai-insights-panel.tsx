@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { SymptomLog } from "@/types/symptom";
 import { getAuthHeaders } from "@/stores/auth-store";
@@ -173,7 +172,7 @@ export default function AIInsightsPanel({ symptoms }: AIInsightsPanelProps) {
   );
 
   return (
-    <div className="fixed bottom-20 right-6 z-40">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] right-3 z-40 sm:bottom-20 sm:right-6">
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -181,8 +180,8 @@ export default function AIInsightsPanel({ symptoms }: AIInsightsPanelProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="mb-3 flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-xl"
-            style={{ width: 400, maxHeight: 500 }}
+            className="mb-3 flex w-[min(400px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] box-border flex-col overflow-hidden rounded-xl border border-border bg-background shadow-xl"
+            style={{ maxHeight: "min(68vh, 500px)" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b bg-teal-600 px-4 py-3">
@@ -296,10 +295,10 @@ export default function AIInsightsPanel({ symptoms }: AIInsightsPanelProps) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-shadow hover:shadow-xl"
+        className="flex h-11 items-center gap-2 rounded-full bg-teal-600 px-3 text-xs font-medium text-white shadow-lg transition-shadow hover:shadow-xl min-[390px]:px-4 min-[390px]:text-sm"
       >
         <Sparkles className="h-4 w-4" />
-        <span>Ask AI</span>
+        <span className="hidden min-[360px]:inline">Ask AI</span>
       </motion.button>
     </div>
   );

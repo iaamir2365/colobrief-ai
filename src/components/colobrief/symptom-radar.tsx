@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { GitCompareArrows } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ChartContainer,
   ChartTooltip,
@@ -84,6 +85,7 @@ function calculateWeekAverages(logs: SymptomLog[]): WeekAverages {
 }
 
 export default function SymptomRadar({ symptoms, isLoading }: SymptomRadarProps) {
+  const isMobile = useIsMobile();
   const radarData = useMemo(() => {
     if (symptoms.length < 5) return null;
 
@@ -125,7 +127,7 @@ export default function SymptomRadar({ symptoms, isLoading }: SymptomRadarProps)
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <Skeleton className="h-[320px] w-full rounded-lg" />
+          <Skeleton className="h-80 w-full rounded-lg" />
         </CardContent>
       </Card>
     );
@@ -169,18 +171,18 @@ export default function SymptomRadar({ symptoms, isLoading }: SymptomRadarProps)
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="w-full overflow-x-auto scrollbar-thin flex justify-center">
-            <ChartContainer config={radarConfig} className="min-w-[450px] sm:min-w-0 h-[260px] sm:h-[320px] mx-auto w-full max-w-lg">
-            <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
+          <div className="flex w-full min-w-0 justify-center">
+            <ChartContainer config={radarConfig} className="mx-auto h-60 w-full max-w-lg min-w-0 sm:h-80">
+            <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={isMobile ? "62%" : "75%"}>
               <PolarGrid stroke="var(--color-border)" />
               <PolarAngleAxis
                 dataKey="dimension"
-                tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+                tick={{ fontSize: isMobile ? 10 : 11, fill: "var(--color-muted-foreground)" }}
               />
               <PolarRadiusAxis
                 angle={90}
                 domain={[0, 10]}
-                tick={{ fontSize: 9, fill: "var(--color-muted-foreground)" }}
+                tick={{ fontSize: isMobile ? 8 : 9, fill: "var(--color-muted-foreground)" }}
                 tickCount={6}
               />
               <ChartTooltip

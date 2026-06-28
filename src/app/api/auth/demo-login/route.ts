@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { hashPassword, signToken } from "@/lib/auth";
+import type { SymptomLog } from "@/lib/db";
 
 const DEMO_EMAIL = "demo@colobrief.ai";
 const DEMO_PASSWORD = "demo123";
@@ -97,7 +98,7 @@ export async function POST() {
 
     // Generate 14 days of demo data if none exists
     if (existingLogsCount === 0) {
-      const entries = [];
+      const entries: Array<Omit<SymptomLog, "id" | "createdAt">> = [];
       for (let i = 13; i >= 0; i--) {
         const isFlareDay = i === 10 || i === 4;
         const isGoodDay = i === 7 || i === 2;

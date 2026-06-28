@@ -181,11 +181,11 @@ function EditSymptomDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Edit Symptom Log — {format(parseISO(log.date), "MMM d, yyyy")}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[70vh] pr-4">
+        <ScrollArea className="max-h-[70vh] pr-3 sm:pr-4 overflow-x-hidden">
           <div className="space-y-5 pb-4">
             {/* Date */}
             <div className="space-y-2">
@@ -246,7 +246,7 @@ function EditSymptomDialog({
             {/* Triggers */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Triggers</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 min-w-0">
                 {COMMON_TRIGGERS.map((trigger) => (
                   <label key={trigger} className="flex items-center gap-2 cursor-pointer select-none">
                     <Checkbox
@@ -269,7 +269,7 @@ function EditSymptomDialog({
             </div>
 
             {/* Medication & Blood & Urgency */}
-            <div className="space-y-4">
+            <div className="space-y-4 w-full max-w-full min-w-0 overflow-hidden">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Medication Taken</Label>
                 <Input
@@ -287,7 +287,7 @@ function EditSymptomDialog({
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Urgency Level</Label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-0">
                   {["None", "Mild", "Moderate", "Severe"].map((label, i) => (
                     <Button
                       key={label}
@@ -311,7 +311,7 @@ function EditSymptomDialog({
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSave} disabled={isSaving} className="bg-teal-600 hover:bg-teal-700">
             {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
@@ -428,9 +428,102 @@ export default function MyRecordsTab({
     return "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100";
   };
 
+  const renderRecordActions = (log: SymptomLog) => (
+    <div className="flex items-center gap-1 shrink-0">
+      <Button
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditingLog(log);
+        }}
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 text-muted-foreground hover:text-teal-600"
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            onClick={(e) => e.stopPropagation()}
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this log?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the symptom log from{" "}
+              {format(parseISO(log.date), "MMM d, yyyy")}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleDelete(log.id)}
+              className="bg-destructive text-white hover:bg-destructive/90"
+              disabled={deletingId === log.id}
+            >
+              {deletingId === log.id ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+
+  const renderExpandedDetails = (log: SymptomLog) => (
+    <div className="text-sm border-t pt-3 mt-3 min-w-0 max-w-full overflow-hidden break-words">
+      <span className="font-medium text-muted-foreground">Notes: </span>
+      {log.notes || "No notes recorded for this entry."}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground min-w-0">
+        <span>Stress: {log.stressLevel}/10</span>
+        <span>Bristol Type: {log.stoolType} — {BRISTOL_LABELS[log.stoolType] || "Unknown"}</span>
+        <span>Medication: {log.medicationTaken || "None"}</span>
+        <span>Blood: {log.bloodInStool ? "Yes" : "No"}</span>
+        <span>Urgency: {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}</span>
+      </div>
+      {log.triggers.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {log.triggers.map((t) => (
+            <Badge key={t} variant="secondary" className="text-xs">
+              {t}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const emptySearchState = (
+    <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground py-12">
+      <div className="rounded-full bg-muted p-3">
+        <SearchX className="h-6 w-6" />
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-medium text-foreground">No matching records</p>
+        <p className="text-xs mt-0.5">Try adjusting your search terms for &ldquo;{search}&rdquo;</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-xs text-teal-600 hover:text-teal-700"
+        onClick={() => {
+          setSearch("");
+          setPage(0);
+        }}
+      >
+        Clear search
+      </Button>
+    </div>
+  );
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 w-full max-w-full min-w-0 overflow-hidden">
         <Skeleton className="h-10 w-full max-w-sm rounded-lg" />
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-96 rounded-xl" />
@@ -443,7 +536,7 @@ export default function MyRecordsTab({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-20 text-center"
+        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-20 px-4 text-center w-full max-w-[24rem] sm:max-w-full mx-auto min-w-0 overflow-hidden"
       >
         <div className="animate-gradient-bg rounded-2xl p-8 mb-6 relative">
           <FileText className="h-14 w-14 text-teal-600 mx-auto" />
@@ -453,7 +546,7 @@ export default function MyRecordsTab({
           Your symptom history will appear here once you start logging. Each entry shows 
           pain levels, stool data, triggers, and personal notes.
         </p>
-        <div className="rounded-lg border bg-card/50 p-4 text-left max-w-sm w-full mb-6 space-y-2">
+        <div className="rounded-lg border bg-card/50 p-4 text-left max-w-sm w-full min-w-0 mb-6 space-y-2">
           <p className="text-sm font-medium mb-1">What you can do here:</p>
           <ul className="text-xs text-muted-foreground space-y-1.5">
             <li className="flex items-start gap-2"><Search className="h-3.5 w-3.5 mt-0.5 shrink-0 text-teal-500" />Search and filter all your logged entries</li>
@@ -471,24 +564,24 @@ export default function MyRecordsTab({
   }
 
   return (
-    <div className="space-y-4 w-full max-w-full min-w-0">
+    <div className="space-y-4 w-full max-w-full min-w-0 overflow-hidden">
       {/* Quick Stats Summary Strip */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-[24rem] sm:max-w-full mx-auto justify-items-center min-w-0"
       >
-        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 p-3 card-premium hover-lift">
+        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 p-3 card-premium hover-lift w-full min-w-0 max-w-full overflow-hidden">
           <p className="text-[10px] uppercase tracking-wider text-teal-600 dark:text-teal-400 font-medium">Total Entries</p>
           <p className="text-2xl font-bold text-teal-800 dark:text-teal-200 stat-number mt-0.5">{symptoms.length}</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/60 dark:border-rose-800/40 p-3 card-premium hover-lift">
+        <div className="rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/60 dark:border-rose-800/40 p-3 card-premium hover-lift w-full min-w-0 max-w-full overflow-hidden">
           <p className="text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-400 font-medium">Avg Pain</p>
           <p className="text-2xl font-bold text-rose-800 dark:text-rose-200 stat-number mt-0.5">
             {symptoms.length ? (symptoms.reduce((s, l) => s + l.painLevel, 0) / symptoms.length).toFixed(1) : "—"}
           </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 p-3 card-premium hover-lift">
+        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/60 dark:border-amber-800/40 p-3 card-premium hover-lift w-full min-w-0 max-w-full overflow-hidden">
           <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium">Blood Days</p>
           <p className="text-2xl font-bold text-amber-800 dark:text-amber-200 stat-number mt-0.5">
             {symptoms.filter(s => s.bloodInStool).length}
@@ -497,7 +590,7 @@ export default function MyRecordsTab({
             </span>
           </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/20 border border-sky-200/60 dark:border-sky-800/40 p-3 card-premium hover-lift">
+        <div className="rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/30 dark:to-indigo-950/20 border border-sky-200/60 dark:border-sky-800/40 p-3 card-premium hover-lift w-full min-w-0 max-w-full overflow-hidden">
           <p className="text-[10px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-medium">Top Trigger</p>
           <p className="text-lg font-bold text-sky-800 dark:text-sky-200 mt-0.5 truncate">
             {(() => {
@@ -511,22 +604,22 @@ export default function MyRecordsTab({
       </motion.div>
 
       {/* Search & Export & Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full max-w-full min-w-0">
-        <div className="relative flex-1 max-w-full sm:max-w-sm w-full">
-          <div className="rounded-xl card-premium flex items-center px-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-          <Input
-            placeholder="Search by date, notes, or triggers..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
-            className="pl-9 border-0 shadow-none focus-visible:ring-0 w-full"
-          />
+      <div className="flex flex-col items-center sm:items-start gap-3 w-full max-w-[24rem] sm:max-w-full mx-auto min-w-0">
+        <div className="relative flex-1 w-full max-w-full sm:max-w-sm min-w-0">
+          <div className="rounded-xl card-premium flex items-center px-1 w-full min-w-0 overflow-hidden">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+            <Input
+              placeholder="Search by date, notes, or triggers..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="pl-9 border-0 shadow-none focus-visible:ring-0 w-full"
+            />
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 w-full min-w-0">
           <input
             ref={fileInputRef}
             type="file"
@@ -537,7 +630,7 @@ export default function MyRecordsTab({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+            className="gap-1.5 text-xs h-8 min-w-0 shrink-0 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
           >
@@ -551,7 +644,7 @@ export default function MyRecordsTab({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+            className="gap-1.5 text-xs h-8 min-w-0 shrink-0 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
             onClick={async () => {
               try {
                 const res = await fetch("/api/symptoms/export?format=csv", { headers: { ...getAuthHeaders() } });
@@ -574,7 +667,7 @@ export default function MyRecordsTab({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs h-8 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
+            className="gap-1.5 text-xs h-8 min-w-0 shrink-0 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-all hover:shadow-md hover:shadow-teal-500/10"
             onClick={async () => {
               try {
                 const res = await fetch("/api/symptoms/export?format=json", { headers: { ...getAuthHeaders() } });
@@ -594,7 +687,7 @@ export default function MyRecordsTab({
             <Download className="h-3.5 w-3.5" />
             JSON
           </Button>
-          <p className="text-sm text-muted-foreground ml-1">
+          <p className="text-sm text-muted-foreground w-full sm:w-auto sm:ml-1">
             <span className="font-medium text-foreground">{paged.length}</span>
             {" / "}
             <span className="font-medium text-foreground">{filtered.length}</span>
@@ -602,8 +695,61 @@ export default function MyRecordsTab({
         </div>
       </div>
 
-      {/* Table */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+      {/* Mobile: stacked record cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="md:hidden w-full max-w-[24rem] mx-auto space-y-3 min-w-0"
+      >
+        {paged.length === 0 && search.trim() ? (
+          <Card className="rounded-xl border-0 shadow-sm w-full min-w-0 max-w-full mx-auto overflow-hidden">
+            <CardContent className="p-4 min-w-0">{emptySearchState}</CardContent>
+          </Card>
+        ) : (
+          paged.map((log) => (
+            <Card
+              key={log.id}
+              className="rounded-xl border-0 shadow-sm cursor-pointer hover:bg-muted/30 transition-colors w-full min-w-0 max-w-full mx-auto overflow-hidden"
+              onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+            >
+              <CardContent className="p-4 min-w-0">
+                <div className="flex items-start justify-between gap-3 min-w-0">
+                  <p className="font-semibold text-foreground min-w-0 truncate">
+                    {format(parseISO(log.date), "MMM d, yyyy")}
+                  </p>
+                  {renderRecordActions(log)}
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 min-w-0">
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Pain</p>
+                    <Badge variant="outline" className={`font-medium ${getPainClass(log.painLevel)}`}>
+                      {log.painLevel}/10
+                    </Badge>
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Frequency</p>
+                    <p className="text-sm font-semibold">{log.stoolFrequency}×</p>
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Stool Type</p>
+                    <p className="text-sm font-medium truncate">
+                      <span className="mr-1">{BRISTOL_EMOJIS[log.stoolType] || "📋"}</span>
+                      Type {log.stoolType}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {BRISTOL_LABELS[log.stoolType] || "Unknown"}
+                    </p>
+                  </div>
+                </div>
+                {expandedId === log.id && renderExpandedDetails(log)}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </motion.div>
+
+      {/* Desktop: table layout */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="hidden md:block w-full min-w-0 max-w-full overflow-hidden">
         <Card className="rounded-xl border-0 shadow-sm overflow-hidden">
           <div className="w-full overflow-x-auto">
             <Table>
@@ -625,27 +771,11 @@ export default function MyRecordsTab({
                 {paged.length === 0 && search.trim() ? (
                   <TableRow>
                     <TableCell colSpan={10} className="h-48 text-center">
-                      <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
-                        <div className="rounded-full bg-muted p-3">
-                          <SearchX className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">No matching records</p>
-                          <p className="text-xs mt-0.5">Try adjusting your search terms for "{search}"</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs text-teal-600 hover:text-teal-700"
-                          onClick={() => { setSearch(""); setPage(0); }}
-                        >
-                          Clear search
-                        </Button>
-                      </div>
+                      {emptySearchState}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paged.map((log, i) => (
+                  paged.map((log) => (
                   <React.Fragment key={log.id}>
                   <TableRow
                     className="cursor-pointer hover:bg-muted/50 transition-colors table-row-premium"
@@ -717,63 +847,13 @@ export default function MyRecordsTab({
                       )}
                     </TableCell>
                     <TableCell className="pr-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          onClick={(e) => { e.stopPropagation(); setEditingLog(log); }}
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-muted-foreground hover:text-teal-600"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              onClick={(e) => e.stopPropagation()}
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this log?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently remove the symptom log from{" "}
-                              {format(parseISO(log.date), "MMM d, yyyy")}. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(log.id)}
-                              className="bg-destructive text-white hover:bg-destructive/90"
-                              disabled={deletingId === log.id}
-                            >
-                              {deletingId === log.id ? "Deleting..." : "Delete"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      </div>
+                      {renderRecordActions(log)}
                     </TableCell>
                   </TableRow>
                   {expandedId === log.id && (
                     <TableRow className="hover:bg-transparent transition-colors">
                       <TableCell colSpan={10} className="bg-muted/20 px-6 py-3">
-                        <div className="text-sm">
-                          <span className="font-medium text-muted-foreground">Notes: </span>
-                          {log.notes || "No notes recorded for this entry."}
-                          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>Stress: {log.stressLevel}/10</span>
-                            <span>Bristol Type: {log.stoolType} — {BRISTOL_LABELS[log.stoolType] || "Unknown"}</span>
-                            <span>Medication: {log.medicationTaken || "None"}</span>
-                            <span>Blood: {log.bloodInStool ? "Yes" : "No"}</span>
-                            <span>Urgency: {["None", "Mild", "Moderate", "Severe"][log.urgencyLevel] || "None"}</span>
-                          </div>
-                        </div>
+                        {renderExpandedDetails(log)}
                       </TableCell>
                     </TableRow>
                   )}
@@ -788,23 +868,23 @@ export default function MyRecordsTab({
 
       {/* Summary Averages */}
       {filtered.length > 0 && (
-        <div className="flex items-center gap-4 mt-3 px-1">
-          <div className="flex items-center gap-6 rounded-xl bg-muted/50 border border-border/50 px-5 py-3 flex-1">
-            <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-4 mt-3 px-1 w-full max-w-[24rem] sm:max-w-full mx-auto min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 rounded-xl bg-muted/50 border border-border/50 px-4 sm:px-5 py-3 w-full min-w-0 overflow-hidden">
+            <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0 flex-wrap">
               <div className="h-2 w-2 rounded-full bg-rose-400" />
               <span className="text-xs text-muted-foreground">Avg Pain</span>
               <span className="text-lg font-bold text-foreground tabular-nums">{avgPain.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">/10</span>
             </div>
-            <div className="h-5 w-px bg-border" />
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:block h-5 w-px bg-border" />
+            <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0 flex-wrap">
               <div className="h-2 w-2 rounded-full bg-teal-400" />
               <span className="text-xs text-muted-foreground">Avg Freq</span>
               <span className="text-lg font-bold text-foreground tabular-nums">{avgFreq.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">/day</span>
             </div>
-            <div className="h-5 w-px bg-border" />
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:block h-5 w-px bg-border" />
+            <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0 flex-wrap">
               <div className="h-2 w-2 rounded-full bg-amber-400" />
               <span className="text-xs text-muted-foreground">Avg Stress</span>
               <span className="text-lg font-bold text-foreground tabular-nums">{avgStress.toFixed(1)}</span>
@@ -816,7 +896,7 @@ export default function MyRecordsTab({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 rounded-xl bg-muted/30 border border-border/40 px-3 py-2.5 shadow-sm card-premium">
+        <div className="flex flex-wrap items-center justify-center gap-1 rounded-xl bg-muted/30 border border-border/40 px-3 py-2.5 shadow-sm card-premium w-full max-w-[24rem] sm:max-w-max mx-auto min-w-0">
           <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(0)} disabled={page === 0}>&laquo;</Button>
           <Button variant="outline" size="sm" className="w-8 h-8 p-0 hover:bg-muted/60" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>&lsaquo;</Button>
           {totalPages <= 7

@@ -45,8 +45,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
   ScatterChart,
   Scatter,
   ReferenceLine,
@@ -106,14 +104,6 @@ const pieChartConfig: ChartConfig = {
   type5: { label: "Type 5", color: BRISTOL_COLORS[4] },
   type6: { label: "Type 6", color: BRISTOL_COLORS[5] },
   type7: { label: "Type 7", color: BRISTOL_COLORS[6] },
-};
-
-const barChartConfig: ChartConfig = {
-  count: { label: "Occurrences", color: "#0d9488" },
-};
-
-const scatterConfig: ChartConfig = {
-  scatter: { label: "Pain vs Stress", color: "#14b8a6" },
 };
 
 const enhancedScatterConfig: ChartConfig = {
@@ -176,13 +166,13 @@ function MiniSparkline({ dataPoints, color }: { dataPoints: number[]; color: str
   if (dataPoints.length === 0) return null;
   const max = Math.max(...dataPoints, 1);
   return (
-    <div className="flex items-end gap-[3px] h-6 mt-2">
+    <div className="mt-2 flex h-6 items-end gap-[3px]">
       {dataPoints.slice(-5).map((val, i) => {
         const height = Math.max(Math.round((val / max) * 24), 2);
         return (
           <div
             key={i}
-            className="w-[6px] rounded-sm opacity-60"
+            className="w-1.5 rounded-sm opacity-60"
             style={{
               height: `${height}px`,
               backgroundColor: color,
@@ -203,33 +193,34 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
 
   return (
     <motion.div
+      className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] sm:max-w-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, type: "spring", stiffness: 200, damping: 20 }}
     >
-      <Card className={`rounded-xl border-0 card-premium hover-lift border-l-4 ${card.borderColor} h-full`}>
-        <CardContent className="p-3 md:p-5 relative flex flex-col h-full">
+      <Card className={`mx-auto h-full w-full min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium hover-lift border-l-4 ${card.borderColor}`}>
+        <CardContent className="relative flex h-full min-w-0 flex-col p-3 md:p-5">
           {card.gaugeMax && !isMobile && (
             <div className="absolute top-3 right-3">
               <CircularGauge value={card.rawValue} max={card.gaugeMax} color={card.gaugeColor} />
             </div>
           )}
-          <div className="flex items-center justify-between">
-            <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className={`shrink-0 rounded-lg p-2.5 ${card.bgColor}`}>
               <card.icon className={`h-5 w-5 ${card.color}`} />
             </div>
             {card.prev !== null ? (
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-1">
                 <TrendIndicator current={card.rawValue} previous={card.prev!} />
-                <span className="text-[10px] text-muted-foreground">vs last wk</span>
+                <span className="hidden whitespace-nowrap text-[10px] text-muted-foreground min-[360px]:inline">vs last wk</span>
               </div>
             ) : (
-              <div className="w-[60px]" />
+              <div className="w-[60px] shrink-0" />
             )}
           </div>
-          <div className="mt-4 flex-grow">
-            <p className="text-xs md:text-sm text-muted-foreground whitespace-normal">{card.label}</p>
-            <p className="text-xl md:text-2xl font-bold mt-0.5 stat-value" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.06)" }}>
+          <div className="mt-4 min-w-0 grow">
+            <p className="break-words text-xs text-muted-foreground md:text-sm">{card.label}</p>
+            <p className="mt-0.5 flex min-w-0 flex-wrap items-baseline break-words text-xl font-bold md:text-2xl stat-value" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.06)" }}>
               {displayValue}<span className="text-sm md:text-base font-medium text-muted-foreground ml-0.5">{card.suffix}</span>
             </p>
           </div>
@@ -278,20 +269,20 @@ function QuickStatsStrip({ symptoms }: { symptoms: SymptomLog[] }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="card-premium rounded-xl p-3">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="card-premium mx-auto box-border w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl p-3 sm:max-w-full">
+        <div className="mx-auto grid w-full min-w-0 max-w-full grid-cols-2 justify-items-center gap-2 sm:grid-cols-4 sm:gap-3">
           {items.map((item, i) => (
             <motion.div
               key={item.label}
-              className="flex flex-col items-center gap-1 text-center"
+              className="flex min-w-0 max-w-full flex-col items-center gap-1 text-center"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 + 0.1, duration: 0.3 }}
             >
               <item.icon className={`h-4 w-4 shrink-0 ${item.color}`} />
               <div className="min-w-0">
-                <p className="text-[10px] text-muted-foreground leading-tight">{item.label}</p>
-                <p className={`text-sm font-semibold ${item.color} leading-tight`}>{item.value}</p>
+                <p className="text-[10px] leading-tight text-muted-foreground">{item.label}</p>
+                <p className={`text-sm font-semibold leading-tight ${item.color}`}>{item.value}</p>
               </div>
             </motion.div>
           ))}
@@ -302,6 +293,7 @@ function QuickStatsStrip({ symptoms }: { symptoms: SymptomLog[] }) {
 }
 
 export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
+  const isMobile = useIsMobile();
 
   const sevenDaysAgo = useMemo(() => subDays(new Date(), 7), []);
   const threeDaysAgo = useMemo(() => subDays(new Date(), 3), []);
@@ -353,7 +345,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   const stoolTypeDistribution = useMemo(() => {
     const counts: Record<number, number> = {};
     symptoms.forEach((s) => {
-      const t = Math.round(s.stoolType);
+      const t = Math.round(s.stoolType ?? 4);
       counts[t] = (counts[t] || 0) + 1;
     });
     return Object.entries(counts)
@@ -416,12 +408,20 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
     const mostImproved = improvements.reduce((best, cur) => (cur.diff > best.diff ? cur : best), improvements[0]);
 
     // Worst & best days (pain*2 + stress)
-    let worstDay: { date: string; score: number } | null = null;
-    let bestDay: { date: string; score: number } | null = null;
+    let worstDayDate = "—";
+    let bestDayDate = "—";
+    let worstScore = Number.NEGATIVE_INFINITY;
+    let bestScore = Number.POSITIVE_INFINITY;
     sorted.forEach((s) => {
       const score = s.painLevel * 2 + s.stressLevel;
-      if (!worstDay || score > worstDay.score) worstDay = { date: s.date, score };
-      if (!bestDay || score < bestDay.score) bestDay = { date: s.date, score };
+      if (score > worstScore) {
+        worstScore = score;
+        worstDayDate = format(parseISO(s.date), "MMM d");
+      }
+      if (score < bestScore) {
+        bestScore = score;
+        bestDayDate = format(parseISO(s.date), "MMM d");
+      }
     });
 
     // Top trigger
@@ -431,8 +431,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
 
     return {
       mostImproved: mostImproved.diff > 0 ? mostImproved.name : null,
-      worstDay: worstDay ? format(parseISO(worstDay.date), "MMM d") : "—",
-      bestDay: bestDay ? format(parseISO(bestDay.date), "MMM d") : "—",
+      worstDay: worstDayDate,
+      bestDay: bestDayDate,
       topTrigger: topTrigger ? topTrigger[0] : "None",
     };
   }, [symptoms]);
@@ -549,8 +549,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 space-y-6 overflow-hidden px-2 sm:left-auto sm:mx-auto sm:w-full sm:max-w-full sm:translate-x-0 sm:px-0">
+        <div className="grid w-full min-w-0 grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
@@ -570,7 +570,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-mesh rounded-2xl flex flex-col items-center justify-center py-24 text-center max-w-lg mx-auto"
+        className="bg-mesh mx-auto box-border flex w-full min-w-0 max-w-[calc(100vw-1rem)] flex-col items-center justify-center overflow-hidden rounded-2xl px-4 py-16 text-center sm:max-w-lg sm:py-24"
       >
         <div className="animate-gradient-bg rounded-2xl p-10 mb-6">
           <div className="relative">
@@ -584,7 +584,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           Start tracking your Ulcerative Colitis symptoms to unlock personalized insights, 
           trend analysis, and clinical handouts for your doctor.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             { icon: "📊", title: "Load Demo Data", desc: "Explore with 14 days of sample UC data", highlight: true },
             { icon: "📝", title: "Log First Symptom", desc: "Start tracking your daily symptoms", highlight: false },
@@ -698,72 +698,80 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   ];
 
   return (
-    <div className="space-y-4 md:space-y-8 w-full max-w-full min-w-0" id="overview-content">
+    <div id="overview-content" className="relative left-1/2 box-border w-screen max-w-[100vw] -translate-x-1/2 space-y-4 overflow-x-hidden px-2 sm:left-auto sm:mx-auto sm:w-full sm:max-w-full sm:translate-x-0 sm:px-0 md:space-y-8 md:px-4 [&>*]:mx-auto [&>*]:w-full [&>*]:min-w-0 [&>*]:max-w-[calc(100vw-1rem)] sm:[&>*]:max-w-full">
       {/* Emergency Alert Banner */}
-      <EmergencyAlertBanner symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <EmergencyAlertBanner symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Quick Stats Mini Bar */}
-      <div className="flex items-center justify-between gap-3">
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
         <QuickStatsStrip symptoms={symptoms} />
-      </div>
+      </section>
 
       {/* 7-Day Symptom Forecast */}
-      <SymptomForecast symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <SymptomForecast symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Health Score + Weekly Progress Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <HealthScoreCard symptoms={symptoms} isLoading={false} />
+      <section className="mx-auto grid w-full min-w-0 max-w-[calc(100vw-1rem)] grid-cols-1 justify-items-center gap-4 overflow-hidden sm:max-w-full md:grid-cols-2 md:gap-6">
+        <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+          <HealthScoreCard symptoms={symptoms} isLoading={false} />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.06 }}
+          className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
         >
           <WeeklyProgressSummary symptoms={symptoms} isLoading={false} />
         </motion.div>
-      </div>
+      </section>
 
       {/* Flare Risk Alert Banner */}
       {flareAlert ? (
         <motion.div
+          className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           <div>
             {flareAlert.level === "high" && (
-              <div className="rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-rose-100/50 dark:from-rose-950/40 dark:to-rose-900/20 dark:border-rose-700/60 p-4 flex items-start gap-3 card-premium">
+              <div className="card-premium flex min-w-0 items-start gap-3 overflow-hidden rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-rose-100/50 p-4 dark:border-rose-700/60 dark:from-rose-950/40 dark:to-rose-900/20">
                 <div className="rounded-full bg-rose-100 dark:bg-rose-900/60 p-2 shrink-0">
                   <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-rose-800 dark:text-rose-300 text-sm">High Flare Risk</h4>
-                  <p className="text-rose-700 dark:text-rose-400 text-sm mt-0.5">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-rose-800 dark:text-rose-300">High Flare Risk</h4>
+                  <p className="mt-0.5 break-words text-sm text-rose-700 dark:text-rose-400">
                     Your average pain level over the last 3 days is {flareAlert.avg.toFixed(1)}/10. Consider contacting your healthcare provider.
                   </p>
                 </div>
               </div>
             )}
             {flareAlert.level === "moderate" && (
-              <div className="rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 dark:border-amber-700/60 p-4 flex items-start gap-3 card-premium">
+              <div className="card-premium flex min-w-0 items-start gap-3 overflow-hidden rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-amber-100/50 p-4 dark:border-amber-700/60 dark:from-amber-950/40 dark:to-amber-900/20">
                 <div className="rounded-full bg-amber-100 dark:bg-amber-900/60 p-2 shrink-0">
                   <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm">Moderate Symptoms</h4>
-                  <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300">Moderate Symptoms</h4>
+                  <p className="mt-0.5 break-words text-sm text-amber-700 dark:text-amber-400">
                     Your recent pain levels are elevated. Continue monitoring and consider dietary adjustments.
                   </p>
                 </div>
               </div>
             )}
             {flareAlert.level === "stable" && (
-              <div className="rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 dark:border-emerald-700/60 p-4 flex items-start gap-3 card-premium">
+              <div className="card-premium flex min-w-0 items-start gap-3 overflow-hidden rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 dark:border-emerald-700/60 dark:from-emerald-950/40 dark:to-teal-950/30">
                 <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/60 p-2 shrink-0">
                   <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Symptoms Stable</h4>
-                  <p className="text-emerald-700 dark:text-emerald-400 text-sm mt-0.5">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Symptoms Stable</h4>
+                  <p className="mt-0.5 break-words text-sm text-emerald-700 dark:text-emerald-400">
                     Your recent readings look good. Keep up the great self-management!
                   </p>
                 </div>
@@ -772,36 +780,42 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           </div>
         </motion.div>
       ) : (
-        <div className="rounded-xl border-0 shadow-sm bg-card flex items-center justify-center p-4">
-          <p className="text-sm text-muted-foreground">No recent flare data available yet.</p>
-        </div>
+        <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+          <div className="rounded-xl border-0 shadow-sm bg-card flex items-center justify-center p-4">
+            <p className="text-sm text-muted-foreground">No recent flare data available yet.</p>
+          </div>
+        </section>
       )}
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08 }}
+        className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
       >
         <StreakCounter symptoms={symptoms} />
       </motion.div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 md:gap-4">
-        {metricCards.map((card, i) => (
-          <AnimatedMetricCard key={card.label} card={card} index={i} />
-        ))}
-      </div>
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <div className="grid min-w-0 max-w-full grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-3 md:gap-4 xl:grid-cols-6">
+          {metricCards.map((card, i) => (
+            <AnimatedMetricCard key={card.label} card={card} index={i} />
+          ))}
+        </div>
+      </section>
 
       {/* Weekly Insights */}
       {weeklyInsights && (
         <motion.div
+          className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
         >
-          <Card className="rounded-xl border-0 card-premium card-glow bg-gradient-subtle">
+          <Card className="min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium card-glow bg-gradient-subtle">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <CardTitle className="flex min-w-0 items-center gap-2 break-words text-base font-semibold">
                 <Trophy className="h-4 w-4 text-amber-500" />
                 Weekly Insights
               </CardTitle>
@@ -845,22 +859,28 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       )}
 
       {/* Symptom Calendar Heatmap */}
-      <SymptomCalendar symptoms={symptoms} isLoading={false} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <SymptomCalendar symptoms={symptoms} isLoading={false} />
+      </section>
 
       {/* Main Line Chart */}
       <motion.div
+        className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <Card className="rounded-xl border-0 card-premium">
+          <Card className="mx-auto w-full min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Symptom Trends</CardTitle>
+            <CardTitle className="min-w-0 break-words text-base font-semibold">Symptom Trends</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 p-2 sm:p-6">
-              <div className="w-full overflow-x-auto scrollbar-thin">
-                <ChartContainer config={lineChartConfig} className="min-w-[550px] sm:min-w-0 h-[250px] sm:h-[320px] w-full overflow-hidden">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+              <div className="mx-auto w-full min-w-0 max-w-full overflow-hidden">
+                <ChartContainer config={lineChartConfig} className="mx-auto h-[220px] w-full min-w-0 max-w-full overflow-hidden sm:h-80">
+              <LineChart
+                data={chartData}
+                margin={isMobile ? { top: 5, right: 4, left: -20, bottom: 0 } : { top: 5, right: 10, left: -20, bottom: 5 }}
+              >
                 <defs>
                   <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.35} />
@@ -880,11 +900,25 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" className="fill-muted-foreground" />
-                <YAxis yAxisId="left" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  interval="preserveStartEnd"
+                  minTickGap={isMobile ? 24 : 16}
+                  className="fill-muted-foreground"
+                />
+                <YAxis yAxisId="left" tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 26 : 32} className="fill-muted-foreground" interval="preserveStartEnd" />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  width={isMobile ? 0 : 32}
+                  hide={isMobile}
+                  className="fill-muted-foreground"
+                  interval="preserveStartEnd"
+                />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={<ChartLegendContent className="px-2" />} />
                 {/* Area fills */}
                 <Area
                   yAxisId="left"
@@ -953,18 +987,19 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       {/* Stress vs Pain Scatter Plot */}
       {scatterAnalysis && (
         <motion.div
+          className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.17 }}
         >
-          <Card className="rounded-xl border-0 card-premium">
+          <Card className="mx-auto w-full min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium">
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                <CardTitle className="flex min-w-0 items-center gap-2 break-words text-base font-semibold">
                   <Brain className="h-4 w-4 text-teal-600" />
                   Stress vs Pain Correlation
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                   <Badge
                     variant={
                       Math.abs(scatterAnalysis.correlation) > 0.6
@@ -975,7 +1010,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   >
                     r = {scatterAnalysis.correlation.toFixed(2)}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="hidden text-xs text-muted-foreground sm:inline">
                     {Math.abs(scatterAnalysis.correlation) > 0.7
                       ? "Strong"
                       : Math.abs(scatterAnalysis.correlation) > 0.4
@@ -987,14 +1022,14 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
               </div>
             </CardHeader>
             <CardContent className="pt-0 p-2 sm:p-6">
-              <div className="w-full overflow-x-auto scrollbar-thin">
-                <ChartContainer config={enhancedScatterConfig} className="min-w-[550px] sm:min-w-0 h-[240px] sm:h-[300px] w-full overflow-hidden">
+              <div className="mx-auto w-full min-w-0 max-w-full overflow-hidden">
+                <ChartContainer config={enhancedScatterConfig} className="mx-auto h-[250px] w-full min-w-0 max-w-full overflow-hidden sm:h-60">
               <ScatterChart
                 margin={{
                   top: 10,
-                  right: 10,
-                  bottom: 20,
-                  left: 10,
+                  right: isMobile ? 4 : 10,
+                  bottom: isMobile ? 12 : 20,
+                  left: isMobile ? 0 : 10,
                 }}
               >
                   <defs>
@@ -1025,9 +1060,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                     name="Stress Level"
                     type="number"
                     domain={[0, 10]}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
                     className="fill-muted-foreground"
-                    label={{
+                    label={isMobile ? undefined : {
                       value: "Stress Level →",
                       position: "bottom",
                       offset: 0,
@@ -1040,9 +1075,10 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                     name="Pain Level"
                     type="number"
                     domain={[0, 10]}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    width={isMobile ? 28 : 36}
                     className="fill-muted-foreground"
-                    label={{
+                    label={isMobile ? undefined : {
                       value: "↑ Pain Level",
                       angle: -90,
                       position: "insideLeft",
@@ -1101,7 +1137,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                 </ScatterChart>
             </ChartContainer>
               </div>
-              <div className="flex items-center justify-center gap-6 mt-2">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
                   Symptom Log Entry
@@ -1124,11 +1160,11 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
 
       {/* Period Comparison */}
       {periodComparison && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
-          <Card className="rounded-xl border-0 card-premium">
+        <motion.div className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+          <Card className="mx-auto w-full min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium">
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <div className="flex min-w-0 items-start justify-between gap-2">
+                <CardTitle className="flex min-w-0 items-center gap-2 break-words text-base font-semibold">
                   <GitCompareArrows className="h-4 w-4 text-teal-600" />
                   Period Comparison
                 </CardTitle>
@@ -1137,12 +1173,12 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             <CardContent className="pt-0">
               <p className="text-sm text-muted-foreground mb-4">Compare your first and second half of logged data to spot trends.</p>
               {/* Column headers */}
-              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center mb-3">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)] items-center gap-1 sm:gap-2 mb-3">
                 <div className="text-center">
                   <p className="text-xs font-medium text-muted-foreground">First Half</p>
                   <p className="text-xs text-muted-foreground/70">{periodComparison.first.dateRange}</p>
                 </div>
-                <div className="w-8" />
+                <div className="w-9 shrink-0" />
                 <div className="text-center">
                   <p className="text-xs font-medium text-muted-foreground">Second Half</p>
                   <p className="text-xs text-muted-foreground/70">{periodComparison.second.dateRange}</p>
@@ -1200,13 +1236,13 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                 return (
                   <div
                     key={row.label}
-                    className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center py-2.5 border-b last:border-b-0"
+                    className="grid min-w-0 grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)] items-center gap-1 py-2.5 sm:gap-2 border-b last:border-b-0"
                   >
-                    <div className="text-center rounded-lg bg-muted/40 px-3 py-2">
-                      <p className="text-sm font-semibold">{row.first}{row.suffix}</p>
+                    <div className="min-w-0 rounded-lg bg-muted/40 px-2 py-2 text-center sm:px-3">
+                      <p className="min-w-0 truncate text-xs font-semibold sm:text-sm">{row.first}{row.suffix}</p>
                     </div>
-                    <div className="flex flex-col items-center w-8">
-                      <p className="text-[10px] text-muted-foreground mb-0.5">{row.label}</p>
+                    <div className="flex w-9 min-w-0 shrink-0 flex-col items-center">
+                      <p className="mb-0.5 max-w-9 break-words text-center text-[9px] leading-tight text-muted-foreground sm:text-[10px]">{row.label}</p>
                       {row.isText ? (
                         changed ? (
                           <ArrowRight className="h-3.5 w-3.5 text-amber-500" />
@@ -1221,9 +1257,9 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                         <TrendingUp className="h-3.5 w-3.5 text-rose-500" />
                       )}
                     </div>
-                    <div className="text-center rounded-lg bg-muted/40 px-3 py-2">
+                    <div className="min-w-0 rounded-lg bg-muted/40 px-2 py-2 text-center sm:px-3">
                       <p
-                        className={`text-sm font-semibold ${
+                        className={`min-w-0 truncate text-xs font-semibold sm:text-sm ${
                           row.isText
                             ? ""
                             : worsened
@@ -1245,16 +1281,17 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       )}
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="mx-auto grid w-full min-w-0 max-w-[calc(100vw-1rem)] grid-cols-1 justify-items-center gap-4 sm:max-w-full lg:grid-cols-3">
         {/* Most Common Triggers */}
         <motion.div
+          className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="rounded-xl border-0 card-premium h-full">
+          <Card className="mx-auto h-full w-full min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Most Common Triggers</CardTitle>
+              <CardTitle className="min-w-0 break-words text-base font-semibold">Most Common Triggers</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               {triggerCounts.length ? (
@@ -1265,7 +1302,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                         <div className="flex items-center gap-2 text-sm mb-1">
                           <span className="h-2 w-2 rounded-full bg-teal-500 shrink-0" />
                           <span className="font-bold">{t.count}</span>
-                          <span className="font-medium truncate text-muted-foreground">{t.trigger}</span>
+                          <span className="min-w-0 flex-1 truncate font-medium text-muted-foreground">{t.trigger}</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
                           <motion.div
@@ -1289,23 +1326,26 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
         </motion.div>
 
         {/* Flare Risk Predictor */}
-        <FlareRiskPredictor symptoms={symptoms} isLoading={isLoading} />
+        <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+          <FlareRiskPredictor symptoms={symptoms} isLoading={isLoading} />
+        </div>
 
         {/* Stool Type Distribution */}
         <motion.div
+          className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <Card className="rounded-xl border-0 card-premium h-full">
+          <Card className="mx-auto h-full w-full min-w-0 max-w-full overflow-hidden rounded-xl border-0 card-premium">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Bristol Stool Type Distribution</CardTitle>
+              <CardTitle className="min-w-0 break-words text-base font-semibold">Bristol Stool Type Distribution</CardTitle>
             </CardHeader>
             <CardContent className="pt-0 p-2 sm:p-6">
               {stoolTypeDistribution.length ? (
-                <div className="flex items-center gap-4 md:flex-row flex-col max-h-none md:max-h-[200px]">
+                <div className="flex max-h-none min-w-0 flex-col items-center gap-4 md:max-h-[200px] md:flex-row">
                   <div className="relative">
-                    <ChartContainer config={pieChartConfig} className="h-[150px] w-[150px] md:h-[200px] md:w-[200px] shrink-0">
+                    <ChartContainer config={pieChartConfig} className="h-[150px] w-[150px] max-w-full shrink-0 md:h-[200px] md:w-[200px]">
                       <PieChart>
                         <defs>
                           <filter id="donutShadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -1338,14 +1378,14 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1 md:gap-2 min-w-0 overflow-y-auto">
+                  <div className="flex w-full min-w-0 flex-col gap-1 overflow-y-auto md:gap-2">
                     {stoolTypeDistribution.map((entry) => (
-                      <div key={entry.type} className="flex items-center gap-2 text-xs md:text-sm">
+                      <div key={entry.type} className="flex min-w-0 items-center gap-2 text-xs md:text-sm">
                         <div
                           className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm shrink-0"
                           style={{ backgroundColor: entry.fill }}
                         />
-                        <span className="text-muted-foreground truncate">{getStoolEmoji(entry.type)} Type {entry.type}</span>
+                        <span className="min-w-0 flex-1 truncate text-muted-foreground">{getStoolEmoji(entry.type)} Type {entry.type}</span>
                         <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] md:text-xs">
                           {entry.value}
                         </Badge>
@@ -1364,28 +1404,44 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       </div>
 
       {/* Severity Distribution */}
-      <SeverityDistribution symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <SeverityDistribution symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Week-over-Week Radar */}
-      <SymptomRadar symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <SymptomRadar symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Blood Tracker */}
-      <BloodTracker symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <BloodTracker symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Medication Tracker */}
-      <MedicationTracker symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <MedicationTracker symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Trigger Correlation Analysis */}
-      <TriggerCorrelation symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <TriggerCorrelation symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* Symptom Timeline */}
-      <SymptomTimeline symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <SymptomTimeline symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* AI Symptom Insights Summary */}
-      <SymptomInsights symptoms={symptoms} isLoading={isLoading} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <SymptomInsights symptoms={symptoms} isLoading={isLoading} />
+      </section>
 
       {/* AI Insights Chat Panel */}
-      <AIInsightsPanel symptoms={symptoms} />
+      <section className="mx-auto w-full min-w-0 max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-full">
+        <AIInsightsPanel symptoms={symptoms} />
+      </section>
     </div>
   );
 }

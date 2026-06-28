@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnimatedNumber } from "@/hooks/use-animated-number";
 import type { SymptomLog } from "@/types/symptom";
-import { subDays, startOfDay, isAfter, isBefore, parseISO, format, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { subDays, startOfDay, isAfter, isBefore, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
 
 interface WeeklyProgressSummaryProps {
   symptoms: SymptomLog[];
@@ -106,7 +106,7 @@ function MiniProgressBar({
   const lastColor = "bg-muted-foreground/20";
 
   return (
-    <div className="flex flex-col gap-1 w-24 shrink-0">
+    <div className="flex w-20 shrink-0 flex-col gap-1 sm:w-24">
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
@@ -138,29 +138,33 @@ function MetricRowDisplay({ metric, index }: { metric: MetricRow; index: number 
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.08 * index, duration: 0.35 }}
-      className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0"
+      className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 border-b border-border/50 py-3 last:border-0 sm:flex sm:items-center"
     >
       <div className="rounded-lg bg-muted/60 p-2 shrink-0">
         <metric.icon className="h-4 w-4 text-muted-foreground" />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground leading-tight">{metric.name}</p>
-        <p className="text-lg font-bold leading-tight mt-0.5">
+      <div className="min-w-0 sm:flex sm:flex-1 sm:items-center sm:gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground leading-tight">{metric.name}</p>
+          <p className="mt-0.5 text-lg font-bold leading-tight">
           {displayValue}
-          <span className="text-xs font-medium text-muted-foreground ml-0.5">
+            <span className="ml-0.5 text-xs font-medium text-muted-foreground">
             {metric.suffix}
-          </span>
-        </p>
-      </div>
-      <MiniProgressBar
-        thisWeek={metric.thisWeek}
-        lastWeek={metric.lastWeek}
-        max={metric.max}
-        lowerIsBetter={metric.lowerIsBetter}
-      />
-      <div className="flex flex-col items-end gap-0.5 shrink-0">
-        <TrendArrow change={metric.change} lowerIsBetter={metric.lowerIsBetter} />
-        <ChangeBadge change={metric.change} lowerIsBetter={metric.lowerIsBetter} />
+            </span>
+          </p>
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-3 sm:mt-0 sm:ml-auto sm:justify-end">
+          <MiniProgressBar
+            thisWeek={metric.thisWeek}
+            lastWeek={metric.lastWeek}
+            max={metric.max}
+            lowerIsBetter={metric.lowerIsBetter}
+          />
+          <div className="flex shrink-0 flex-col items-end gap-0.5">
+            <TrendArrow change={metric.change} lowerIsBetter={metric.lowerIsBetter} />
+            <ChangeBadge change={metric.change} lowerIsBetter={metric.lowerIsBetter} />
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -363,13 +367,13 @@ export default function WeeklyProgressSummary({
   return (
     <Card className="rounded-xl border-0 shadow-sm card-premium">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-teal-600" />
             Weekly Progress
           </CardTitle>
           <div
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${status.bg} ${status.color} ${status.border} badge-refined`}
+            className={`inline-flex items-center gap-1.5 self-start rounded-full border px-2.5 py-0.5 text-xs font-semibold ${status.bg} ${status.color} ${status.border} badge-refined sm:self-auto`}
           >
             {overallStatus === "Improving" && (
               <TrendingDown className="h-3 w-3" />
@@ -389,12 +393,12 @@ export default function WeeklyProgressSummary({
       </CardHeader>
       <CardContent className="pt-0">
         <div>
-          {rows.map((row, i) => (
+          {rows.map((row: MetricRow, i: number) => (
             <MetricRowDisplay key={row.name} metric={row} index={i} />
           ))}
         </div>
         {/* Legend */}
-        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-border/40">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/40 pt-2">
           <div className="flex items-center gap-1.5">
             <div className="h-1.5 w-3 rounded-full bg-muted-foreground/60" />
             <span className="text-[10px] text-muted-foreground">This week</span>

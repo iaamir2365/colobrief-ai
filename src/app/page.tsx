@@ -44,12 +44,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import type { SymptomLog } from "@/types/symptom";
-import { useAuthStore, getAuthHeaders } from "@/stores/auth-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { fetchJson } from "@/lib/fetch-json";
 
 import OverviewTab from "@/components/colobrief/overview-tab";
 import LogSymptomsTab from "@/components/colobrief/log-symptoms-tab";
@@ -86,35 +86,39 @@ function AppContent() {
     initialize();
   }, [initialize]);
 
-  // Authenticated fetch wrapper
-  const authFetch = useCallback((url: string, options: RequestInit = {}) => {
-    const headers = new Headers(options.headers);
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-    return fetch(url, { ...options, headers });
-  }, [token]);
-
   const { data: symptoms = [], isLoading, isError, error } = useQuery<SymptomLog[]>({
     queryKey: ["symptoms"],
-    queryFn: () => authFetch("/api/symptoms").then((r) => {
-      if (r.status === 401) {
+    queryFn: async () => {
+      const { data, response } = await fetchJson<SymptomLog[]>("/api/symptoms", {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (response.status === 401) {
         logout();
         throw new Error("Session expired");
       }
-      return r.json();
-    }),
+      if (!response.ok) {
+        throw new Error("Failed to load symptom data");
+      }
+      return data;
+    },
     enabled: !!token && isInitialized && !!user?.emailVerified,
   });
 
   const demoMutation = useMutation({
-    mutationFn: () => authFetch("/api/symptoms/demo", { method: "POST" }).then((r) => {
-      if (r.status === 401) {
+    mutationFn: async () => {
+      const { data, response } = await fetchJson<unknown>("/api/symptoms/demo", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (response.status === 401) {
         logout();
         throw new Error("Session expired");
       }
-      return r.json();
-    }),
+      if (!response.ok) {
+        throw new Error("Failed to load demo data");
+      }
+      return data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["symptoms"] });
       toast.success("Demo data loaded! 🎉 Explore the dashboard with sample UC symptom data.");
@@ -355,15 +359,15 @@ function AppContent() {
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset>
+        <SidebarInset className="w-full min-w-0 max-w-full overflow-x-hidden">
           <OnboardingTour
             onLoadDemo={() => demoMutation.mutate()}
             onStartLogging={() => setActiveTab("log")}
             symptomCount={symptoms.length}
           />
-          <div className="min-h-screen flex flex-col">
+          <div className="flex min-h-screen w-full min-w-0 max-w-full flex-col overflow-x-hidden">
             {/* Top Header */}
-            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6 print:hidden">
+            <header className="sticky top-0 z-10 flex h-14 w-full min-w-0 max-w-full items-center gap-3 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:gap-4 sm:px-6 print:hidden">
               {/* Mobile Hamburger Button */}
               <Button variant="ghost" size="icon" className="md:hidden -ml-2" onClick={() => setSheetOpen(true)}>
                 <Menu className="h-5 w-5" />
@@ -413,16 +417,16 @@ function AppContent() {
 
           {/* Error Banner */}
           {isError && (
-            <div className="mx-6 mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive flex items-center gap-2">
+            <div className="mx-3 mt-4 min-w-0 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive flex items-center gap-2 sm:mx-6 sm:max-w-full">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error instanceof Error ? error.message : "Failed to load symptom data. Please try refreshing the page."}
             </div>
           )}
 
           {/* Main Content */}
-          <main className="flex-1 p-3 sm:p-4 md:p-6 pb-32 md:pb-20">
-            <ScrollArea className="h-full">
-              <div className="w-full max-w-full min-w-0">
+          <main className="flex-1 w-full min-w-0 max-w-full overflow-x-hidden px-0 py-3 pb-[calc(env(safe-area-inset-bottom)+9rem)] sm:px-4 sm:py-4 sm:pb-36 md:px-6 md:py-6 md:pb-20">
+            <ScrollArea className="h-full w-full min-w-0 max-w-full overflow-x-hidden">
+              <div className="mx-auto w-full min-w-0 max-w-[100vw] overflow-x-hidden px-3 sm:max-w-full sm:px-0">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeTab}
@@ -430,7 +434,7 @@ function AppContent() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="w-full max-w-full min-w-0"
+                    className="mx-auto w-full min-w-0 max-w-full overflow-x-hidden"
                   >
                     {activeTab === "overview" && (
                       <OverviewTab symptoms={symptoms} isLoading={isLoading} />
@@ -489,9 +493,9 @@ function AppContent() {
           <Button
             onClick={() => setActiveTab("log")}
             size="lg"
-            className="fixed bottom-6 right-6 md:hidden h-14 w-14 rounded-full shadow-xl shadow-teal-500/30 bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 z-50 p-0 glow-teal"
+            className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-3 z-50 h-12 w-12 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 p-0 shadow-xl shadow-teal-500/30 hover:from-teal-600 hover:to-teal-700 md:hidden md:h-14 md:w-14 glow-teal"
           >
-            <PlusCircle className="h-7 w-7" />
+            <PlusCircle className="h-6 w-6 md:h-7 md:w-7" />
           </Button>
         </div>
       </SidebarInset>
