@@ -148,7 +148,7 @@ export default function OnboardingTour({
                         </h2>
                         <p className="text-muted-foreground leading-relaxed max-w-xs mx-auto">
                           Your AI-powered companion for tracking Ulcerative Colitis
-                          symptoms. Let&apos;s take a quick tour.
+                          symptoms. Let's take a quick tour.
                         </p>
                       </div>
                       <div className="flex flex-col items-center gap-3 pt-2 w-full">
@@ -435,7 +435,7 @@ export default function OnboardingTour({
 
                       <div className="space-y-2">
                         <h2 className="text-2xl font-bold tracking-tight">
-                          You&apos;re All Set!
+                          You're All Set!
                         </h2>
                         <p className="text-muted-foreground leading-relaxed max-w-xs mx-auto">
                           Try with sample data or start logging your own symptoms

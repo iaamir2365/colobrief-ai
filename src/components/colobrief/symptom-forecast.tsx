@@ -174,7 +174,7 @@ export default function SymptomForecast({ symptoms, isLoading }: SymptomForecast
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin -mx-1 px-1">
             {forecast.map((day, i) => (
               <motion.div
                 key={`${day.dayName}-${day.date}`}

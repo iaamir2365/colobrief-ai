@@ -471,7 +471,7 @@ export default function MyRecordsTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-full min-w-0">
       {/* Quick Stats Summary Strip */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -511,9 +511,9 @@ export default function MyRecordsTab({
       </motion.div>
 
       {/* Search & Export & Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <div className="rounded-xl card-premium flex items-center px-1">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full max-w-full min-w-0">
+        <div className="relative flex-1 max-w-full sm:max-w-sm w-full">
+          <div className="rounded-xl card-premium flex items-center px-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
             placeholder="Search by date, notes, or triggers..."
@@ -522,7 +522,7 @@ export default function MyRecordsTab({
               setSearch(e.target.value);
               setPage(0);
             }}
-            className="pl-9 border-0 shadow-none focus-visible:ring-0"
+            className="pl-9 border-0 shadow-none focus-visible:ring-0 w-full"
           />
           </div>
         </div>
@@ -605,7 +605,7 @@ export default function MyRecordsTab({
       {/* Table */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <Card className="rounded-xl border-0 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">

@@ -17,6 +17,7 @@ import {
   AlertCircle,
   CalendarDays,
   LogOut,
+  Menu,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -24,6 +25,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Sidebar,
   SidebarContent,
@@ -72,6 +79,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const { theme, setTheme } = useTheme();
   const { user, token, isLoading: authLoading, isInitialized, initialize, logout } = useAuthStore();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Initialize auth on mount
   useEffect(() => {
@@ -118,6 +126,7 @@ function AppContent() {
 
   const handleTabChange = useCallback((key: string) => {
     setActiveTab(key as TabKey);
+    setSheetOpen(false);
   }, []);
 
   useEffect(() => {
@@ -181,114 +190,188 @@ function AppContent() {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon" className="border-r-0">
-        <SidebarHeader className="p-4">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 text-white shadow-sm">
-                  <Heart className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">ColoBrief AI</span>
-                  <span className="truncate text-xs text-muted-foreground">Empathetic UC Tracking</span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {NAV_ITEMS.map((item) => (
-                  <SidebarMenuItem key={item.key}>
-                    <SidebarMenuButton
-                      isActive={activeTab === item.key}
-                      onClick={() => handleTabChange(item.key)}
-                      tooltip={`${item.label} (Ctrl+${item.shortcut})`}
-                      className={activeTab === item.key ? "bg-primary/10 border-l-2 border-l-primary" : "border-l-2 border-l-transparent"}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <SidebarSeparator />
-
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => demoMutation.mutate()}
-                    disabled={demoMutation.isPending}
-                    tooltip="Load Demo Data"
-                    className="text-muted-foreground hover:text-foreground border-l-2 border-l-teal-500 bg-teal-500/5 hover:bg-teal-500/10 rounded-r-md btn-premium"
-                  >
-                    {demoMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <DatabaseZap className="h-4 w-4" />
-                    )}
-                    <span>Load Demo Data</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-
-        </SidebarContent>
-
-        <SidebarFooter className="p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-teal-100 text-teal-700 text-xs font-medium">{userInitials}</AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-            </div>
+    <>
+      {/* Mobile Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="left" className="w-4/5">
+          <SheetHeader className="pt-2">
+            <SheetTitle className="flex items-center gap-2">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 text-white shadow-sm">
+                <Heart className="size-4" />
+              </div>
+              ColoBrief AI
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-2 py-4">
+            {NAV_ITEMS.map((item) => (
+              <Button
+                key={item.key}
+                variant={activeTab === item.key ? "default" : "ghost"}
+                onClick={() => handleTabChange(item.key)}
+                className="justify-start gap-3"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Button>
+            ))}
+          </div>
+          <Separator />
+          <div className="py-4">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-rose-500"
               onClick={() => {
-                logout();
-                queryClient.clear();
-                toast.success("Logged out successfully");
+                demoMutation.mutate();
+                setSheetOpen(false);
               }}
-              title="Sign out"
+              disabled={demoMutation.isPending}
+              className="justify-start gap-3 w-full"
             >
-              <LogOut className="h-4 w-4" />
+              {demoMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <DatabaseZap className="h-4 w-4" />
+              )}
+              <span>Load Demo Data</span>
             </Button>
           </div>
-          <span className="truncate text-xs text-muted-foreground">v1.5.0</span>
-        </SidebarFooter>
+          <div className="mt-auto border-t pt-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-teal-100 text-teal-700 text-sm font-medium">{userInitials}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-rose-500"
+                onClick={() => {
+                  logout();
+                  queryClient.clear();
+                  toast.success("Logged out successfully");
+                }}
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-        <SidebarRail />
-      </Sidebar>
+      <SidebarProvider defaultOpen={false}>
+        <Sidebar collapsible="offcanvas" className="border-r-0 hidden md:flex">
+          <SidebarHeader className="p-4">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-700 text-white shadow-sm">
+                    <Heart className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">ColoBrief AI</span>
+                    <span className="truncate text-xs text-muted-foreground">Empathetic UC Tracking</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
 
-      <SidebarInset>
-        <OnboardingTour
-          onLoadDemo={() => demoMutation.mutate()}
-          onStartLogging={() => setActiveTab("log")}
-          symptomCount={symptoms.length}
-        />
-        <div className="min-h-screen flex flex-col">
-          {/* Top Header */}
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 print:hidden">
-            <SidebarTrigger className="-ml-2" />
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold tracking-tight">{TAB_TITLES[activeTab]}</h1>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {NAV_ITEMS.map((item) => (
+                    <SidebarMenuItem key={item.key}>
+                      <SidebarMenuButton
+                        isActive={activeTab === item.key}
+                        onClick={() => {
+                          handleTabChange(item.key);
+                        }}
+                        tooltip={`${item.label} (Ctrl+${item.shortcut})`}
+                        className={activeTab === item.key ? "bg-primary/10 border-l-2 border-l-primary" : "border-l-2 border-l-transparent"}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarSeparator />
+
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => demoMutation.mutate()}
+                      disabled={demoMutation.isPending}
+                      tooltip="Load Demo Data"
+                      className="text-muted-foreground hover:text-foreground border-l-2 border-l-teal-500 bg-teal-500/5 hover:bg-teal-500/10 rounded-r-md btn-premium"
+                    >
+                      {demoMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <DatabaseZap className="h-4 w-4" />
+                      )}
+                      <span>Load Demo Data</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <SidebarFooter className="p-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-teal-100 text-teal-700 text-xs font-medium">{userInitials}</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-rose-500"
+                onClick={() => {
+                  logout();
+                  queryClient.clear();
+                  toast.success("Logged out successfully");
+                }}
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+            <span className="truncate text-xs text-muted-foreground">v1.5.0</span>
+          </SidebarFooter>
+        </Sidebar>
+
+        <SidebarInset>
+          <OnboardingTour
+            onLoadDemo={() => demoMutation.mutate()}
+            onStartLogging={() => setActiveTab("log")}
+            symptomCount={symptoms.length}
+          />
+          <div className="min-h-screen flex flex-col">
+            {/* Top Header */}
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6 print:hidden">
+              {/* Mobile Hamburger Button */}
+              <Button variant="ghost" size="icon" className="md:hidden -ml-2" onClick={() => setSheetOpen(true)}>
+                <Menu className="h-5 w-5" />
+              </Button>
+              {/* Desktop Sidebar Trigger */}
+              <SidebarTrigger className="hidden md:flex -ml-2" />
+              <Separator orientation="vertical" className="h-6 hidden md:block" />
+              <h1 className="text-lg font-semibold tracking-tight">{TAB_TITLES[activeTab]}</h1>
             {symptoms.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -337,40 +420,43 @@ function AppContent() {
           )}
 
           {/* Main Content */}
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 pb-32 md:pb-20">
             <ScrollArea className="h-full">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
-                  {activeTab === "overview" && (
-                    <OverviewTab symptoms={symptoms} isLoading={isLoading} />
-                  )}
-                  {activeTab === "log" && (
-                    <LogSymptomsTab
-                      symptoms={symptoms}
-                      onSaved={() => queryClient.invalidateQueries({ queryKey: ["symptoms"] })}
-                    />
-                  )}
-                  {activeTab === "records" && (
-                    <MyRecordsTab
-                      symptoms={symptoms}
-                      isLoading={isLoading}
-                      onDeleted={() =>
-                        queryClient.invalidateQueries({ queryKey: ["symptoms"] })
-                      }
-                      onGoToLog={() => setActiveTab("log")}
-                    />
-                  )}
-                  {activeTab === "handout" && (
-                    <DoctorHandoutTab symptoms={symptoms} isLoading={isLoading} />
-                  )}
-                </motion.div>
-              </AnimatePresence>
+              <div className="w-full max-w-full min-w-0">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    className="w-full max-w-full min-w-0"
+                  >
+                    {activeTab === "overview" && (
+                      <OverviewTab symptoms={symptoms} isLoading={isLoading} />
+                    )}
+                    {activeTab === "log" && (
+                      <LogSymptomsTab
+                        symptoms={symptoms}
+                        onSaved={() => queryClient.invalidateQueries({ queryKey: ["symptoms"] })}
+                      />
+                    )}
+                    {activeTab === "records" && (
+                      <MyRecordsTab
+                        symptoms={symptoms}
+                        isLoading={isLoading}
+                        onDeleted={() =>
+                          queryClient.invalidateQueries({ queryKey: ["symptoms"] })
+                        }
+                        onGoToLog={() => setActiveTab("log")}
+                      />
+                    )}
+                    {activeTab === "handout" && (
+                      <DoctorHandoutTab symptoms={symptoms} isLoading={isLoading} />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </ScrollArea>
           </main>
 
@@ -410,6 +496,7 @@ function AppContent() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+    </>
   );
 }
 

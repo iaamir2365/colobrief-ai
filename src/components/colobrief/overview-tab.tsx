@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useAnimatedNumber } from "@/hooks/use-animated-number";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -195,6 +196,7 @@ function MiniSparkline({ dataPoints, color }: { dataPoints: number[]; color: str
 
 function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: number }) {
   const animatedValue = useAnimatedNumber(card.rawValue);
+  const isMobile = useIsMobile();
   const displayValue = card.decimals > 0
     ? animatedValue.toFixed(card.decimals)
     : String(Math.round(animatedValue));
@@ -205,10 +207,10 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, type: "spring", stiffness: 200, damping: 20 }}
     >
-      <Card className={`rounded-xl border-0 card-premium hover-lift border-l-4 ${card.borderColor}`}>
-        <CardContent className="p-5 relative">
-          {card.gaugeMax && (
-            <div className="absolute top-2 right-2">
+      <Card className={`rounded-xl border-0 card-premium hover-lift border-l-4 ${card.borderColor} h-full`}>
+        <CardContent className="p-3 md:p-5 relative flex flex-col h-full">
+          {card.gaugeMax && !isMobile && (
+            <div className="absolute top-3 right-3">
               <CircularGauge value={card.rawValue} max={card.gaugeMax} color={card.gaugeColor} />
             </div>
           )}
@@ -216,18 +218,25 @@ function AnimatedMetricCard({ card, index }: { card: MetricCardData; index: numb
             <div className={`rounded-lg p-2.5 ${card.bgColor}`}>
               <card.icon className={`h-5 w-5 ${card.color}`} />
             </div>
-            {card.prev !== null && (
-              <TrendIndicator current={card.rawValue} previous={card.prev!} />
+            {card.prev !== null ? (
+              <div className="flex items-center gap-1">
+                <TrendIndicator current={card.rawValue} previous={card.prev!} />
+                <span className="text-[10px] text-muted-foreground">vs last wk</span>
+              </div>
+            ) : (
+              <div className="w-[60px]" />
             )}
           </div>
-          <div className="mt-3">
-            <p className="text-sm text-muted-foreground">{card.label}</p>
-            <p className="text-2xl font-bold mt-0.5 stat-value" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.06)" }}>
-              {displayValue}<span className="text-base font-medium text-muted-foreground ml-0.5">{card.suffix}</span>
+          <div className="mt-4 flex-grow">
+            <p className="text-xs md:text-sm text-muted-foreground whitespace-normal">{card.label}</p>
+            <p className="text-xl md:text-2xl font-bold mt-0.5 stat-value" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.06)" }}>
+              {displayValue}<span className="text-sm md:text-base font-medium text-muted-foreground ml-0.5">{card.suffix}</span>
             </p>
           </div>
-          {card.sparkData.length > 0 && (
+          {card.sparkData.length > 0 ? (
             <MiniSparkline dataPoints={card.sparkData} color={card.sparklineColor} />
+          ) : (
+            <div className="h-[30px]" />
           )}
         </CardContent>
       </Card>
@@ -270,11 +279,11 @@ function QuickStatsStrip({ symptoms }: { symptoms: SymptomLog[] }) {
       transition={{ duration: 0.4 }}
     >
       <div className="card-premium rounded-xl p-3">
-        <div className="flex items-center justify-around gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {items.map((item, i) => (
             <motion.div
               key={item.label}
-              className="flex items-center gap-2 text-center"
+              className="flex flex-col items-center gap-1 text-center"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 + 0.1, duration: 0.3 }}
@@ -541,7 +550,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
@@ -689,7 +698,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
   ];
 
   return (
-    <div className="space-y-8" id="overview-content">
+    <div className="space-y-4 md:space-y-8 w-full max-w-full min-w-0" id="overview-content">
       {/* Emergency Alert Banner */}
       <EmergencyAlertBanner symptoms={symptoms} isLoading={isLoading} />
 
@@ -777,7 +786,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
       </motion.div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 md:gap-4">
         {metricCards.map((card, i) => (
           <AnimatedMetricCard key={card.label} card={card} index={i} />
         ))}
@@ -848,9 +857,10 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Symptom Trends</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
-            <ChartContainer config={lineChartConfig} className="h-[320px] w-full">
-              <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <CardContent className="pt-0 p-2 sm:p-6">
+              <div className="w-full overflow-x-auto scrollbar-thin">
+                <ChartContainer config={lineChartConfig} className="min-w-[550px] sm:min-w-0 h-[250px] sm:h-[320px] w-full overflow-hidden">
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                 <defs>
                   <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.35} />
@@ -870,7 +880,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" className="fill-muted-foreground" />
                 <YAxis yAxisId="left" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -935,6 +945,7 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                 {/* Blood indicator dots rendered via custom activeDot on pain line */}
               </LineChart>
             </ChartContainer>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -975,12 +986,13 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
-            <ChartContainer config={enhancedScatterConfig} className="h-[300px] w-full">
+            <CardContent className="pt-0 p-2 sm:p-6">
+              <div className="w-full overflow-x-auto scrollbar-thin">
+                <ChartContainer config={enhancedScatterConfig} className="min-w-[550px] sm:min-w-0 h-[240px] sm:h-[300px] w-full overflow-hidden">
               <ScatterChart
                 margin={{
                   top: 10,
-                  right: 30,
+                  right: 10,
                   bottom: 20,
                   left: 10,
                 }}
@@ -1087,7 +1099,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                     })}
                   </Scatter>
                 </ScatterChart>
-              </ChartContainer>
+            </ChartContainer>
+              </div>
               <div className="flex items-center justify-center gap-6 mt-2">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
@@ -1288,11 +1301,11 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">Bristol Stool Type Distribution</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 p-2 sm:p-6">
               {stoolTypeDistribution.length ? (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 md:flex-row flex-col max-h-none md:max-h-[200px]">
                   <div className="relative">
-                    <ChartContainer config={pieChartConfig} className="h-[200px] w-[200px] shrink-0">
+                    <ChartContainer config={pieChartConfig} className="h-[150px] w-[150px] md:h-[200px] md:w-[200px] shrink-0">
                       <PieChart>
                         <defs>
                           <filter id="donutShadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -1303,8 +1316,8 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                           data={stoolTypeDistribution}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={85}
+                          innerRadius={35}
+                          outerRadius={65}
                           dataKey="value"
                           nameKey="type"
                           stroke="none"
@@ -1320,20 +1333,20 @@ export default function OverviewTab({ symptoms, isLoading }: OverviewTabProps) {
                     {/* Center label */}
                     {mostCommonStoolType && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-2xl font-bold text-foreground">Type {mostCommonStoolType.type}</span>
-                        <span className="text-xs text-muted-foreground">Most Common</span>
+                        <span className="text-lg md:text-2xl font-bold text-foreground">Type {mostCommonStoolType.type}</span>
+                        <span className="text-[10px] md:text-xs text-muted-foreground">Most Common</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-2 min-w-0">
+                  <div className="flex flex-col gap-1 md:gap-2 min-w-0 overflow-y-auto">
                     {stoolTypeDistribution.map((entry) => (
-                      <div key={entry.type} className="flex items-center gap-2 text-sm">
+                      <div key={entry.type} className="flex items-center gap-2 text-xs md:text-sm">
                         <div
-                          className="h-3 w-3 rounded-sm shrink-0"
+                          className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm shrink-0"
                           style={{ backgroundColor: entry.fill }}
                         />
                         <span className="text-muted-foreground truncate">{getStoolEmoji(entry.type)} Type {entry.type}</span>
-                        <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
+                        <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] md:text-xs">
                           {entry.value}
                         </Badge>
                       </div>

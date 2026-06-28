@@ -169,7 +169,8 @@ export default function SymptomRadar({ symptoms, isLoading }: SymptomRadarProps)
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <ChartContainer config={radarConfig} className="mx-auto h-[320px] w-full max-w-lg">
+          <div className="w-full overflow-x-auto scrollbar-thin flex justify-center">
+            <ChartContainer config={radarConfig} className="min-w-[450px] sm:min-w-0 h-[260px] sm:h-[320px] mx-auto w-full max-w-lg">
             <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
               <PolarGrid stroke="var(--color-border)" />
               <PolarAngleAxis
@@ -205,6 +206,7 @@ export default function SymptomRadar({ symptoms, isLoading }: SymptomRadarProps)
               <ChartLegend content={<ChartLegendContent />} />
             </RadarChart>
           </ChartContainer>
+          </div>
           <p className="text-[11px] text-muted-foreground/60 mt-2 text-center">
             All metrics normalized to 0–10 scale. Lower is better for Pain, Stool, Stress, Urgency.
           </p>

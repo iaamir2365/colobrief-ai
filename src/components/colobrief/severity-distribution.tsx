@@ -154,7 +154,8 @@ export default function SeverityDistribution({
         </CardHeader>
 
         <CardContent className="pt-0 space-y-3">
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
+          <div className="w-full overflow-x-auto scrollbar-thin">
+            <ChartContainer config={chartConfig} className="min-w-[500px] sm:min-w-0 h-[200px] w-full">
             <BarChart data={chartData} barCategoryGap="20%">
               <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
               <XAxis
@@ -192,6 +193,7 @@ export default function SeverityDistribution({
               </Bar>
             </BarChart>
           </ChartContainer>
+          </div>
 
           {/* Count labels on top of bars — rendered as a visual summary */}
           <div className="flex justify-around px-2 -mt-2">

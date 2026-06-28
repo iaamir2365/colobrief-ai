@@ -1,28 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const ZHIPU_BASE_URL = process.env.ZHIPU_BASE_URL || "https://open.bigmodel.cn/api/paas/v4";
-const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || "";
-
-async function callGLM(messages: { role: string; content: string }[], temperature = 0.4) {
-  const res = await fetch(`${ZHIPU_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${ZHIPU_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "GLM-4.7-Flash",
-      messages,
-      temperature,
-      thinking: { type: "disabled" },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`GLM API error ${res.status}: ${err}`);
-  }
-  return res.json();
-}
+import { callGLM } from "@/lib/zhipu";
 
 export async function POST(request: NextRequest) {
   try {

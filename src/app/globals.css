@@ -127,10 +127,22 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 box-border;
+  }
+  html,
+  body,
+  #root,
+  main {
+    @apply w-full max-w-full min-h-[100dvh] overflow-x-hidden;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  img,
+  svg,
+  canvas,
+  video {
+    @apply max-w-full;
   }
 }
 

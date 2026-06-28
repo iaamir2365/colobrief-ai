@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-auth";
 import { sendVerificationEmail } from "@/lib/email";
-import { randomBytes } from "crypto";
+import { generateVerificationCode } from "@/lib/auth";
 
 /**
  * POST /api/auth/send-verification
@@ -23,8 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a 6-digit verification code
-    const code = randomBytes(3).toString("hex").toUpperCase();
-    const token = `${code}-${Date.now()}`;
+    const { code, token } = generateVerificationCode();
 
     // Store the token in the user record
     await db.user.update({

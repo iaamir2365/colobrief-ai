@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET || "colobrief-jwt-secret-key-2024";
 
@@ -58,4 +59,10 @@ export function getTokenFromRequest(request: Request): JWTPayload | null {
   }
 
   return null;
+}
+
+export function generateVerificationCode(): { code: string; token: string } {
+  const code = randomBytes(3).toString("hex").toUpperCase();
+  const token = `${code}-${Date.now()}`;
+  return { code, token };
 }

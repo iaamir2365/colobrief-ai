@@ -91,12 +91,12 @@ export async function POST() {
     }
 
     // Check if demo user already has data
-    const existingLogs = await db.symptomLog.count({
+    const existingLogsCount = await db.symptomLog.count({
       where: { userId: user.id },
     });
 
     // Generate 14 days of demo data if none exists
-    if (existingLogs === 0) {
+    if (existingLogsCount === 0) {
       const entries = [];
       for (let i = 13; i >= 0; i--) {
         const isFlareDay = i === 10 || i === 4;
@@ -162,7 +162,7 @@ export async function POST() {
         doctorName: user.doctorName,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt.toISOString(),
-        _count: { symptomLogs: existingLogs || 14 },
+        _count: { symptomLogs: existingLogsCount || 14 },
       },
     });
   } catch (error) {

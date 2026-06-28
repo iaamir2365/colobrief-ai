@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { requireVerifiedAuth } from "@/lib/api-auth";
+import { mapSymptomLogToResponse } from "@/lib/utils";
 
 export async function PUT(
   request: NextRequest,
@@ -46,21 +47,7 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({
-      id: updated.id,
-      userId: updated.userId,
-      date: updated.date,
-      painLevel: updated.painLevel,
-      stoolFrequency: updated.stoolFrequency,
-      stoolType: updated.stoolType,
-      stressLevel: updated.stressLevel,
-      triggers: JSON.parse(updated.triggers),
-      notes: updated.notes ?? undefined,
-      medicationTaken: updated.medicationTaken ?? null,
-      bloodInStool: updated.bloodInStool,
-      urgencyLevel: updated.urgencyLevel,
-      createdAt: updated.createdAt.toISOString(),
-    });
+    return NextResponse.json(mapSymptomLogToResponse(updated));
   } catch (error) {
     console.error("Error updating symptom log:", error);
     return NextResponse.json(

@@ -15,17 +15,6 @@ export async function GET(request: Request) {
 
     const user = await db.user.findUnique({
       where: { id: payload.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        doctorName: true,
-        emailVerified: true,
-        createdAt: true,
-        _count: {
-          select: { symptomLogs: true },
-        },
-      },
     });
 
     if (!user) {
@@ -35,9 +24,18 @@ export async function GET(request: Request) {
       );
     }
 
+    const symptomLogsCount = await db.symptomLog.count({ where: { userId: user.id } });
+
     return NextResponse.json({
-      ...user,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      doctorName: user.doctorName,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt.toISOString(),
+      _count: {
+        symptomLogs: symptomLogsCount,
+      },
     });
   } catch (error) {
     console.error("Error fetching current user:", error);

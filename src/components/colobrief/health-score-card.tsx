@@ -50,15 +50,60 @@ function calculateScore(logs: SymptomLog[]): number {
 
 function CircularGaugeLarge({ value, color }: { value: number; color: string }) {
   const size = 150;
+  const mobileSize = 130;
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
+  const mobileRadius = (mobileSize - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
+  const mobileCircumference = mobileRadius * 2 * Math.PI;
   const progress = (value / 100) * circumference;
+  const mobileProgress = (value / 100) * mobileCircumference;
   const center = size / 2;
+  const mobileCenter = mobileSize / 2;
 
   return (
-    <div className="relative inline-flex items-center justify-center cursor-pointer group transition-transform duration-200 hover:scale-[1.04]">
-      <svg width={size} height={size} className="-rotate-90">
+    <div className="relative mx-auto flex justify-center items-center w-full max-w-[130px] md:max-w-none cursor-pointer group transition-transform duration-200 hover:scale-[1.04]">
+      {/* Mobile SVG */}
+      <svg width={mobileSize} height={mobileSize} className="-rotate-90 md:hidden">
+        {/* Background track */}
+        <circle
+          cx={mobileCenter}
+          cy={mobileCenter}
+          r={mobileRadius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-muted/20"
+        />
+        {/* Glow filter */}
+        <defs>
+          <filter id="gaugeGlowMobile">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {/* Progress arc */}
+        <motion.circle
+          cx={mobileCenter}
+          cy={mobileCenter}
+          r={mobileRadius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={mobileCircumference}
+          filter="url(#gaugeGlowMobile)"
+          initial={{ strokeDashoffset: mobileCircumference }}
+          animate={{ strokeDashoffset: mobileCircumference - mobileProgress }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+        />
+      </svg>
+      
+      {/* Desktop SVG */}
+      <svg width={size} height={size} className="-rotate-90 hidden md:block">
         {/* Background track */}
         <circle
           cx={center}
@@ -71,7 +116,7 @@ function CircularGaugeLarge({ value, color }: { value: number; color: string }) 
         />
         {/* Glow filter */}
         <defs>
-          <filter id="gaugeGlow">
+          <filter id="gaugeGlowDesktop">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -89,16 +134,17 @@ function CircularGaugeLarge({ value, color }: { value: number; color: string }) 
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
-          filter="url(#gaugeGlow)"
+          filter="url(#gaugeGlowDesktop)"
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference - progress }}
           transition={{ duration: 1.2, ease: "easeOut" }}
         />
       </svg>
+      
       {/* Center score text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-4xl font-bold tabular-nums"
+          className="text-2xl md:text-4xl font-bold tabular-nums"
           style={{ color }}
         >
           {Math.round(value)}
@@ -209,7 +255,7 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
             background: `radial-gradient(circle at 50% 30%, ${color}, transparent 70%)`,
           }}
         />
-        <CardContent className="p-5 relative flex flex-col items-center">
+        <CardContent className="flex flex-col items-center justify-center text-center p-4 w-full md:p-5 md:relative">
           {/* Header */}
           <div className="flex items-center justify-between w-full mb-3">
             <h3 className="section-title">
@@ -251,7 +297,7 @@ export default function HealthScoreCard({ symptoms, isLoading }: HealthScoreCard
           </motion.p>
 
           {/* Mini metrics */}
-          <div className="grid grid-cols-4 gap-3 mt-5 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 w-full">
             {miniMetrics.map((m) => (
               <div
                 key={m.label}

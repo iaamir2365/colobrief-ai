@@ -66,17 +66,22 @@ function parseInline(text: string): string {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-end gap-2">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900">
-        <Bot className="h-4 w-4 text-teal-600" />
-      </div>
-      <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-3">
-        <div className="flex gap-1">
-          <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:0ms]" />
-          <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:150ms]" />
-          <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:300ms]" />
+    <div className="space-y-2">
+      <div className="flex items-end gap-2">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900">
+          <Bot className="h-4 w-4 text-teal-600" />
+        </div>
+        <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-3">
+          <div className="flex gap-1">
+            <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:0ms]" />
+            <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:150ms]" />
+            <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:300ms]" />
+          </div>
         </div>
       </div>
+      <p className="text-xs text-muted-foreground text-center">
+        AI may take longer due to rate limits — please wait patiently.
+      </p>
     </div>
   );
 }

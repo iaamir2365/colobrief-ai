@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { requireVerifiedAuth } from "@/lib/api-auth";
+import { mapSymptomLogToResponse } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,21 +13,7 @@ export async function GET(request: NextRequest) {
       orderBy: { date: "desc" },
     });
 
-    const mapped = logs.map((log) => ({
-      id: log.id,
-      userId: log.userId,
-      date: log.date,
-      painLevel: log.painLevel,
-      stoolFrequency: log.stoolFrequency,
-      stoolType: log.stoolType, // can be null
-      stressLevel: log.stressLevel,
-      triggers: JSON.parse(log.triggers),
-      notes: log.notes ?? undefined,
-      medicationTaken: log.medicationTaken ?? null,
-      bloodInStool: log.bloodInStool,
-      urgencyLevel: log.urgencyLevel,
-      createdAt: log.createdAt.toISOString(),
-    }));
+    const mapped = logs.map(mapSymptomLogToResponse);
 
     return NextResponse.json(mapped);
   } catch (error) {
@@ -70,21 +57,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      id: log.id,
-      userId: log.userId,
-      date: log.date,
-      painLevel: log.painLevel,
-      stoolFrequency: log.stoolFrequency,
-      stoolType: log.stoolType,
-      stressLevel: log.stressLevel,
-      triggers: JSON.parse(log.triggers),
-      notes: log.notes ?? undefined,
-      medicationTaken: log.medicationTaken ?? null,
-      bloodInStool: log.bloodInStool,
-      urgencyLevel: log.urgencyLevel,
-      createdAt: log.createdAt.toISOString(),
-    });
+    return NextResponse.json(mapSymptomLogToResponse(log));
   } catch (error) {
     console.error("Error creating symptom log:", error);
     return NextResponse.json(

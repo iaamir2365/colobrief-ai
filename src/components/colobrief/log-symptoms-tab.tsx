@@ -515,7 +515,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 w-full max-w-full min-w-0">
       {/* Form Progress Indicator */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 px-1">
@@ -755,7 +755,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
               <CardTitle className="text-base font-semibold flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Triggers</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
                 {COMMON_TRIGGERS.map((trigger) => (
                   <label
                     key={trigger}
@@ -876,9 +876,9 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
           <Card className="rounded-xl border-0 shadow-sm card-premium card-glow">
             <CardContent className="p-6">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <Label className="text-sm font-medium">Notes</Label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <Button
                       variant={isRecording ? "destructive" : "outline"}
                       size="sm"
@@ -909,7 +909,7 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       size="sm"
                       onClick={handleAIExtract}
                       disabled={isExtracting || !notes.trim()}
-                      className="gap-1.5 bg-gradient-to-r from-violet-600 to-teal-600 hover:from-violet-700 hover:to-teal-700 text-white border-0 shadow-sm"
+                      className="gap-1.5 bg-gradient-to-r from-violet-600 to-teal-600 hover:from-violet-700 hover:to-teal-700 text-white border-0 shadow-sm w-full sm:w-auto"
                     >
                       {isExtracting ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -937,6 +937,15 @@ export default function LogSymptomsTab({ symptoms, onSaved }: LogSymptomsTabProp
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
                     </span>
                     Listening...
+                  </p>
+                )}
+                {isExtracting && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1.5 mt-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                    </span>
+                    AI extracting... may take longer due to rate limits — please wait patiently.
                   </p>
                 )}
               </div>

@@ -304,7 +304,7 @@ export default function DoctorHandoutTab({ symptoms, isLoading }: DoctorHandoutT
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-full min-w-0">
       {/* Action buttons - hidden in print */}
       <div className="flex flex-wrap gap-2 print:hidden">
         <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="gap-2 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 hover:shadow-md hover:shadow-teal-500/10 transition-all">

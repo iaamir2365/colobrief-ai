@@ -1,29 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireVerifiedAuth } from "@/lib/api-auth";
-
-const ZHIPU_BASE_URL = process.env.ZHIPU_BASE_URL || "https://open.bigmodel.cn/api/paas/v4";
-const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || "";
-
-async function callGLM(messages: { role: string; content: string }[], temperature = 0.3) {
-  const res = await fetch(`${ZHIPU_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${ZHIPU_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "GLM-4.7-Flash",
-      messages,
-      temperature,
-      thinking: { type: "disabled" },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`GLM API error ${res.status}: ${err}`);
-  }
-  return res.json();
-}
+import { callGLM } from "@/lib/zhipu";
 
 const EXTRACT_SYSTEM_PROMPT = `Analyze this unstructured patient daily log for Ulcerative Colitis. Extract the symptoms and map them strictly to this JSON format. If a symptom is not mentioned, use null or default values:
 {

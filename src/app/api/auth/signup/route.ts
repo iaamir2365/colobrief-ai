@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { hashPassword, signToken } from "@/lib/auth";
+import { hashPassword, signToken, generateVerificationCode } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/email";
-import { randomBytes } from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,8 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Hash password and generate verification code
     const hashedPassword = await hashPassword(password);
-    const code = randomBytes(3).toString("hex").toUpperCase();
-    const verificationToken = `${code}-${Date.now()}`;
+    const { code, token: verificationToken } = generateVerificationCode();
     const createdUser = await db.user.create({
       data: {
         name: name.trim(),
